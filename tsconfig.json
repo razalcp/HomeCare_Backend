@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // JavaScript version to compile to
+    "module": "commonjs", // Module system
+    "rootDir": "./src", // Source folder
+    "outDir": "./dist", // Compiled output folder
+    "strict": true, // Enable all strict type-checking options
+    "esModuleInterop": true, // Allow import/export compatibility
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"], // Files to include
+  "exclude": ["node_modules", "dist"] // Files to exclude
+}

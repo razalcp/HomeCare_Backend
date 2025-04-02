@@ -20,6 +20,6 @@ router.get("/resendOtp", userController.resendOtp)
 router.post("/login", userController.login)
 router.get('/getVerifiedDoctors', authMiddleware, userController.getVerifiedDoctors)
 router.post('/userLogout',userController.logoutUser)
-
-
+// router.post("/create-payment-intent",userController.createPaymentIntent)
+router.post('/create-checkout-session',authMiddleware,userController.createcheckoutsession)
 export default router;

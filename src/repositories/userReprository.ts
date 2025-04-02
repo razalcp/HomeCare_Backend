@@ -3,6 +3,7 @@ import { IUserModel } from "../interfaces/user/userModelInterface";
 import { Model } from "mongoose";
 import { IUser, IUserAuth } from "../interfaces/user/userInterface";
 import { IDoctor } from "../models/doctor/doctorModel";
+
 class UserReprository implements IUserRepository {
   private userModel = Model<IUserModel>;
   private doctorModel = Model<IDoctor>
@@ -36,7 +37,7 @@ class UserReprository implements IUserRepository {
 
         return singleUser;
       } else {
-        console.log("blocked");
+        // console.log("blocked");
 
         throw new Error("User is blocked")
       }
@@ -49,7 +50,7 @@ class UserReprository implements IUserRepository {
   getVerifiedDoctors = async () => {
     try {
       const data = await this.doctorModel.find({ kycStatus: "Approved" })
-      console.log("rep", data);
+
       return data
 
     } catch (error) {

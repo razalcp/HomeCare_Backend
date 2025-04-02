@@ -132,15 +132,65 @@ class AdminController {
         }
     };
 
+
     updateuserIsBlocked = async (req: Request, res: Response) => {
         try {
             const { buttonName, id } = req.body
             const updateData = await this.adminService.updateuserIsBlocked(buttonName, id)
+            if (buttonName === 'Block') {
+                res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: "strict" });
+                res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: "strict" });
+            }
             res.status(HTTP_statusCode.OK).json({ data: updateData })
         } catch (error) {
             throw error
         }
     }
+
+    // updateuserIsBlocked = async (req: Request, res: Response) => {
+    //     try {
+    //         const { buttonName, id } = req.body
+    //         const updateData = await this.adminService.updateuserIsBlocked(buttonName, id)
+    //         console.log("udata",updateData);
+
+    //         if (updateData?.isUserBlocked){
+    //             try {
+    //                 res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
+    //                 res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
+    //                 res.status(200).json({ message: "Logged out successfully" });
+    //               } catch (error) {
+    //                 res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+    //               }
+    //         }
+
+    //         res.status(HTTP_statusCode.OK).json({ data: updateData })
+    //     } catch (error) {
+    //         throw error
+    //     }
+    // }
+
+    // updateuserIsBlocked = async (req: Request, res: Response) => {
+    //     try {
+    //         const { buttonName, id } = req.body;
+    //         const updateData = await this.adminService.updateuserIsBlocked(buttonName, id);
+    //         console.log("udata", updateData);
+
+    //         if (updateData?.isUserBlocked) {
+    //             try {
+    //                 res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
+    //                 res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
+    //                 return res.status(200).json({ message: "Logged out successfully" }); // <-- RETURN added
+    //             } catch (error) {
+    //                 return res.status(500).json({ message: "Something went wrong", error }); // <-- RETURN added
+    //             }
+    //         }
+
+    //         return res.status(200).json({ data: updateData }); // <-- RETURN added
+    //     } catch (error) {
+    //         console.error("Error in updateuserIsBlocked:", error);
+    //         return res.status(500).json({ message: "Internal Server Error", error });
+    //     }
+    // };
 
 }
 

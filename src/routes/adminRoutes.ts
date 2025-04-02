@@ -25,5 +25,5 @@ router.get('/getDoctorData', adminAuthMiddleware, adminController.getDoctors)
 router.patch('/updateKycStatus', adminAuthMiddleware, adminController.updateKycStatus)
 router.get('/getPatients', adminAuthMiddleware, adminController.getPatients)
 router.patch('/updateIsBlocked', adminAuthMiddleware, adminController.updateuserIsBlocked)
-router.post('/adminLogout',adminController.logoutAdmin)
+router.post('/adminLogout', adminController.logoutAdmin)
 export default router

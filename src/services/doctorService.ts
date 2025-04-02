@@ -15,6 +15,10 @@ class DoctorService {
         this.doctorReprository = doctorReprository
     }
 
+    findRegisteredEmail=async(email:any)=>{
+        return await this.doctorReprository.findByEmail(email)
+    }
+
     register = async (email: string) => {
         try {
             const alreadyExistingDoctor = await this.doctorReprository.findByEmail(email)
@@ -178,14 +182,12 @@ class DoctorService {
     doctorKycRegister = async (doctorData: any, imgObject: any) => {
         try {
 
-            // console.log("Inside doctorKycRegister service");
-            // console.log("This is doctor data", doctorData);
-            // console.log("This is image object", imgObject);
-
+           
             const saveDoctorData = await this.doctorReprository.doctorRepoKycRegister(doctorData, imgObject)
+           
             return saveDoctorData
         } catch (error: any) {
-            // console.log("Inside service", error.message)
+          
             throw new Error(error.message)
         }
     }
@@ -196,15 +198,27 @@ class DoctorService {
 
     updateDoctorProfile = async (doctorData: any, imgObject: any) => {
         try {
-
-          
-
             const updateDoctorData = await this.doctorReprository.updateDoctor(doctorData, imgObject)
             return updateDoctorData;
         } catch (error: any) {
-            // console.log("Inside service", error.message)
+            console.log("Inside service", error.message)
             throw new Error(error.message)
         }
+    }
+    addDoctorSlots=async (slotData:any) => {
+        try {
+        const updateSlotData = await this.doctorReprository.addDoctorSlots(slotData)
+        // console.log(updateSlotData);
+        return updateSlotData
+            
+        } catch (error:any) {
+            throw error
+        }
+        
+    }
+    getDoctorSlots = async (doctorId:string) => {
+        const getSlots = await this.doctorReprository.getDoctorSlots(doctorId)
+        return getSlots
     }
 
 }

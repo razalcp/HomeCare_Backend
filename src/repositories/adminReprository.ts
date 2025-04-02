@@ -28,9 +28,14 @@ class AdminReprository {
 
     addDepartments = async (dept: String) => {
         try {
-            const data = await this.departmentModel.findOne({ dept })
-
-
+            // console.log(dept); 
+            
+            const data = await this.departmentModel.findOne({departmentName: dept })
+  
+            
+        //  console.log(data);
+         
+            
             if (data === null) {
                 // console.log(this.departmentModel);
                 try {
@@ -51,6 +56,9 @@ class AdminReprository {
 
 
     };
+
+  
+    
 
     getDepartments = async () => {
         try {

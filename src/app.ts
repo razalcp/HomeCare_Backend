@@ -11,6 +11,7 @@ const app: Application = express();
 
 dotenv.config();
 
+
 mongooseConnection();
 
 app.use(cookieParser());

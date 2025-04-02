@@ -3,14 +3,16 @@ import IDoctorModel from "../interfaces/doctor/doctorModelInterface"
 import IDoctorReprository from "../interfaces/doctor/IDoctorReprository"
 import { Model } from 'mongoose'
 import { IDepartment } from "../models/admin/departmentModel"
+import { ISlot } from "../models/doctor/slotModel"
 class DoctorReprository implements IDoctorReprository {
     private doctorModel: Model<IDoctorModel>
     private departmentModel: Model<IDepartment>
-
-    constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>) {
+    private slotModel: Model<ISlot>
+    constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>, slotModel: Model<ISlot>) {
 
         this.doctorModel = doctorModel
         this.departmentModel = departmentModel
+        this.slotModel = slotModel
     }
 
     findByEmail = async (email: string): Promise<IDoctorModel | null> => {
@@ -23,10 +25,10 @@ class DoctorReprository implements IDoctorReprository {
     }
 
     findEmailForLogin = async (email: string): Promise<IDoctorModel | null> => {
-        // console.log("Inside Doctor Reprository ", email);
+
         try {
             const doct = await this.doctorModel.findOne({ email })
-            // console.log("Repo doc", doct);
+
 
             return doct
         } catch (error) {
@@ -37,13 +39,13 @@ class DoctorReprository implements IDoctorReprository {
     doctorRepoKycRegister = async (doctorData: any, imgObject: any) => {
 
 
-        // console.log("repo doctorData ", doctorData);
-        // console.log("repo imgObject ", imgObject);
+
+
 
         const existingUser = await this.doctorModel.findOne({ email: doctorData.email })
 
         if (existingUser) {
-            // console.log("Inside existingUser");
+
 
             const updatedUser = await this.doctorModel.findOneAndUpdate(
                 { email: doctorData.email },
@@ -61,7 +63,7 @@ class DoctorReprository implements IDoctorReprository {
 
     };
 
-    updateDoctor =async (doctorData: any, imgObject: any) => {
+    updateDoctor = async (doctorData: any, imgObject: any) => {
 
 
         // console.log("repo doctorData ", doctorData);
@@ -89,7 +91,7 @@ class DoctorReprository implements IDoctorReprository {
     };
 
     register = async (regEmail: string | null) => {
-        // console.log("Inside regi ",regEmail);
+        console.log("Inside regi ", regEmail);
 
         const obj = { email: regEmail }
 
@@ -116,7 +118,59 @@ class DoctorReprository implements IDoctorReprository {
     };
 
 
+    addDoctorSlots = async (slotData: ISlot | ISlot[]) => {
+          
+        try {
+            if (Array.isArray(slotData)) {
+                // Handling array case
+                          
+                for (const slot of slotData) {
+                    const existingSlot = await this.slotModel.findOne({
+                        doctorId: slot.doctorId,
+                        date: slot.date,
+                        startTime: slot.startTime,
+                        endTime: slot.endTime
+                    });
+
+                    if (existingSlot) {
+                        throw new Error(`Slot already added for this date and time`);
+                    }
+                }
+
+                // If no duplicate, insert all slots
+                await this.slotModel.insertMany(slotData);
+            } else {
+                // Handling object case
+                const existingSlot = await this.slotModel.findOne({
+                    doctorId: slotData.doctorId,
+                    date: slotData.date,
+                    startTime: slotData.startTime,
+                    endTime: slotData.endTime
+                });
+
+                if (existingSlot) {
+                    throw new Error(`Slot already added for ${slotData.date} from ${slotData.startTime} to ${slotData.endTime}`);
+                }
+
+                // Insert new slot
+                const newSlot = new this.slotModel(slotData);
+                await newSlot.save();
+            }
+
+            return { success: true, message: "Slot(s) added successfully" };
+        } catch (error: any) {
+            console.log("error.message",error.message);
+            
+            throw new Error(error.message)
+        }
+    };
+
+    getDoctorSlots = async (doctorId:string) => {
+        return await this.slotModel.find({ doctorId });
+    };
 
 }
+
+
 
 export default DoctorReprository

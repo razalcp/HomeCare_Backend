@@ -87,9 +87,21 @@ class DoctorController {
             // console.log(enteredOtp);
 
 
-            const serviceResponse = await this.doctorService.verifyDoctorOtp(
-                enteredOtp
-            );
+            const serviceResponse = await this.doctorService.verifyDoctorOtp(enteredOtp);
+            res.cookie("doctorRefreshToken", serviceResponse.doctorRefreshToken, {
+                httpOnly: true,
+                sameSite: 'none',
+                secure: true,
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+            });
+
+            res.cookie("doctorAccessToken", serviceResponse.doctorToken, {
+                httpOnly: true,
+                sameSite: 'none',
+                secure: true,
+                maxAge: 15 * 60 * 1000,
+            });
+
             res.status(HTTP_statusCode.OK).json(serviceResponse);
         } catch (error: any) {
             if (error.message === "Incorrect OTP") {
@@ -131,10 +143,12 @@ class DoctorController {
             const fileName = req.files as Express.Multer.File[]
 
 
-            console.log("This is doctor data inside controller ", doctorData)
+            // console.log("This is doctor data inside controller ", doctorData)
             // console.log(fileName);
+            const { email } = doctorData
+            // console.log("destructered email", email)
+            // console.log("doctorRegister Controller Worked for changing logic", doctorData)
 
-            // console.log("doctorRegister Controller Worked")
 
             //testing cloudinary weather connected
 
@@ -169,20 +183,31 @@ class DoctorController {
             };
             const imgObject: any = {}
 
-            for (const file of fileName!) {
-                const upload: any = await uploadToCloudinary(file.buffer)
+            const isEmailRegistered = await this.doctorService.findRegisteredEmail(email)
+            console.log("Inside isEmailRegistered", isEmailRegistered)
 
-                imgObject[file.fieldname] = upload
-                // console.log(imgObject)
-                // console.log(`Uploaded file name :${file.fieldname} and url = `, result);
+            if (isEmailRegistered?.email === email) {
+                console.log("inside cloud upload condition");
+
+                for (const file of fileName!) {
+                    const upload: any = await uploadToCloudinary(file.buffer)
+
+                    imgObject[file.fieldname] = upload
+                    // console.log(imgObject)
+                    // console.log(`Uploaded file name :${file.fieldname} and url = `, result);
+
+                }
 
             }
+
 
 
             await this.doctorService.doctorKycRegister(doctorData, imgObject)
             // const doc =  await this.doctorService.register(userData);
             // const fileNames = req.body.fileNames ? JSON.parse(req.body.fileNames) : [];
-
+            res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
+            res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
+            res.status(200).json({ message: "Logged out successfully" });
         } catch (error: any) {
             console.log(error.message);
             return res.status(400).json({ error: error.message });
@@ -242,6 +267,53 @@ class DoctorController {
         }
 
     }
+
+    logoutDoctor = async (req: Request, res: Response) => {
+        try {
+            res.clearCookie("doctorAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
+            res.clearCookie("doctorRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
+            res.status(200).json({ message: "Logged out successfully" });
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+        }
+    };
+
+
+
+    addDoctorSlots = async (req: Request, res: Response) => {
+        try {
+            // console.log("Inside doctor controller add slots", req.body);
+            const slotData = req.body
+            const addSlot = await this.doctorService.addDoctorSlots(slotData)
+
+            res.status(200).json({ message: "Slot added successfully!" });
+        } catch (error: any) {
+            // console.log("inside controller",error);
+
+            if (error.message) {
+                res
+                    .status(HTTP_statusCode.BadRequest)
+                    .json({ message: error.message });
+            } else {
+                res
+                    .status(HTTP_statusCode.InternalServerError)
+                    .json({ message: "Something wrong please try again later" });
+            }
+
+        }
+    };
+
+    getDoctorSlots = async (req: Request, res: Response) => {
+
+
+        const { doctorId } = req.params;
+        const getData = await this.doctorService.getDoctorSlots(doctorId)
+        res.status(HTTP_statusCode.OK).json(getData);
+
+    };
+
 }
+
+
 
 export default DoctorController

@@ -2,11 +2,19 @@ import UserService from "../../services/userService";
 import { Request, Response } from "express";
 import { IUser } from "../../interfaces/user/userInterface";
 import HTTP_statusCode from "../../enums/httpStatusCode";
+const stripe = require('stripe')("sk_test_51R6U86C1BfcS3nBm3F9VPOzMitLY6kndB9xIywEvFDKrPi8jDQ457NySmoSq2Nl0hBdT8vtGMvNZ5Wr8cNq736Kk00RPBZDxXt")
+
+// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+//   apiVersion: "2023-10-16" as any,
+// });
 
 class userController {
   private userService: UserService;
 
   constructor(userService: UserService) {
+    console.log(process.env.STRIPE_SECRET_KEY);
+
     this.userService = userService;
   }
 
@@ -102,7 +110,7 @@ class userController {
     } catch (error: any) {
 
 
-      console.log("User:= login error", error.message);
+      // console.log("User:= login error", error.message);
       if (error.message === "Email not found") {
         res.status(HTTP_statusCode.NotFound).json({ message: "Email not found" });
       } else if (error.message === "Wrong password") {
@@ -127,8 +135,8 @@ class userController {
   };
 
   logoutUser = async (req: Request, res: Response) => {
-    
-    
+
+
     try {
       res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
       res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
@@ -137,6 +145,32 @@ class userController {
       res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
     }
   };
+  
+  createcheckoutsession = async (req: Request, res: Response) => {
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      success_url: "http://localhost:1234/success",
+      cancel_url: "http://localhost:1234/paymentFailed",
+      customer_email: req.body.userEmail, // Optional: associate user with payment
+      line_items: [
+        {
+          price_data: {
+            currency: "inr", // Change based on your currency
+            product_data: {
+              name: `Consultation with Dr. ${req.body.doctorName}`,
+              description: `Appointment on ${req.body.selectedDate} at ${req.body.startTime}`,
+              images: [req.body.doctorImage], // Optional: Display doctor's image
+            },
+            unit_amount: Math.round(req.body.doctorFees * 100), // Convert to cents
+          },
+          quantity: 1, // Always 1 for a single appointment
+        },
+      ],
+    });
+    res.json({ id: session.id })
+  }
 
 
 }

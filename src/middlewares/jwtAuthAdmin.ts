@@ -41,7 +41,15 @@ const adminAuthMiddleware = (req: Request, res: Response, next: NextFunction) =>
     try {
         const decoded = jwt.verify(accessToken, secret_key) as { user_id: string, role: string };
         (req as any).user = decoded; // Attach user data to request object
-        next();
+
+            
+
+            if ((req as any).user.role === 'admin') {
+                console.log("admn cond");
+                
+                next();
+            }
+        // next();
     } catch (error) {
         res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid access token." });
         return

@@ -108,6 +108,15 @@ class AdminService {
             throw error
         }
     }
+
+    getWalletData = async (adminId: string) => {
+        try {
+        const getData = await this.adminReprository.getWalletData(adminId)
+          return getData;
+        } catch (error) {
+          return error
+        }
+      };
 }
 
 export default AdminService

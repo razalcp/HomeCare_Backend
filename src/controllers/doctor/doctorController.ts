@@ -311,6 +311,27 @@ class DoctorController {
         res.status(HTTP_statusCode.OK).json(getData);
 
     };
+    getMyBookings = async (req: Request, res: Response) => {
+        try {
+            const doctorId = req.body.doctorId
+            // console.log("Inside doctorcontrollers getUserBookings methord , this is userID :",doctorId);
+            const getBookingData = await this.doctorService.getMyBookings(doctorId)
+            res.status(HTTP_statusCode.OK).json(getBookingData)
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+        }
+    };
+    getWalletData = async (req: Request, res: Response) => {
+        try {
+          const { doctorId } = req.params;
+    
+    
+          const getData = await this.doctorService.getWalletData(doctorId)
+          res.status(HTTP_statusCode.OK).json(getData)
+        } catch (error) {
+          res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+        }
+      }
 
 }
 

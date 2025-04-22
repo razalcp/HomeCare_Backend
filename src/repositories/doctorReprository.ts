@@ -4,15 +4,21 @@ import IDoctorReprository from "../interfaces/doctor/IDoctorReprository"
 import { Model } from 'mongoose'
 import { IDepartment } from "../models/admin/departmentModel"
 import { ISlot } from "../models/doctor/slotModel"
+import { IBooking } from "../models/user/bookingModel"
+import { IWallet } from "../models/doctor/doctorWalletModel"
 class DoctorReprository implements IDoctorReprository {
     private doctorModel: Model<IDoctorModel>
     private departmentModel: Model<IDepartment>
     private slotModel: Model<ISlot>
-    constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>, slotModel: Model<ISlot>) {
+    private bookingModel = Model<IBooking>
+    private doctorWalletModel = Model<IWallet>
+    constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>) {
 
         this.doctorModel = doctorModel
         this.departmentModel = departmentModel
         this.slotModel = slotModel
+        this.bookingModel = bookingModel
+        this.doctorWalletModel = doctorWalletModel
     }
 
     findByEmail = async (email: string): Promise<IDoctorModel | null> => {
@@ -119,11 +125,11 @@ class DoctorReprository implements IDoctorReprository {
 
 
     addDoctorSlots = async (slotData: ISlot | ISlot[]) => {
-          
+
         try {
             if (Array.isArray(slotData)) {
                 // Handling array case
-                          
+
                 for (const slot of slotData) {
                     const existingSlot = await this.slotModel.findOne({
                         doctorId: slot.doctorId,
@@ -159,15 +165,44 @@ class DoctorReprository implements IDoctorReprository {
 
             return { success: true, message: "Slot(s) added successfully" };
         } catch (error: any) {
-            console.log("error.message",error.message);
-            
+            console.log("error.message", error.message);
+
             throw new Error(error.message)
         }
     };
 
-    getDoctorSlots = async (doctorId:string) => {
+    getDoctorSlots = async (doctorId: string) => {
         return await this.slotModel.find({ doctorId });
     };
+
+    getMyBookings = async (doctorId: string) => {
+        try {
+            // console.log("Inside UserRepository getUserBookings method, this is userID:", userId);
+
+            const bookings = await this.bookingModel.find({ doctorId })
+                .populate('doctorId') // populate doctor details
+                .populate('slotId')   // populate slot details
+                .populate('userId');  // optional: to populate user info if needed
+            // console.log("doctorside", bookings);
+
+            return bookings;
+        } catch (error) {
+            console.error("Error fetching user bookings:", error);
+            throw error;
+        }
+    };
+
+    getWalletData = async (doctorId: string) => {
+        try {
+            const wallet = await this.doctorWalletModel.findOne({ doctorId });
+            return wallet; // or throw if not found
+        } catch (error) {
+            console.error('Error fetching doctor wallet:', error);
+            throw new Error('Failed to fetch wallet');
+        }
+    };
+
+   
 
 }
 

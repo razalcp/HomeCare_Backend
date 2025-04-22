@@ -14,13 +14,13 @@ class AdminController {
         try {
             const { values } = req.body
             const { loginId, password } = values
-            // console.log("Inside Admin Controllers methord")
+
             // console.log("email --> ", loginId)
-            // console.log("password --> ", password);
+
 
 
             const serviceResponse = await this.adminService.checkWetherAdmin(loginId, password)
-            // console.log("serviceResponse = ", serviceResponse);
+
 
             res.cookie("adminRefreshToken", serviceResponse?.adminRefreshToken, {
                 httpOnly: true,
@@ -147,50 +147,17 @@ class AdminController {
         }
     }
 
-    // updateuserIsBlocked = async (req: Request, res: Response) => {
-    //     try {
-    //         const { buttonName, id } = req.body
-    //         const updateData = await this.adminService.updateuserIsBlocked(buttonName, id)
-    //         console.log("udata",updateData);
+    getWalletData = async (req: Request, res: Response) => {
+        try {
+            const { adminId } = req.params;
 
-    //         if (updateData?.isUserBlocked){
-    //             try {
-    //                 res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
-    //                 res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
-    //                 res.status(200).json({ message: "Logged out successfully" });
-    //               } catch (error) {
-    //                 res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
-    //               }
-    //         }
 
-    //         res.status(HTTP_statusCode.OK).json({ data: updateData })
-    //     } catch (error) {
-    //         throw error
-    //     }
-    // }
-
-    // updateuserIsBlocked = async (req: Request, res: Response) => {
-    //     try {
-    //         const { buttonName, id } = req.body;
-    //         const updateData = await this.adminService.updateuserIsBlocked(buttonName, id);
-    //         console.log("udata", updateData);
-
-    //         if (updateData?.isUserBlocked) {
-    //             try {
-    //                 res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
-    //                 res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
-    //                 return res.status(200).json({ message: "Logged out successfully" }); // <-- RETURN added
-    //             } catch (error) {
-    //                 return res.status(500).json({ message: "Something went wrong", error }); // <-- RETURN added
-    //             }
-    //         }
-
-    //         return res.status(200).json({ data: updateData }); // <-- RETURN added
-    //     } catch (error) {
-    //         console.error("Error in updateuserIsBlocked:", error);
-    //         return res.status(500).json({ message: "Internal Server Error", error });
-    //     }
-    // };
+            const getData = await this.adminService.getWalletData(adminId)
+            res.status(HTTP_statusCode.OK).json(getData)
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+        }
+    }
 
 }
 

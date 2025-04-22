@@ -87,8 +87,8 @@ class UserService {
 
     try {
       const userData = await this.userReprository.login(email);
-   
-      
+
+
       if (!userData) throw new Error("Email not found");
 
       const comparePassword = await bcrypt.compare(password, userData.password as string);
@@ -104,13 +104,77 @@ class UserService {
     }
   };
 
-  getVerifiedDoctors=async()=>{
+  getVerifiedDoctors = async () => {
     try {
       return await this.userReprository.getVerifiedDoctors()
     } catch (error) {
       throw error
     }
   }
+  saveBookingToDb = async (slotId: string, userId: string, doctorId: string) => {
+    try {
+      await this.userReprository.saveBookingToDb(slotId, userId, doctorId)
+    } catch (error) {
+      throw error
+    }
+  }
+  getUserBookings = async (userId: string) => {
+    try {
+
+      // console.log("Inside UserServices getUserBookings methord , this is userID :",userId);
+      return await this.userReprository.getUserBookings(userId)
+    } catch {
+
+    }
+  }
+
+  cancelBooking = async (bookingId: string) => {
+    try {
+      const cancelBookingData = await this.userReprository.cancelBooking(bookingId)
+      return cancelBookingData
+
+    } catch (error) {
+
+    }
+  }
+  getWalletData = async (userId: string) => {
+    try {
+      const getData = await this.userReprository.getWalletData(userId)
+      return getData;
+    } catch (error) {
+      return error
+    }
+  };
+
+
+
+  updateUserProfile = async (userData: any, imgObject: any) => {
+      try {
+          // Hash password if it exists
+          if (userData.password) {
+              const hashedPassword = await bcrypt.hash(userData.password as string, 10);
+              userData.password = hashedPassword;
+          }
+  
+          const updateUserData = await this.userReprository.updateUser(userData, imgObject);
+          return updateUserData;
+      } catch (error: any) {
+          console.log("Inside service", error.message);
+          throw new Error(error.message);
+      }
+  };
+  
+  getUser = async (email:string) => {
+    try {
+     
+      // console.log(email);    
+      const getUserData = await this.userReprository.getUser(email)
+    return getUserData
+    } catch (error) {
+      throw error
+    }
+  }
+
 }
 
 export default UserService;

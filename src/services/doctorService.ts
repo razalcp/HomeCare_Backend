@@ -15,7 +15,7 @@ class DoctorService {
         this.doctorReprository = doctorReprository
     }
 
-    findRegisteredEmail=async(email:any)=>{
+    findRegisteredEmail = async (email: any) => {
         return await this.doctorReprository.findByEmail(email)
     }
 
@@ -182,12 +182,12 @@ class DoctorService {
     doctorKycRegister = async (doctorData: any, imgObject: any) => {
         try {
 
-           
+
             const saveDoctorData = await this.doctorReprository.doctorRepoKycRegister(doctorData, imgObject)
-           
+
             return saveDoctorData
         } catch (error: any) {
-          
+
             throw new Error(error.message)
         }
     }
@@ -205,21 +205,38 @@ class DoctorService {
             throw new Error(error.message)
         }
     }
-    addDoctorSlots=async (slotData:any) => {
+    addDoctorSlots = async (slotData: any) => {
         try {
-        const updateSlotData = await this.doctorReprository.addDoctorSlots(slotData)
-        // console.log(updateSlotData);
-        return updateSlotData
-            
-        } catch (error:any) {
+            const updateSlotData = await this.doctorReprository.addDoctorSlots(slotData)
+            // console.log(updateSlotData);
+            return updateSlotData
+
+        } catch (error: any) {
             throw error
         }
-        
+
     }
-    getDoctorSlots = async (doctorId:string) => {
+    getDoctorSlots = async (doctorId: string) => {
         const getSlots = await this.doctorReprository.getDoctorSlots(doctorId)
         return getSlots
-    }
+    };
+    getMyBookings = async (doctorId: string) => {
+        try {
+
+            // console.log("Inside UserServices getUserBookings methord , this is userID :",userId);
+            return await this.doctorReprository.getMyBookings(doctorId)
+        } catch {
+
+        }
+    };
+    getWalletData = async (doctorId: string) => {
+        try {
+            const getData = await this.doctorReprository.getWalletData(doctorId)
+            return getData;
+        } catch (error) {
+            return error
+        }
+    };
 
 }
 

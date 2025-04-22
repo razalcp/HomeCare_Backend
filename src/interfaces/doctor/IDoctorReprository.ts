@@ -1,5 +1,7 @@
 import { IDepartment } from "../../models/admin/departmentModel"
+import { IWallet } from "../../models/doctor/doctorWalletModel"
 import { ISlot } from "../../models/doctor/slotModel"
+import { IBooking } from "../../models/user/bookingModel"
 import IDoctorModel from "./doctorModelInterface"
 
 interface IDoctorReprository {
@@ -13,6 +15,8 @@ interface IDoctorReprository {
 
      getDoctorSlots(doctorId: string): Promise<ISlot[]>
     updateDoctor(doctorId: string, updateData: Partial<IDoctorModel>, imgObject?: any): Promise<IDoctorModel | null | void>; 
+    getMyBookings(doctorId:string):Promise<IBooking[]>;
+    getWalletData(doctorId:string):Promise<IWallet>;
 }
 
 

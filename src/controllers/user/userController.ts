@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { IUser } from "../../interfaces/user/userInterface";
 import HTTP_statusCode from "../../enums/httpStatusCode";
 const stripe = require('stripe')("sk_test_51R6U86C1BfcS3nBm3F9VPOzMitLY6kndB9xIywEvFDKrPi8jDQ457NySmoSq2Nl0hBdT8vtGMvNZ5Wr8cNq736Kk00RPBZDxXt")
-
+import cloudinary from '../../config/cloudinary_config'
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
 //   apiVersion: "2023-10-16" as any,
@@ -13,7 +13,7 @@ class userController {
   private userService: UserService;
 
   constructor(userService: UserService) {
-    console.log(process.env.STRIPE_SECRET_KEY);
+
 
     this.userService = userService;
   }
@@ -145,13 +145,13 @@ class userController {
       res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
     }
   };
-  
+
   createcheckoutsession = async (req: Request, res: Response) => {
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      success_url: "http://localhost:1234/success",
+      success_url: `http://localhost:1234/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
       cancel_url: "http://localhost:1234/paymentFailed",
       customer_email: req.body.userEmail, // Optional: associate user with payment
       line_items: [
@@ -169,10 +169,117 @@ class userController {
         },
       ],
     });
+
+
     res.json({ id: session.id })
   }
 
 
+  saveBookingToDb = async (req: Request, res: Response) => {
+    try {
+      const slotId = req.body.slotId
+      const userId = req.body.userId
+      const doctorId = req.body.doctorId
+      // console.log("saveBookingToDb worked ", slotId, userId, doctorId);
+      const saveData = await this.userService.saveBookingToDb(slotId, userId, doctorId)
+
+    } catch (error) {
+
+    }
+  }
+
+  getUserBookings = async (req: Request, res: Response) => {
+    try {
+      const userId = req.body.userId
+      // console.log("Inside Usercontrollers getUserBookings methord , this is userID :",userId);
+      const getBookingData = await this.userService.getUserBookings(userId)
+      res.status(HTTP_statusCode.OK).json(getBookingData)
+    } catch (error) {
+      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+    }
+  };
+
+  cancelBooking = async (req: Request, res: Response) => {
+    try {
+      const bookingId = req.body.bookingId
+      const cancelBookingData = await this.userService.cancelBooking(bookingId)
+      res.status(HTTP_statusCode.OK).json(cancelBookingData)
+    } catch (error) {
+      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+    }
+  }
+
+  getWalletData = async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+
+
+      const getData = await this.userService.getWalletData(userId)
+      res.status(HTTP_statusCode.OK).json(getData)
+    } catch (error) {
+      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+    }
+  };
+
+  updateUser = async (req: Request, res: Response) => {
+    try {
+      const userData: any = req.body
+      const fileName = req.files as Express.Multer.File[]
+      // console.log("userData",userData);
+      // console.log("fileName",fileName);
+
+    
+      let uploadToCloudinary = (buffer: Buffer) => {
+        console.log("uploadToCloudinary");
+
+        return new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: "doctor_profiles" }, // Cloudinary folder
+            (error, result) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result?.secure_url); // Return uploaded image URL
+              }
+            }
+          );
+          uploadStream.end(buffer); // Send buffer data to Cloudinary
+        });
+
+
+
+      };
+      const imgObject: any = {}
+
+      for (const file of fileName!) {
+        const upload: any = await uploadToCloudinary(file.buffer)
+
+        imgObject[file.fieldname] = upload
+        // console.log(imgObject)
+        // console.log(`Uploaded file name :${file.fieldname} and url = `, result);
+
+      }
+      const docData = await this.userService.updateUserProfile(userData, imgObject)
+      res.status(HTTP_statusCode.OK).json(docData)
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+
+    }
+
+  };
+
+  getUser = async (req: Request, res: Response) => {
+    try {
+      const {email} = req.params
+      // console.log(email);
+      
+     
+      const getUserData = await this.userService.getUser(email)
+      res.status(HTTP_statusCode.OK).json(getUserData)
+    } catch (error) {
+      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+    }
+  }
 }
 
 

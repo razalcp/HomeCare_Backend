@@ -9,10 +9,11 @@ import DepartmentModel from '../models/admin/departmentModel'
 import DoctorModel from '../models/doctor/doctorModel'
 import User from '../models/user/userModel'
 import adminAuthMiddleware from '../middlewares/jwtAuthAdmin'
+import adminWalletModel from '../models/admin/adminWalletModel'
 
 const router = express.Router()
 
-const adminReprository = new AdminReprository(AdminModel, DepartmentModel, DoctorModel as any, User)
+const adminReprository = new AdminReprository(AdminModel, DepartmentModel, DoctorModel as any, User, adminWalletModel as any)
 const adminService = new AdminService(adminReprository)
 const adminController = new AdminController(adminService)
 
@@ -26,4 +27,5 @@ router.patch('/updateKycStatus', adminAuthMiddleware, adminController.updateKycS
 router.get('/getPatients', adminAuthMiddleware, adminController.getPatients)
 router.patch('/updateIsBlocked', adminAuthMiddleware, adminController.updateuserIsBlocked)
 router.post('/adminLogout', adminController.logoutAdmin)
+router.get('/getWalletData/:adminId', adminAuthMiddleware, adminController.getWalletData)
 export default router

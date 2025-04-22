@@ -6,6 +6,8 @@ export interface ISlot extends Document {
     endTime: string;
     status: string;
     doctorId: mongoose.Types.ObjectId;
+    isBooked: boolean;
+    
 }
 
 const slotSchema = new Schema<ISlot>({
@@ -13,7 +15,8 @@ const slotSchema = new Schema<ISlot>({
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
     status: { type: String, required: true, enum: ["Available", "Booked", "Cancelled"] },
-    doctorId: { type: Schema.Types.ObjectId, required: true, ref: "Doctor" }
+    doctorId: { type: Schema.Types.ObjectId, required: true, ref: "Doctor" },
+    isBooked: { type: Boolean, default: false }
 
 });
 

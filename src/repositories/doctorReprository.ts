@@ -12,13 +12,17 @@ class DoctorReprository implements IDoctorReprository {
     private slotModel: Model<ISlot>
     private bookingModel = Model<IBooking>
     private doctorWalletModel = Model<IWallet>
-    constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>) {
+    private messageModel = Model as any
+    private conversationModel = Model as any
+    constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, messageModel: any, conversationModel: any) {
 
         this.doctorModel = doctorModel
         this.departmentModel = departmentModel
         this.slotModel = slotModel
         this.bookingModel = bookingModel
         this.doctorWalletModel = doctorWalletModel
+        this.messageModel = messageModel
+        this.conversationModel = conversationModel
     }
 
     findByEmail = async (email: string): Promise<IDoctorModel | null> => {
@@ -192,6 +196,8 @@ class DoctorReprository implements IDoctorReprository {
         }
     };
 
+
+
     getWalletData = async (doctorId: string) => {
         try {
             const wallet = await this.doctorWalletModel.findOne({ doctorId });
@@ -202,8 +208,102 @@ class DoctorReprository implements IDoctorReprository {
         }
     };
 
-   
+    getBookedUser = async (doctorId: string) => {
+        try {
+            const bookings = await this.bookingModel.find({ doctorId })
+                .populate('userId', 'name email mobile profileIMG') // only select needed fields
+                .exec();
 
+            // Extract user data from populated bookings
+            // const users = bookings.map(booking => booking.userId);
+            const users = bookings.map(booking => {
+                const user = booking.userId as any; // type assertion if using TypeScript
+                return {
+                    bookingId: booking._id,
+                   _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    mobile: user.mobile,
+                    profileIMG: user.profileIMG
+                };
+            });
+
+
+            console.log("users", users);
+
+            return users
+
+
+        } catch (error) {
+            throw new Error('Failed to fetch booked user data');
+        }
+    };
+
+    saveMessages = async (messageData: { senderId: string; receiverId: string; message: string; image: string; }) => {
+        try {
+            const { senderId, receiverId, message, image } = messageData;
+
+            // console.log("Inside repo", messageData);
+
+
+            let conversation = await this.conversationModel.findOne({
+                participants: { $all: [senderId, receiverId] },
+            });
+
+            if (!conversation) {
+                conversation = await this.conversationModel.create({
+                    participants: [senderId, receiverId],
+                    messages: [],
+                });
+            }
+
+
+            const newMessage = await this.messageModel.create({
+                senderId,
+                receiverId,
+                message,
+                image
+            });
+
+            // Step 4: Push the message into conversation's messages array
+            conversation.messages.push(newMessage._id);
+            await conversation.save();
+
+            return newMessage;
+        } catch (error) {
+            console.error("Error in saveMessages:", error);
+            throw error;
+        }
+    };
+
+
+
+    findMessage = async (receiverId: string, senderId: string) => {
+        try {
+            const conversation = await this.conversationModel.findOne({
+                participants: { $all: [receiverId, senderId] },
+            }).populate('messages');
+
+            if (!conversation) {
+                return [];
+            }
+            // console.log(conversation.messages);
+
+            return conversation.messages;
+        } catch (error) {
+            console.error('Error finding conversation:', error);
+            throw error;
+        }
+    };
+
+    deleteSlot = async (slotId: string) => {
+        try {
+            return await this.slotModel.findByIdAndDelete(slotId)
+
+        } catch (error) {
+            return error
+        }
+    }
 }
 
 

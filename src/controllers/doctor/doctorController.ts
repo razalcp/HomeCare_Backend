@@ -201,7 +201,6 @@ class DoctorController {
             }
 
 
-
             await this.doctorService.doctorKycRegister(doctorData, imgObject)
             // const doc =  await this.doctorService.register(userData);
             // const fileNames = req.body.fileNames ? JSON.parse(req.body.fileNames) : [];
@@ -213,13 +212,13 @@ class DoctorController {
             return res.status(400).json({ error: error.message });
 
         }
-    }
+    };
 
     getDepartments = async (req: Request, res: Response) => {
         const getData = await this.doctorService.getDepartments()
         res.status(HTTP_statusCode.OK).json(getData);
 
-    }
+    };
 
     updateDoctor = async (req: Request, res: Response) => {
         try {
@@ -266,7 +265,7 @@ class DoctorController {
 
         }
 
-    }
+    };
 
     logoutDoctor = async (req: Request, res: Response) => {
         try {
@@ -311,6 +310,7 @@ class DoctorController {
         res.status(HTTP_statusCode.OK).json(getData);
 
     };
+
     getMyBookings = async (req: Request, res: Response) => {
         try {
             const doctorId = req.body.doctorId
@@ -321,17 +321,56 @@ class DoctorController {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
         }
     };
+
     getWalletData = async (req: Request, res: Response) => {
         try {
-          const { doctorId } = req.params;
-    
-    
-          const getData = await this.doctorService.getWalletData(doctorId)
-          res.status(HTTP_statusCode.OK).json(getData)
+            const { doctorId } = req.params;
+            const getData = await this.doctorService.getWalletData(doctorId)
+            res.status(HTTP_statusCode.OK).json(getData)
         } catch (error) {
-          res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
         }
-      }
+    };
+
+    bookedUsers = async (req: Request, res: Response) => {
+        try {
+            const doctorId = (req as any).user.user_id
+            const Userdata = await this.doctorService.getBookedUsers(doctorId)
+            res.status(HTTP_statusCode.OK).json(Userdata)
+
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+        }
+
+    };
+
+    saveMessages = async (req: Request, res: Response) => {
+        try {
+            const messageData = req.body
+            const saveData = await this.doctorService.saveMessages(messageData)
+            res.status(HTTP_statusCode.OK).json(saveData)
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+        }
+    };
+
+    messages = async (req: Request, res: Response) => {
+        try {
+            const { receiverId, senderId } = req.query;
+            // console.log("Recived both",receiverId,senderId);
+            const getData = await this.doctorService.getMessages(receiverId as string, senderId as string)
+            res.status(HTTP_statusCode.OK).json(getData)
+
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+        }
+    };
+
+    deleteSlot = async (req: Request, res: Response) => {
+        const { slotId } = req.params;
+        const update = await this.doctorService.deleteSlot(slotId)
+        res.status(200).json({ message: "Slot deleted" });
+    };
 
 }
 

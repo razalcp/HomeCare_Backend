@@ -132,7 +132,7 @@ class AdminReprository {
                 { isUserBlocked },
                 { new: true }
             );
-            console.log(updatedUser);
+            // console.log(updatedUser);
 
             return updatedUser;
         } catch (error) {

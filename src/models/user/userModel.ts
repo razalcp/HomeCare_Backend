@@ -9,17 +9,50 @@ const medicalRecordSchema = new Schema({
 });
 
 
+// const userSchema: Schema = new Schema<IUserModel>({
+//   name: {
+//     type: String,
+//   },
+//   email: {
+//     type: String,
+//     unique: true
+//   },
+//   mobile: {
+//     type: String,
+//     unique: true
+//   },
+//   password: {
+//     type: String,
+//   },
+//   dob: {
+//     type: Date,
+//   },
+//   profileIMG: {
+//     type: String,
+//   },
+//   walletBalance: {
+//     type: Number,
+//   },
+//   medicalRecords: {
+//     type: [medicalRecordSchema],
+//   },
+//   isUserBlocked: {
+//     type: Boolean,
+//     default: false,
+//   },
+// });
+
 const userSchema: Schema = new Schema<IUserModel>({
   name: {
     type: String,
   },
   email: {
     type: String,
-    unique: true
+    unique: true,
   },
   mobile: {
     type: String,
-    unique: true
+    unique: true,
   },
   password: {
     type: String,
@@ -29,6 +62,24 @@ const userSchema: Schema = new Schema<IUserModel>({
   },
   profileIMG: {
     type: String,
+  },
+  gender: {
+    type: String,
+    enum: ['Male', 'Female', 'Other'],
+  },
+  age: {
+    type: Number,
+  },
+  bloodGroup: {
+    type: String,
+  },
+  allergies: {
+    type: [String],
+    default: [],
+  },
+  currentMedications: {
+    type: [String],
+    default: [],
   },
   walletBalance: {
     type: Number,
@@ -41,6 +92,7 @@ const userSchema: Schema = new Schema<IUserModel>({
     default: false,
   },
 });
+
 
 const User = model<IUserModel>("User", userSchema);
 

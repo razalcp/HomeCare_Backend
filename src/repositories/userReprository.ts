@@ -17,7 +17,10 @@ class UserReprository implements IUserRepository {
   private doctorWalletModel = Model<IWallet>
   private adminWalletModel = Model<IAdminWallet>
   private userWalletModel = Model<IUserWallet>
-  constructor(userModel: Model<IUserModel>, doctorModel: Model<IDoctor>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, adminWalletModel: Model<IAdminWallet>, userWalletModel: Model<IUserWallet>) {
+  private conversationModel = Model as any
+  private messageModel = Model as any
+
+  constructor(userModel: Model<IUserModel>, doctorModel: Model<IDoctor>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, adminWalletModel: Model<IAdminWallet>, userWalletModel: Model<IUserWallet>, conversationModel: any, messageModel: any) {
     this.userModel = userModel;
     this.doctorModel = doctorModel
     this.slotModel = slotModel
@@ -25,6 +28,8 @@ class UserReprository implements IUserRepository {
     this.doctorWalletModel = doctorWalletModel
     this.adminWalletModel = adminWalletModel
     this.userWalletModel = userWalletModel
+    this.conversationModel = conversationModel
+    this.messageModel = messageModel
   }
 
   findByEmail = async (email: string): Promise<IUser | null> => {
@@ -71,7 +76,147 @@ class UserReprository implements IUserRepository {
       throw error
     }
   }
+  saveWalletBookingToDb = async (slotId: any, userId: any, doctorId: any, docFees: number) => {
+    try {
+      const wallet = await this.userWalletModel.findOne({ userId });
 
+      if (!wallet) {
+        throw new Error("Wallet not found");
+      }
+
+      // 2. Check balance
+      if (wallet.balance < docFees) {
+        throw new Error("Insufficient Wallet Balance");
+      }
+
+
+
+      // await wallet.save()
+
+      if (slotId) {
+        const slot = await this.slotModel.findById(slotId);
+
+        if (!slot) {
+          throw new Error("Slot not found");
+        }
+
+        if (slot.isBooked) {
+          throw new Error("Slot already booked");
+        }
+
+        await this.slotModel.findByIdAndUpdate(slotId, {
+          isBooked: true,
+          status: "Booked"
+        });
+
+
+      }
+      // Step 2: Save booking
+      const newBooking = await this.bookingModel.create({
+        doctorId,
+        userId,
+        slotId,
+        paymentStatus: "paid",
+        bookingStatus: "booked"
+      });
+
+      await newBooking.save();
+
+
+
+      // 3. Get doctor's fee
+      const doctor = await this.doctorModel.findById(doctorId);
+      if (!doctor) throw new Error("Doctor not found");
+
+      const doctorFees = doctor.consultationFee; // assuming `fees` field exists in doctor collection
+      // console.log("doctorFees",doctorFees);
+
+      const doctorShare = Math.floor(doctorFees * 0.7);
+      const adminShare = doctorFees - doctorShare;
+      // console.log("doctorShare",doctorShare);
+
+      const bookingId = newBooking._id.toString();
+      // console.log("bookingId",bookingId);
+      
+      if (wallet) {
+        wallet.balance -= docFees;
+        wallet.transactions.push({
+          amount: docFees,
+          transactionId: bookingId,
+          transactionType: "debit",
+          appointmentId: bookingId
+        });
+        await wallet.save()
+      }
+
+      // 4. Update Doctor Wallet
+      const doctorWallet = await this.doctorWalletModel.findOne({ doctorId });
+      // console.log("doc wallet found ", doctorWallet);
+
+      if (doctorWallet) {
+        doctorWallet.balance += doctorShare;
+        doctorWallet.transactions.push({
+          amount: doctorShare,
+          transactionId: bookingId,
+          transactionType: "credit",
+          appointmentId: bookingId
+        });
+        await doctorWallet.save();
+      } else {
+        // console.log("new doctor wallet creatted");
+
+        // If wallet doesn't exist, create it
+        const wal = await this.doctorWalletModel.create({
+          doctorId,
+          balance: doctorShare,
+          transactions: [{
+            amount: doctorShare,
+            transactionId: bookingId,
+            transactionType: "credit",
+            appointmentId: bookingId
+          }]
+        });
+        // console.log("creayd wallet",wal);
+
+      }
+      const adminId = "admin"; // or however you define it
+
+      let adminWallet = await this.adminWalletModel.findOne({ adminId });
+
+      if (!adminWallet) {
+        // If no wallet exists, create one
+        adminWallet = await this.adminWalletModel.create({
+          adminId,
+          balance: adminShare,
+          transactions: [{
+            amount: adminShare,
+            transactionId: bookingId,
+            transactionType: "credit",
+            appointmentId: bookingId
+          }]
+        });
+        // console.log("Admin wallet created.");
+      } else {
+        // Update existing wallet
+        adminWallet.balance += adminShare;
+        adminWallet.transactions.push({
+          amount: adminShare,
+          transactionId: bookingId,
+          transactionType: "credit",
+          appointmentId: bookingId
+        });
+        await adminWallet.save();
+        // console.log("✅ Admin wallet updated.");
+      }
+
+      return "Wallet Booking Successful"
+
+    } catch (error) {
+      throw error
+    }
+  };
+
+  
   saveBookingToDb = async (slotId: any, userId: any, doctorId: any) => {
     try {
       // console.log("Inside Reprository ", slotId, userId, doctorId);
@@ -99,7 +244,8 @@ class UserReprository implements IUserRepository {
         doctorId,
         userId,
         slotId,
-        paymentStatus: "paid"
+        paymentStatus: "paid",
+        bookingStatus: "booked"
       });
 
       await newBooking.save();
@@ -190,6 +336,7 @@ class UserReprository implements IUserRepository {
       // console.log("Inside UserRepository getUserBookings method, this is userID:", userId);
 
       const bookings = await this.bookingModel.find({ userId })
+        .sort({ createdAt: -1 })
         .populate('doctorId') // populate doctor details
         .populate('slotId')   // populate slot details
         .populate('userId');  // populate user info
@@ -269,7 +416,11 @@ class UserReprository implements IUserRepository {
       await userWallet.save();
 
       // Step 6: Delete the booking
-      await this.bookingModel.findByIdAndDelete(bookingId);
+      // await this.bookingModel.findByIdAndDelete(bookingId);
+      await this.bookingModel.findByIdAndUpdate(bookingId, {
+        bookingStatus: 'cancelled',
+        paymentStatus: 'refunded'
+      })
 
       // console.log('Booking cancelled, slot available, amount refunded');
       return { message: "Booking Cancelled Successfully" }
@@ -326,6 +477,89 @@ class UserReprository implements IUserRepository {
     } catch (error) {
       throw error
     }
+  };
+
+  getBookedDoctor = async (userId: string) => {
+    try {
+      const bookings = await this.bookingModel.find({ userId })
+        .populate('doctorId', 'name email profileImage') // only select needed fields
+        .exec();
+      console.log("inside repo", bookings);
+
+      // Extract user data from populated bookings
+      const doctors = bookings.map(booking => booking.doctorId);
+      return doctors
+
+
+    } catch (error) {
+      throw new Error('Failed to fetch booked user data');
+    }
+  };
+
+  findMessage = async (receiverId: string, senderId: string) => {
+    try {
+      const conversation = await this.conversationModel.findOne({
+        participants: { $all: [receiverId, senderId] },
+      }).populate('messages');
+
+      if (!conversation) {
+        return [];
+      }
+      // console.log(conversation.messages);
+
+      return conversation.messages;
+    } catch (error) {
+      console.error('Error finding conversation:', error);
+      throw error;
+    }
+  };
+
+  saveMessages: any = async (messageData: { senderId: string; receiverId: string; message: string, image: string; }) => {
+    try {
+      const { senderId, receiverId, message, image } = messageData;
+
+      // console.log("Inside repo", messageData);
+
+
+      let conversation = await this.conversationModel.findOne({
+        participants: { $all: [senderId, receiverId] },
+      });
+
+      if (!conversation) {
+        conversation = await this.conversationModel.create({
+          participants: [senderId, receiverId],
+          messages: [],
+        });
+      }
+
+
+      const newMessage = await this.messageModel.create({
+        senderId,
+        receiverId,
+        message,
+        image
+      });
+
+      // Step 4: Push the message into conversation's messages array
+      conversation.messages.push(newMessage._id);
+      await conversation.save();
+
+      return newMessage;
+    } catch (error) {
+      console.error("Error in saveMessages:", error);
+      throw error;
+    }
+  };
+
+  deleteMessage = async (messageId: string) => {
+    console.log("InsideRepo", messageId);
+
+    if (!messageId) {
+      throw new Error("Message ID is required.");
+    }
+
+    const deleted = await this.messageModel.findByIdAndDelete(messageId);
+    return deleted;
   }
 
 }

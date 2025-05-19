@@ -11,8 +11,11 @@ import doctorAuthMiddleware from '../middlewares/jwtAuthDoctor'
 import SlotModel from '../models/doctor/slotModel'
 import BookingModel from "../models/user/bookingModel";
 import doctorWalletModel from '../models/doctor/doctorWalletModel'
+import messageModel from '../models/messageModel'
+import conversationModel from '../models/conversationModel'
+
 const router = express.Router()
-const doctorReprository = new DoctorReprository(DoctorModel as any, DepartmentModel, SlotModel as any, BookingModel as any, doctorWalletModel as any)
+const doctorReprository = new DoctorReprository(DoctorModel as any, DepartmentModel, SlotModel as any, BookingModel as any, doctorWalletModel as any, messageModel as any, conversationModel as any)
 const doctorService = new DoctorService(doctorReprository)
 const doctorController: any = new DoctorController(doctorService)
 
@@ -28,7 +31,8 @@ router.post('/addDoctorSlots', doctorAuthMiddleware, doctorController.addDoctorS
 router.get("/availableDoctorSlots/:doctorId", doctorAuthMiddleware, doctorController.getDoctorSlots);
 router.post('/getMyBookings', doctorAuthMiddleware, doctorController.getMyBookings);
 router.get('/getWalletData/:doctorId', doctorAuthMiddleware, doctorController.getWalletData);
-
-
-
+router.get('/bookedUsers', doctorAuthMiddleware, doctorController.bookedUsers)
+router.post('/saveMessages', doctorAuthMiddleware, upload.any(), doctorController.saveMessages)
+router.get('/messages', doctorAuthMiddleware, doctorController.messages)
+router.delete('/deleteSlot/:slotId',doctorAuthMiddleware, doctorController.deleteSlot)
 export default router;

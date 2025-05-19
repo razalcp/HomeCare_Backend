@@ -6,7 +6,11 @@ import mongooseConnection from "./config/database_config";
 import doctorRouter from './routes/doctorRoutes'
 import adminRouter from './routes/adminRoutes'
 import cookieParser from "cookie-parser";
+// import messageRoutes from "./routes/messageRoutes.js";
+import { startSocket } from "./socketConfig";
 
+const socketIo=require('socket.io')
+const http = require('http');
 const app: Application = express();
 
 dotenv.config();
@@ -26,11 +30,17 @@ app.use(
   })
 );
 
+//socket
+const server = http.createServer(app);
+startSocket(server)
+
+
 app.use("/", userRouter);
 app.use("/doctors", doctorRouter)
 app.use("/admin", adminRouter)
+// app.use("/messages", messageRoutes);
 
 const PORT = process.env.PORT;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

@@ -28,4 +28,5 @@ router.get('/getPatients', adminAuthMiddleware, adminController.getPatients)
 router.patch('/updateIsBlocked', adminAuthMiddleware, adminController.updateuserIsBlocked)
 router.post('/adminLogout', adminController.logoutAdmin)
 router.get('/getWalletData/:adminId', adminAuthMiddleware, adminController.getWalletData)
+
 export default router

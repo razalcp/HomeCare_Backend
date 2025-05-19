@@ -4,8 +4,11 @@ export interface IBooking extends Document {
     doctorId: mongoose.Types.ObjectId;
     userId: mongoose.Types.ObjectId;
     slotId: mongoose.Types.ObjectId;
-    paymentStatus: "processing" | "paid" | "failed";
-}
+    paymentStatus: "processing" | "paid" | "failed" | "refunded";
+    bookingStatus: "processing" | "booked" | "cancelled"
+
+};
+
 
 const bookingSchema = new Schema<IBooking>({
     doctorId: { type: Schema.Types.ObjectId, required: true, ref: "Doctor" },
@@ -13,9 +16,14 @@ const bookingSchema = new Schema<IBooking>({
     slotId: { type: Schema.Types.ObjectId, required: true, ref: "slots" },
     paymentStatus: {
         type: String,
-        enum: ["processing", "paid", "failed"],
+        enum: ["processing", "paid", "failed", "refunded"],
         default: "processing"
-    }
+    },
+    bookingStatus: {
+        type: String,
+        enum: ["processing", "booked", "cancelled"],
+        default: "processing"
+    },
 }, { timestamps: true });
 
 const BookingModel = model<IBooking>("bookings", bookingSchema);

@@ -149,32 +149,79 @@ class UserService {
 
 
   updateUserProfile = async (userData: any, imgObject: any) => {
-      try {
-          // Hash password if it exists
-          if (userData.password) {
-              const hashedPassword = await bcrypt.hash(userData.password as string, 10);
-              userData.password = hashedPassword;
-          }
-  
-          const updateUserData = await this.userReprository.updateUser(userData, imgObject);
-          return updateUserData;
-      } catch (error: any) {
-          console.log("Inside service", error.message);
-          throw new Error(error.message);
-      }
-  };
-  
-  getUser = async (email:string) => {
     try {
-     
+      // Hash password if it exists
+      if (userData.password) {
+        const hashedPassword = await bcrypt.hash(userData.password as string, 10);
+        userData.password = hashedPassword;
+      }
+
+      const updateUserData = await this.userReprository.updateUser(userData, imgObject);
+      return updateUserData;
+    } catch (error: any) {
+      console.log("Inside service", error.message);
+      throw new Error(error.message);
+    }
+  };
+
+  getUser = async (email: string) => {
+    try {
+
       // console.log(email);    
       const getUserData = await this.userReprository.getUser(email)
-    return getUserData
+      return getUserData
     } catch (error) {
       throw error
     }
-  }
+  };
 
+  getBookedDoctors = async (userId: string) => {
+    try {
+      const userData = await this.userReprository.getBookedDoctor(userId)
+      return userData
+    } catch (error) {
+      return error
+    };
+
+  };
+
+  getMessages = async (receiverId: string, senderId: string) => {
+    try {
+      const messageData = await this.userReprository.findMessage(receiverId, senderId)
+
+      return messageData
+    } catch (error) {
+      return error
+    }
+  };
+
+  saveMessages = async (messageData: any) => {
+    try {
+
+      const saveData = await this.userReprository.saveMessages(messageData)
+      return saveData
+    } catch (error) {
+      return error
+    }
+  };
+  deleteMessage = async (messageId: string) => {
+    try {
+      const updateData = await this.userReprository.deleteMessage(messageId)
+      return updateData
+    } catch (error) {
+      return error
+    }
+  };
+
+  saveWalletBookingToDb = async (slotId: string, userId: string, doctorId: string, doctorFees: number) => {
+    try {
+      return await this.userReprository.saveWalletBookingToDb(slotId, userId, doctorId, doctorFees)
+    } catch (error) {
+
+
+      throw error
+    }
+  }
 }
 
 export default UserService;

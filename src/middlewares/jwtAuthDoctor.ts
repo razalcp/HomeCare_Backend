@@ -41,7 +41,7 @@ const doctorAuthMiddleware = (req: Request, res: Response, next: NextFunction) =
     try {
         const decoded = jwt.verify(accessToken, secret_key) as { user_id: string, role: string };
         (req as any).user = decoded; // Attach user data to request object
-        console.log("This is role", (req as any).user);
+        // console.log("This is role", (req as any).user);
 
         if ((req as any).user.role === 'doctor') {
             next();

@@ -237,7 +237,44 @@ class DoctorService {
             return error
         }
     };
+    getBookedUsers = async (doctorId: string) => {
+        try {
+            const userData = await this.doctorReprository.getBookedUser(doctorId)
+            return userData
+        } catch (error) {
+            return error
+        }
+    };
 
+    saveMessages = async (messageData: any) => {
+        try {
+
+            const saveData = await this.doctorReprository.saveMessages(messageData)
+            return saveData
+        } catch (error) {
+            return error
+        }
+    };
+
+    getMessages = async (receiverId: string, senderId: string) => {
+        try {
+            const messageData = await this.doctorReprository.findMessage(receiverId, senderId)
+
+            return messageData
+        } catch (error) {
+            return error
+        }
+    }
+
+    deleteSlot = async (slotId:string) => {
+        try {
+            const update = await this.doctorReprository.deleteSlot(slotId)
+        return update
+        } catch (error) {
+            return error
+        }
+        
+    };
 }
 
 export default DoctorService

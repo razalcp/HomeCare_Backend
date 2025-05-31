@@ -217,11 +217,36 @@ class UserService {
     try {
       return await this.userReprository.saveWalletBookingToDb(slotId, userId, doctorId, doctorFees)
     } catch (error) {
+      throw error
+    }
+  };
+
+  submitReview = async (reviewData: any) => {
+    try {
+
+      const saveData = await this.userReprository.submitReview(reviewData)
+
+      return saveData
+    } catch (error) {
 
 
       throw error
     }
-  }
+  };
+
+
+  reviewDetails = async (doctorId: string) => {
+    try {
+
+      const saveData = await this.userReprository.reviewDetails (doctorId)
+
+      return saveData
+    } catch (error) {
+
+
+      throw error
+    }
+  };
 }
 
 export default UserService;

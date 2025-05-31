@@ -61,6 +61,8 @@ const startSocket = (server: HttpServer) => {
         });
 
         socket.on("reject-call", (data) => {
+            console.log("call rejected by user",data);
+            
             const friendSocketId = getReceiverSocketId(data.to);
             if (friendSocketId) {
                 socket.to(friendSocketId).emit("call-rejected");
@@ -104,11 +106,19 @@ const startSocket = (server: HttpServer) => {
 
 
         socket.on("trainer-call-accept", async (data) => {
-            console.log("backend trainer-call-accept ",data);
-            
+            console.log("backend trainer-call-accept ", data);
+
             const trainerSocket = await getReceiverSocketId(data.trainerId);
             if (trainerSocket) {
-               io.to(trainerSocket).emit("trianer-accept", data);
+                io.to(trainerSocket).emit("trianer-accept", data);
+            }
+        });
+
+        socket.on("leave-room", (data) => {
+            const friendSocketId = getReceiverSocketId(data.to);
+            console.log('friendSocketId when leave',friendSocketId, 'data', data.to);
+            if (friendSocketId) {
+                socket.to(friendSocketId).emit("user-left", data.to);
             }
         });
 

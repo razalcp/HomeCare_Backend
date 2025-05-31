@@ -4,6 +4,7 @@ import { IUser } from "../../interfaces/user/userInterface";
 import HTTP_statusCode from "../../enums/httpStatusCode";
 const stripe = require('stripe')("sk_test_51R6U86C1BfcS3nBm3F9VPOzMitLY6kndB9xIywEvFDKrPi8jDQ457NySmoSq2Nl0hBdT8vtGMvNZ5Wr8cNq736Kk00RPBZDxXt")
 import cloudinary from '../../config/cloudinary_config'
+import { log } from "console";
 
 
 class userController {
@@ -384,7 +385,32 @@ class userController {
       res.status(HTTP_statusCode.InternalServerError).json(error.message);
     }
 
-  }
+  };
+
+  submitReview = async (req: Request, res: Response) => {
+    try {
+      const reviewData = req.body
+      const saveData = await this.userService.submitReview(reviewData)
+
+      res.status(HTTP_statusCode.OK).json(saveData)
+    } catch (error) {
+      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+    }
+  };
+  
+  reviewDetails = async (req: Request, res: Response) => {
+    try {
+      const { doctorId } = req.query
+
+
+      const saveData = await this.userService.reviewDetails(doctorId as string)
+
+      res.status(HTTP_statusCode.OK).json(saveData)
+    } catch (error) {
+      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+    }
+  };
+
 }
 
 

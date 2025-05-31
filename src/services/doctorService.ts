@@ -237,6 +237,15 @@ class DoctorService {
             return error
         }
     };
+    deleteSlot = async (slotId: string) => {
+        try {
+            const update = await this.doctorReprository.deleteSlot(slotId)
+            return update
+        } catch (error) {
+            return error
+        }
+
+    };
     getBookedUsers = async (doctorId: string) => {
         try {
             const userData = await this.doctorReprository.getBookedUser(doctorId)
@@ -266,15 +275,37 @@ class DoctorService {
         }
     }
 
-    deleteSlot = async (slotId:string) => {
+
+    savePrescription = async (presData: any) => {
         try {
-            const update = await this.doctorReprository.deleteSlot(slotId)
-        return update
+            const saveData = await this.doctorReprository.savePrescription(presData)
+            return saveData
         } catch (error) {
             return error
         }
-        
-    };
+    }
+    getPrescription = async (bookingId: string) => {
+        try {
+            const prescriptionData = await this.doctorReprository.getPrescription(bookingId)
+            return prescriptionData
+        } catch (error) {
+            return error
+        }
+    }
+    doctorDashBoard = async (doctorId: string) => {
+        try {
+            
+           
+            
+            const dashData = await this.doctorReprository.doctorDashboard(doctorId)
+            
+            
+            return  dashData 
+        } catch (error) {
+            return error
+        }
+    }
+
 }
 
 export default DoctorService

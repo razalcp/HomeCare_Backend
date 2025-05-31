@@ -53,7 +53,7 @@ class DoctorController {
     }
 
     verifyOtp = async (req: Request, res: Response) => {
-        console.log("Inside doctor's verify otp")
+
 
         try {
             const { enteredOtp } = req.body
@@ -80,11 +80,11 @@ class DoctorController {
     }
 
     verifyDoctorOtp = async (req: Request, res: Response) => {
-        // console.log("Inside doctor's verify otp")
+
 
         try {
             const { enteredOtp } = req.body
-            // console.log(enteredOtp);
+
 
 
             const serviceResponse = await this.doctorService.verifyDoctorOtp(enteredOtp);
@@ -353,6 +353,11 @@ class DoctorController {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
         }
     };
+    deleteSlot = async (req: Request, res: Response) => {
+        const { slotId } = req.params;
+        const update = await this.doctorService.deleteSlot(slotId)
+        res.status(200).json({ message: "Slot deleted" });
+    };
 
     messages = async (req: Request, res: Response) => {
         try {
@@ -366,11 +371,44 @@ class DoctorController {
         }
     };
 
-    deleteSlot = async (req: Request, res: Response) => {
-        const { slotId } = req.params;
-        const update = await this.doctorService.deleteSlot(slotId)
-        res.status(200).json({ message: "Slot deleted" });
+
+
+    savePrescription = async (req: Request, res: Response) => {
+        try {
+            const presData = req.body
+            console.log("This is prescription", presData);
+            const saveData = await this.doctorService.savePrescription(presData)
+            res.status(HTTP_statusCode.OK).json(saveData)
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+
+        }
+
+    }
+    getPrescription = async (req: Request, res: Response) => {
+        try {
+            const { bookingId } = req.query
+
+            const presData = await this.doctorService.getPrescription(bookingId as string)
+
+            res.status(HTTP_statusCode.OK).json(presData)
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+
+        }
     };
+
+    doctorDashBoard = async (req: Request, res: Response) => {
+        try {
+            const { doctorId } = req.query
+            const dashData = await this.doctorService.doctorDashBoard(doctorId as string)
+
+            res.status(HTTP_statusCode.OK).json(dashData)
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+
+        }
+    }
 
 }
 

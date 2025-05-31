@@ -15,8 +15,11 @@ import userWalletModel from "../models/user/userWalletModel";
 import upload from '../config/multer_config'
 import conversationModel from '../models/conversationModel'
 import messageModel from '../models/messageModel'
+import ReviewModel from "../models/user/reviewModel";
 
-const userReprository = new UserReprository(User, DoctorModel as any, SlotModel as any, BookingModel as any, doctorWalletModel as any, AdminWalletModel as any, userWalletModel as any, conversationModel as any, messageModel as any);
+
+
+const userReprository = new UserReprository(User, DoctorModel as any, SlotModel as any, BookingModel as any, doctorWalletModel as any, AdminWalletModel as any, userWalletModel as any, conversationModel as any, messageModel as any, ReviewModel as any);
 const userService = new UserService(userReprository as any);
 const userController = new UserController(userService);
 
@@ -28,7 +31,7 @@ router.get("/resendOtp", userController.resendOtp)
 router.post("/login", userController.login)
 router.get('/getVerifiedDoctors', authMiddleware, userController.getVerifiedDoctors)
 router.post('/userLogout', userController.logoutUser)
-// router.post("/create-payment-intent",userController.createPaymentIntent)
+
 router.post('/create-checkout-session', authMiddleware, userController.createcheckoutsession)
 router.post('/saveBooking', authMiddleware, userController.saveBookingToDb)
 router.post('/getUserBookings', authMiddleware, userController.getUserBookings)
@@ -41,6 +44,8 @@ router.get('/messages', authMiddleware, userController.messages)
 router.post('/saveMessages', authMiddleware, userController.saveMessages)
 router.post('/uploadToCloudinary', authMiddleware, upload.any(), userController.uploadImage)
 router.delete('/deleteMessage', authMiddleware, userController.deleteMessage)
-router.post('/walletBooking',authMiddleware,userController.walletBooking)
+router.post('/walletBooking', authMiddleware, userController.walletBooking)
+router.post('/submitReview', authMiddleware, userController.submitReview)
+router.get('/reviewDetails', authMiddleware, userController.reviewDetails)
 
 export default router;

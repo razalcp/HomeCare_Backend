@@ -157,6 +157,16 @@ class AdminController {
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
         }
+    };
+
+    findDashBoardData = async (req: Request, res: Response) => {
+        try {
+            const getData = await this.adminService.findDashBoardData()
+            res.status(HTTP_statusCode.OK).json(getData)
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+
+        }
     }
 
 }

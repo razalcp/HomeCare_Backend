@@ -5,7 +5,8 @@ export interface IBooking extends Document {
     userId: mongoose.Types.ObjectId;
     slotId: mongoose.Types.ObjectId;
     paymentStatus: "processing" | "paid" | "failed" | "refunded";
-    bookingStatus: "processing" | "booked" | "cancelled"
+    bookingStatus: "processing" | "booked" | "cancelled";
+    consultationStatus: "pending" | "completed"
 
 };
 
@@ -24,6 +25,11 @@ const bookingSchema = new Schema<IBooking>({
         enum: ["processing", "booked", "cancelled"],
         default: "processing"
     },
+    consultationStatus: {
+        type: String,
+        enum: ["pending", "completed"],
+        default: "pending"
+    }
 }, { timestamps: true });
 
 const BookingModel = model<IBooking>("bookings", bookingSchema);

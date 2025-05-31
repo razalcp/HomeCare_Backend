@@ -1,12 +1,17 @@
 
 import IDoctorModel from "../interfaces/doctor/doctorModelInterface"
 import IDoctorReprository from "../interfaces/doctor/IDoctorReprository"
-import { Model } from 'mongoose'
+import mongoose, { Model } from 'mongoose'
 import { IDepartment } from "../models/admin/departmentModel"
 import { ISlot } from "../models/doctor/slotModel"
 import { IBooking } from "../models/user/bookingModel"
 import { IWallet } from "../models/doctor/doctorWalletModel"
-class DoctorReprository implements IDoctorReprository {
+import BaseRepository from "./baseRepository"
+import { IUserModel } from "../interfaces/user/userModelInterface"
+import { log } from "console"
+
+
+class DoctorReprository extends BaseRepository<any> implements IDoctorReprository {
     private doctorModel: Model<IDoctorModel>
     private departmentModel: Model<IDepartment>
     private slotModel: Model<ISlot>
@@ -14,8 +19,11 @@ class DoctorReprository implements IDoctorReprository {
     private doctorWalletModel = Model<IWallet>
     private messageModel = Model as any
     private conversationModel = Model as any
-    constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, messageModel: any, conversationModel: any) {
+    private prescriptionModel = Model as any
+    private userModel: Model<IUserModel>
 
+    constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, messageModel: any, conversationModel: any, prescriptionModel: any, userModel: Model<IUserModel>) {
+        super(doctorModel)
         this.doctorModel = doctorModel
         this.departmentModel = departmentModel
         this.slotModel = slotModel
@@ -23,6 +31,9 @@ class DoctorReprository implements IDoctorReprository {
         this.doctorWalletModel = doctorWalletModel
         this.messageModel = messageModel
         this.conversationModel = conversationModel
+        this.prescriptionModel = prescriptionModel
+        this.userModel = userModel
+
     }
 
     findByEmail = async (email: string): Promise<IDoctorModel | null> => {
@@ -211,27 +222,40 @@ class DoctorReprository implements IDoctorReprository {
     getBookedUser = async (doctorId: string) => {
         try {
             const bookings = await this.bookingModel.find({ doctorId })
-                .populate('userId', 'name email mobile profileIMG') // only select needed fields
+                .populate('userId')
+                .populate('slotId')   // only select needed fields
                 .exec();
-
+            // console.log("This is booked users", bookings)
             // Extract user data from populated bookings
             // const users = bookings.map(booking => booking.userId);
             const users = bookings.map(booking => {
-                const user = booking.userId as any; // type assertion if using TypeScript
+                const user = booking.userId as any;
+                const slot = booking.slotId as any;
+
                 return {
                     bookingId: booking._id,
-                   _id: user._id,
+                    _id: user._id,
                     name: user.name,
                     email: user.email,
                     mobile: user.mobile,
-                    profileIMG: user.profileIMG
+                    profileIMG: user.profileIMG,
+                    bloodGroup: user.bloodGroup,
+                    age: user.age,
+                    gender: user.gender,
+                    consultationStatus: booking.consultationStatus,
+
+                    // Include slot info
+                    slotId: {
+                        _id: slot._id,
+                        date: slot.date,
+                        startTime: slot.startTime,
+                        endTime: slot.endTime,
+                        status: slot.status,
+                    }
                 };
             });
 
-
-            console.log("users", users);
-
-            return users
+            return users;
 
 
         } catch (error) {
@@ -302,6 +326,105 @@ class DoctorReprository implements IDoctorReprository {
 
         } catch (error) {
             return error
+        }
+    }
+
+    savePrescription = async (presData: any) => {
+        try {
+
+
+            const updatedBooking = await this.bookingModel.findByIdAndUpdate(
+                presData.bookingId,
+                { consultationStatus: "completed" },
+                { new: true }
+            );
+            if (!updatedBooking) {
+                throw new Error("Booking not found");
+            }
+            const newPrescription = new this.prescriptionModel(presData);
+            await newPrescription.save();
+        } catch (error) {
+            return error
+        }
+    };
+
+    getPrescription = async (bookingId: string) => {
+        try {
+            const data = await this.prescriptionModel.findOne({ bookingId });
+
+            return data
+        } catch (error) {
+            console.error("Error fetching prescription:", error);
+            throw error;
+        }
+    }
+
+    doctorDashboard = async (doctorId: string) => {
+
+
+        try {
+            const totalAppointments = await this.bookingModel.countDocuments({
+
+                doctorId: doctorId
+            });
+            // console.log("totalAppointments : ", totalAppointments);
+
+            const activePatients = await this.userModel.countDocuments({ isUserBlocked: false });
+            // console.log('Active Users:', activePatients);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Convert to string since your slot date is stored as a string (e.g., "2025-05-29")
+            const todayStr = today.toISOString().split("T")[0];
+
+            const upcomingAppointments = await this.bookingModel.find()
+                .populate({
+                    path: "slotId",
+                    match: {
+                        doctorId: new mongoose.Types.ObjectId(doctorId),
+                        date: { $gte: todayStr },
+                    },
+                })
+                .sort({ "slotId.date": 1 })
+                .lean();
+
+            // Filter out bookings where slotId didn't match (populate returns null)
+            const filtered = upcomingAppointments.filter(b => b.slotId);
+
+            // console.log("Upcoming Appointments:", filtered);
+
+            const revenueResult = await this.doctorWalletModel.aggregate([
+                { $unwind: '$transactions' },
+                { $match: { 'transactions.transactionType': 'credit' } },
+                {
+                    $group: {
+                        _id: null,
+                        totalRevenue: { $sum: '$transactions.amount' }
+                    }
+                }
+            ]);
+
+            const doctorRevenue = revenueResult[0]?.totalRevenue || 0;
+            // console.log('Total Doctor Revenue:', doctorRevenue);
+            // console.log({
+            //     totalAppointments: totalAppointments,
+            //     activePatients: activePatients,
+            //     upcomingAppointments: filtered,
+            //     doctorRevenue: doctorRevenue
+
+            // });
+
+            return {
+                totalAppointments: totalAppointments,
+                activePatients: activePatients,
+                upcomingAppointments: filtered,
+                doctorRevenue: doctorRevenue
+
+            }
+
+
+        } catch (error) {
+
         }
     }
 }

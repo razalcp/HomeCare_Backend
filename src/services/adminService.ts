@@ -17,11 +17,11 @@ class AdminService {
             // console.log("this is data ", data)
             if (!data) throw new Error("Check Credentials");
             const comparePassword = await bcrypt.compare(password as any, data.password as string);
-                  if (!comparePassword) throw new Error("Wrong password");
+            if (!comparePassword) throw new Error("Wrong password");
 
-            console.log("comparePassword",comparePassword);
-            
-           
+            console.log("comparePassword", comparePassword);
+
+
             if (comparePassword) {
                 const adminToken = createToken(data._id?.toString() || "", process.env.adminRole as string);
 
@@ -102,7 +102,7 @@ class AdminService {
     }
     updateuserIsBlocked = async (buttonName: string, id: string) => {
         try {
-            const update = await this.adminReprository. updateuserIsBlocked(buttonName, id)
+            const update = await this.adminReprository.updateuserIsBlocked(buttonName, id)
             return update
         } catch (error) {
             throw error
@@ -111,12 +111,21 @@ class AdminService {
 
     getWalletData = async (adminId: string) => {
         try {
-        const getData = await this.adminReprository.getWalletData(adminId)
-          return getData;
+            const getData = await this.adminReprository.getWalletData(adminId)
+            return getData;
         } catch (error) {
-          return error
+            return error
         }
-      };
+    };
+
+    findDashBoardData = async () => {
+        try {
+            const getData = await this.adminReprository.findDashBoardData()
+            return getData;
+        } catch (error) {
+            return error
+        }
+    }
 }
 
 export default AdminService

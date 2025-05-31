@@ -8,8 +8,9 @@ import { IBooking } from "../models/user/bookingModel";
 import doctorWalletModel, { IWallet } from "../models/doctor/doctorWalletModel";
 import { IAdminWallet } from "../models/admin/adminWalletModel";
 import { IUserWallet } from "../models/user/userWalletModel";
+import BaseRepository from "./baseRepository";
 
-class UserReprository implements IUserRepository {
+class UserReprository extends BaseRepository<any> implements IUserRepository {
   private userModel = Model<IUserModel>;
   private doctorModel = Model<IDoctor>
   private slotModel = Model<ISlot>
@@ -19,8 +20,10 @@ class UserReprository implements IUserRepository {
   private userWalletModel = Model<IUserWallet>
   private conversationModel = Model as any
   private messageModel = Model as any
+  private reviewModel = Model as any
 
-  constructor(userModel: Model<IUserModel>, doctorModel: Model<IDoctor>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, adminWalletModel: Model<IAdminWallet>, userWalletModel: Model<IUserWallet>, conversationModel: any, messageModel: any) {
+  constructor(userModel: Model<IUserModel>, doctorModel: Model<IDoctor>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, adminWalletModel: Model<IAdminWallet>, userWalletModel: Model<IUserWallet>, conversationModel: any, messageModel: any, reviewModel: any) {
+    super(userModel)
     this.userModel = userModel;
     this.doctorModel = doctorModel
     this.slotModel = slotModel
@@ -30,6 +33,7 @@ class UserReprository implements IUserRepository {
     this.userWalletModel = userWalletModel
     this.conversationModel = conversationModel
     this.messageModel = messageModel
+    this.reviewModel = reviewModel
   }
 
   findByEmail = async (email: string): Promise<IUser | null> => {
@@ -137,7 +141,7 @@ class UserReprository implements IUserRepository {
 
       const bookingId = newBooking._id.toString();
       // console.log("bookingId",bookingId);
-      
+
       if (wallet) {
         wallet.balance -= docFees;
         wallet.transactions.push({
@@ -216,7 +220,7 @@ class UserReprository implements IUserRepository {
     }
   };
 
-  
+
   saveBookingToDb = async (slotId: any, userId: any, doctorId: any) => {
     try {
       // console.log("Inside Reprository ", slotId, userId, doctorId);
@@ -484,7 +488,7 @@ class UserReprository implements IUserRepository {
       const bookings = await this.bookingModel.find({ userId })
         .populate('doctorId', 'name email profileImage') // only select needed fields
         .exec();
-      console.log("inside repo", bookings);
+      // console.log("inside repo", bookings);
 
       // Extract user data from populated bookings
       const doctors = bookings.map(booking => booking.doctorId);
@@ -562,6 +566,53 @@ class UserReprository implements IUserRepository {
     return deleted;
   }
 
-}
+  submitReview = async (reviewData: any) => {
+    try {
+      const { userId, doctorId, rating, comment } = reviewData;
+
+      // Check if a review already exists
+      const existingReview = await this.reviewModel.findOne({ userId, doctorId });
+
+
+      if (existingReview) {
+
+
+        throw new Error("Review already added for this doctor");
+      }
+
+      // Create a new review
+      const newReview = new this.reviewModel({
+        userId,
+        doctorId,
+        rating,
+        comment,
+      });
+
+      await newReview.save();
+      const allReviews = await this.reviewModel.find({ doctorId }).populate('userId', 'name profileIMG');
+      return {
+        success: true,
+        message: "Review submitted successfully",
+        data: allReviews,
+      };
+    } catch (error: any) {
+      throw error.message
+    }
+  };
+
+  reviewDetails = async (doctorId: string) => {
+    try {
+      const allReviews = await this.reviewModel.find({ doctorId }).populate('userId', 'name profileIMG');
+      return {
+        success: true,
+        message: "Review submitted successfully",
+        data: allReviews,
+      };
+    } catch (error) {
+      throw error
+    }
+  }
+
+};
 
 export default UserReprository;

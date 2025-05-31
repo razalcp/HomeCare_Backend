@@ -13,9 +13,11 @@ import BookingModel from "../models/user/bookingModel";
 import doctorWalletModel from '../models/doctor/doctorWalletModel'
 import messageModel from '../models/messageModel'
 import conversationModel from '../models/conversationModel'
+import PrescriptionModel from '../models/doctor/prescriptionModel'
+import User from '../models/user/userModel'
 
 const router = express.Router()
-const doctorReprository = new DoctorReprository(DoctorModel as any, DepartmentModel, SlotModel as any, BookingModel as any, doctorWalletModel as any, messageModel as any, conversationModel as any)
+const doctorReprository = new DoctorReprository(DoctorModel as any, DepartmentModel, SlotModel as any, BookingModel as any, doctorWalletModel as any, messageModel as any, conversationModel as any, PrescriptionModel as any, User)
 const doctorService = new DoctorService(doctorReprository)
 const doctorController: any = new DoctorController(doctorService)
 
@@ -34,5 +36,9 @@ router.get('/getWalletData/:doctorId', doctorAuthMiddleware, doctorController.ge
 router.get('/bookedUsers', doctorAuthMiddleware, doctorController.bookedUsers)
 router.post('/saveMessages', doctorAuthMiddleware, upload.any(), doctorController.saveMessages)
 router.get('/messages', doctorAuthMiddleware, doctorController.messages)
-router.delete('/deleteSlot/:slotId',doctorAuthMiddleware, doctorController.deleteSlot)
+router.delete('/deleteSlot/:slotId', doctorAuthMiddleware, doctorController.deleteSlot)
+router.post('/savePrescription', doctorAuthMiddleware, doctorController.savePrescription)
+router.get('/prescription', doctorAuthMiddleware, doctorController.getPrescription)
+router.get('/doctorDashBoard', doctorAuthMiddleware, doctorController.doctorDashBoard)
+
 export default router;

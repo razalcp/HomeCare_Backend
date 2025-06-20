@@ -4,15 +4,14 @@ import { IUser } from "../../interfaces/user/userInterface";
 import HTTP_statusCode from "../../enums/httpStatusCode";
 const stripe = require('stripe')("sk_test_51R6U86C1BfcS3nBm3F9VPOzMitLY6kndB9xIywEvFDKrPi8jDQ457NySmoSq2Nl0hBdT8vtGMvNZ5Wr8cNq736Kk00RPBZDxXt")
 import cloudinary from '../../config/cloudinary_config'
-import { log } from "console";
+import { IUserService } from "../../interfaces/user/IUserService";
+
 
 
 class userController {
-  private userService: UserService;
+  private userService: IUserService;
 
-  constructor(userService: UserService) {
-
-
+  constructor(userService: IUserService) {
     this.userService = userService;
   }
 
@@ -107,8 +106,6 @@ class userController {
 
     } catch (error: any) {
 
-
-      // console.log("User:= login error", error.message);
       if (error.message === "Email not found") {
         res.status(HTTP_statusCode.NotFound).json({ message: "Email not found" });
       } else if (error.message === "Wrong password") {
@@ -123,14 +120,41 @@ class userController {
 
   }
 
+
   getVerifiedDoctors = async (req: Request, res: Response) => {
     try {
-      const docData = await this.userService.getVerifiedDoctors()
-      res.status(HTTP_statusCode.OK).json(docData)
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = (req.query.search as string) || "";
+      const sort = (req.query.sort as string) || "";
+      const departments = req.query.departments
+        ? (req.query.departments as string).split(",")
+        : [];
+
+      const minFee = parseInt(req.query.minFee as string) || 0;
+      const maxFee = parseInt(req.query.maxFee as string) || 10000;
+
+      const result = await this.userService.getVerifiedDoctors(
+        page,
+        limit,
+        search,
+        sort,
+        departments,
+        minFee,
+        maxFee
+      );
+
+      res.status(200).json({
+        data: result.data,
+        total: result.total,
+        page,
+        limit,
+      });
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(500).json({ message: "Something went wrong", error });
     }
   };
+
 
   logoutUser = async (req: Request, res: Response) => {
 
@@ -178,7 +202,6 @@ class userController {
       const slotId = req.body.slotId
       const userId = req.body.userId
       const doctorId = req.body.doctorId
-      // console.log("saveBookingToDb worked ", slotId, userId, doctorId);
       const saveData = await this.userService.saveBookingToDb(slotId, userId, doctorId)
 
     } catch (error) {
@@ -189,7 +212,6 @@ class userController {
   getUserBookings = async (req: Request, res: Response) => {
     try {
       const userId = req.body.userId
-      // console.log("Inside Usercontrollers getUserBookings methord , this is userID :",userId);
       const getBookingData = await this.userService.getUserBookings(userId)
       res.status(HTTP_statusCode.OK).json(getBookingData)
     } catch (error) {
@@ -207,28 +229,32 @@ class userController {
     }
   }
 
+
   getWalletData = async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
 
-
-      const getData = await this.userService.getWalletData(userId)
-      res.status(HTTP_statusCode.OK).json(getData)
+      const getData = await this.userService.getWalletData(userId, page, limit);
+      res.status(HTTP_statusCode.OK).json(getData);
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({
+        message: "Something went wrong",
+        error,
+      });
     }
   };
+
 
   updateUser = async (req: Request, res: Response) => {
     try {
       const userData: any = req.body
       const fileName = req.files as Express.Multer.File[]
-      console.log("userData", userData);
-      // console.log("fileName",fileName);
+
 
 
       let uploadToCloudinary = (buffer: Buffer) => {
-        console.log("uploadToCloudinary");
 
         return new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
@@ -253,8 +279,7 @@ class userController {
         const upload: any = await uploadToCloudinary(file.buffer)
 
         imgObject[file.fieldname] = upload
-        // console.log(imgObject)
-        // console.log(`Uploaded file name :${file.fieldname} and url = `, result);
+
 
       }
       const docData = await this.userService.updateUserProfile(userData, imgObject)
@@ -269,8 +294,6 @@ class userController {
   getUser = async (req: Request, res: Response) => {
     try {
       const { email } = req.params
-      // console.log(email);
-
 
       const getUserData = await this.userService.getUser(email)
       res.status(HTTP_statusCode.OK).json(getUserData)
@@ -281,15 +304,8 @@ class userController {
 
   bookedDoctors = async (req: Request, res: Response) => {
     try {
-      console.log("bookedDoctors");
-
-
       const userId = (req as any).user.user_id
-
-
       const Userdata = await this.userService.getBookedDoctors(userId)
-
-
       res.status(HTTP_statusCode.OK).json(Userdata)
 
     } catch (error) {
@@ -301,7 +317,7 @@ class userController {
   messages = async (req: Request, res: Response) => {
     try {
       const { receiverId, senderId } = req.query;
-      // console.log("Recived both",receiverId,senderId);
+
       const getData = await this.userService.getMessages(receiverId as any, senderId as any)
       res.status(HTTP_statusCode.OK).json(getData)
 
@@ -314,11 +330,7 @@ class userController {
   saveMessages = async (req: Request, res: Response) => {
     try {
       const messageData = req.body
-      // console.log("This is message data",messageData);
-
       const saveData = await this.userService.saveMessages(messageData)
-      // console.log("This is saveed",saveData);
-
       res.status(HTTP_statusCode.OK).json(saveData)
     } catch (error) {
       res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -330,7 +342,7 @@ class userController {
       const fileName = req.files as Express.Multer.File[]
 
       let uploadToCloudinary = (buffer: Buffer) => {
-        console.log("uploadToCloudinary");
+
 
         return new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
@@ -378,7 +390,7 @@ class userController {
       const userId = req.body.userId
       const doctorId = req.body.doctorId
       const doctorFees = req.body.doctorFees
-      // console.log("walletBooking worked ", slotId, userId, doctorId);
+
       const saveData = await this.userService.saveWalletBookingToDb(slotId, userId, doctorId, doctorFees)
       res.status(HTTP_statusCode.OK).json(saveData)
     } catch (error: any) {
@@ -397,7 +409,7 @@ class userController {
       res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
     }
   };
-  
+
   reviewDetails = async (req: Request, res: Response) => {
     try {
       const { doctorId } = req.query

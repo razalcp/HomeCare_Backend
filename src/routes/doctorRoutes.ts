@@ -31,6 +31,7 @@ router.patch('/updateDoctorProfile', doctorAuthMiddleware, upload.any(), doctorC
 router.post('/doctorLogout', doctorController.logoutDoctor);
 router.post('/addDoctorSlots', doctorAuthMiddleware, doctorController.addDoctorSlots);
 router.get("/availableDoctorSlots/:doctorId", doctorAuthMiddleware, doctorController.getDoctorSlots);
+router.get("/availableDoctorSlotsForBooking/:doctorId", doctorAuthMiddleware, doctorController.getDoctorSlotsForBooking)
 router.post('/getMyBookings', doctorAuthMiddleware, doctorController.getMyBookings);
 router.get('/getWalletData/:doctorId', doctorAuthMiddleware, doctorController.getWalletData);
 router.get('/bookedUsers', doctorAuthMiddleware, doctorController.bookedUsers)
@@ -40,5 +41,5 @@ router.delete('/deleteSlot/:slotId', doctorAuthMiddleware, doctorController.dele
 router.post('/savePrescription', doctorAuthMiddleware, doctorController.savePrescription)
 router.get('/prescription', doctorAuthMiddleware, doctorController.getPrescription)
 router.get('/doctorDashBoard', doctorAuthMiddleware, doctorController.doctorDashBoard)
-
+router.patch('/editDepartment', doctorAuthMiddleware, doctorController.updateDepartment)
 export default router;

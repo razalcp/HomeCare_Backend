@@ -15,12 +15,7 @@ class AdminController {
             const { values } = req.body
             const { loginId, password } = values
 
-            // console.log("email --> ", loginId)
-
-
-
             const serviceResponse = await this.adminService.checkWetherAdmin(loginId, password)
-
 
             res.cookie("adminRefreshToken", serviceResponse?.adminRefreshToken, {
                 httpOnly: true,
@@ -34,7 +29,7 @@ class AdminController {
                 // secure:false,
                 maxAge: 15 * 60 * 1000,
             });
-            // console.log("this is ", serviceResponse);
+
 
             res.status(HTTP_statusCode.OK).json({ data: serviceResponse });
 
@@ -76,16 +71,22 @@ class AdminController {
 
     };
 
+
+
     getDepartments = async (req: Request, res: Response) => {
         try {
-            const getData = await this.adminService.getDepartments()
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 5;
 
+            const getData = await this.adminService.getDepartments(page, limit);
 
-            res.status(HTTP_statusCode.OK).json({ data: getData })
+            res.status(HTTP_statusCode.OK).json(getData);
         } catch (error) {
-            throw error
+            throw error;
         }
     };
+
+
     updateListUnlist = async (req: Request, res: Response) => {
         try {
 
@@ -98,17 +99,21 @@ class AdminController {
         }
     }
 
+
     getDoctors = async (req: Request, res: Response) => {
-
         try {
-            const getDocData = await this.adminService.getDoctorData()
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 8;
 
-            res.status(HTTP_statusCode.OK).json(getDocData)
+            const result = await this.adminService.getDoctorData(page, limit);
 
+            res.status(200).json(result);
         } catch (error) {
-            throw error
+            console.error("Error in getDoctors Controller", error);
+            res.status(500).json({ message: "Server Error" });
         }
-    }
+    };
+
     updateKycStatus = async (req: Request, res: Response) => {
 
         try {
@@ -122,13 +127,17 @@ class AdminController {
         }
     }
 
+
     getPatients = async (req: Request, res: Response) => {
         try {
-            const getData = await this.adminService.getPatients()
-            res.status(HTTP_statusCode.OK).json(getData);
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 7;
 
+            const result = await this.adminService.getPatients(page, limit);
+
+            res.status(HTTP_statusCode.OK).json(result);
         } catch (error) {
-            throw error
+            throw error;
         }
     };
 
@@ -147,17 +156,21 @@ class AdminController {
         }
     }
 
+
     getWalletData = async (req: Request, res: Response) => {
         try {
             const { adminId } = req.params;
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 5;
 
+            const walletData = await this.adminService.getWalletData(adminId, page, limit);
 
-            const getData = await this.adminService.getWalletData(adminId)
-            res.status(HTTP_statusCode.OK).json(getData)
+            res.status(HTTP_statusCode.OK).json(walletData);
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
         }
     };
+
 
     findDashBoardData = async (req: Request, res: Response) => {
         try {
@@ -173,3 +186,4 @@ class AdminController {
 
 
 export default AdminController;
+

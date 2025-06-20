@@ -12,10 +12,10 @@ interface IDoctorReprository {
     getDepartments(): Promise<IDepartment[]>
     findEmailForLogin(email: string): Promise<IDoctorModel | null>
     addDoctorSlots(slotData: ISlot | ISlot[]): Promise<{ success: boolean; message: string }>;
-    getDoctorSlots(doctorId: string): Promise<ISlot[]>
+    getDoctorSlots(doctorId: string, page: number, limit: number): Promise<any>
     updateDoctor(doctorId: string, updateData: Partial<IDoctorModel>, imgObject?: any): Promise<IDoctorModel | null | void>;
-    getMyBookings(doctorId: string): Promise<IBooking[]>;
-    getWalletData(doctorId: string): Promise<IWallet>;
+    getMyBookings(doctorId: string, page: number, limit: number): Promise<any>;
+    getWalletData(doctorId: string, page: number, limit: number): Promise<any>;
 }
 
 

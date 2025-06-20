@@ -4,8 +4,11 @@ import sendEmail from "../config/email_config";
 import bcrypt from "bcrypt";
 import { IUserModel } from "../interfaces/user/userModelInterface";
 import { createToken, createRefreshToken } from "../config/jwt_config";
+import { IUserService } from "../interfaces/user/IUserService";
 
-class UserService {
+
+class UserService implements IUserService {
+
   private userReprository: IUserRepository;
   private userData: IUser | null = null;
   private OTP: string | null = null;
@@ -104,13 +107,31 @@ class UserService {
     }
   };
 
-  getVerifiedDoctors = async () => {
+  getVerifiedDoctors = async (
+    page: number,
+    limit: number,
+    search: string,
+    sort: string,
+    departments: string[],
+    minFee: number,
+    maxFee: number
+  ) => {
     try {
-      return await this.userReprository.getVerifiedDoctors()
+      return await this.userReprository.getVerifiedDoctors(
+        page,
+        limit,
+        search,
+        sort,
+        departments,
+        minFee,
+        maxFee
+      );
     } catch (error) {
-      throw error
+      throw error;
     }
-  }
+  };
+
+
   saveBookingToDb = async (slotId: string, userId: string, doctorId: string) => {
     try {
       await this.userReprository.saveBookingToDb(slotId, userId, doctorId)
@@ -118,13 +139,12 @@ class UserService {
       throw error
     }
   }
+
   getUserBookings = async (userId: string) => {
     try {
-
-      // console.log("Inside UserServices getUserBookings methord , this is userID :",userId);
       return await this.userReprository.getUserBookings(userId)
-    } catch {
-
+    } catch (error) {
+      throw error
     }
   }
 
@@ -134,17 +154,19 @@ class UserService {
       return cancelBookingData
 
     } catch (error) {
-
-    }
-  }
-  getWalletData = async (userId: string) => {
-    try {
-      const getData = await this.userReprository.getWalletData(userId)
-      return getData;
-    } catch (error) {
-      return error
+      throw error
     }
   };
+
+
+  getWalletData = async (userId: string, page: number, limit: number) => {
+    try {
+      return await this.userReprository.getWalletData(userId, page, limit);
+    } catch (error) {
+      throw error;
+    }
+  };
+
 
 
 
@@ -159,15 +181,13 @@ class UserService {
       const updateUserData = await this.userReprository.updateUser(userData, imgObject);
       return updateUserData;
     } catch (error: any) {
-      console.log("Inside service", error.message);
+
       throw new Error(error.message);
     }
   };
 
   getUser = async (email: string) => {
     try {
-
-      // console.log(email);    
       const getUserData = await this.userReprository.getUser(email)
       return getUserData
     } catch (error) {
@@ -223,13 +243,9 @@ class UserService {
 
   submitReview = async (reviewData: any) => {
     try {
-
       const saveData = await this.userReprository.submitReview(reviewData)
-
       return saveData
     } catch (error) {
-
-
       throw error
     }
   };
@@ -237,13 +253,9 @@ class UserService {
 
   reviewDetails = async (doctorId: string) => {
     try {
-
-      const saveData = await this.userReprository.reviewDetails (doctorId)
-
+      const saveData = await this.userReprository.reviewDetails(doctorId)
       return saveData
     } catch (error) {
-
-
       throw error
     }
   };

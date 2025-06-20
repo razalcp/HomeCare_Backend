@@ -1,246 +1,9 @@
-// import { IAdmin } from '../models/admin/adminModel'
-// import { Model } from 'mongoose'
-// import { IDepartment } from '../models/admin/departmentModel'
-// import { IDoctor } from '../models/doctor/doctorModel'
-// import { IUserModel } from '../interfaces/user/userModelInterface'
-// import { IAdminWallet } from '../models/admin/adminWalletModel'
-// import BaseRepository from './baseRepository'
-
-
-
-// class AdminReprository {
-//     private adminModel: Model<IAdmin>
-//     private departmentModel: Model<IDepartment>
-//     private doctorModel: Model<IDoctor>
-//     private userModel: Model<IUserModel>
-//     private adminWalletModel: Model<IAdminWallet>
-//     private doctorWalletModel: any
-//     private bookingModel: any
-//     constructor(adminModel: Model<IAdmin>, departmentModel: Model<IDepartment>, doctorModel: Model<IDoctor>, bookingModel: any, userModel: Model<IUserModel>, adminWalletModel: Model<IAdminWallet>, doctorWalletModel: any) {
-//         console.log("This is admin model", adminModel);
-//         console.log("This is user model", userModel);
-
-
-
-//         this.adminModel = adminModel
-//         this.departmentModel = departmentModel
-//         this.doctorModel = doctorModel
-//         this.userModel = userModel
-//         this.adminWalletModel = adminWalletModel
-//         this.doctorWalletModel = doctorWalletModel
-//         this.bookingModel = bookingModel
-//     }
-
-//     getEmailAndPassword = async (email: String, password: String) => {
-
-//         return await this.adminModel.findOne({ email });
-
-
-//     };
-
-//     addDepartments = async (dept: String) => {
-//         try {
-//             // console.log(dept); 
-
-//             const data = await this.departmentModel.findOne({ departmentName: dept })
-
-//             if (data === null) {
-//                 // console.log(this.departmentModel);
-//                 try {
-//                     const obj = { departmentName: dept };
-//                     await this.departmentModel.create(obj);
-//                     const allData = await this.departmentModel.find()
-//                     return allData
-//                 } catch (error) {
-//                     throw error
-//                 }
-//             }
-//         } catch (error) {
-//             throw error
-//         }
-
-
-//     };
-
-
-
-
-//     getDepartments = async () => {
-//         try {
-//             return await this.departmentModel.find()
-
-//         } catch (error) {
-//             throw error
-//         }
-//     };
-
-//     updateListUnlist = async (departmentName: String) => {
-//         try {
-
-//             const department = await this.departmentModel.findOne({ departmentName });
-
-//             if (!department) {
-
-//                 return null;
-//             }
-//             department.isListed = !department.isListed;
-//             const updatedDepartment = await department.save();
-//             return await this.departmentModel.find()
-
-//         } catch (error) {
-//             throw error
-//         }
-//     };
-
-
-//     getDoctors = async () => {
-//         try {
-//             return await this.doctorModel.find()
-//         } catch (error) {
-//             throw error
-//         }
-//     };
-
-//     updateKycStatus = async (status: String, doctorId: String) => {
-//         try {
-//             console.log(status, doctorId);
-
-//             // const validDoctorId = new mongoose.Types.ObjectId(doctorId);
-//             const updatedDoctor = await this.doctorModel.findByIdAndUpdate(
-//                 doctorId,
-//                 { $set: { kycStatus: status } }, // Updating the kycStatus field
-//                 { new: true } // Return the updated document
-//             );
-//             return updatedDoctor
-
-//         } catch (error) {
-
-//         }
-//     };
-
-
-//     getPatients = async () => {
-//         try {
-//             const getData = await this.userModel.find()
-//             return getData
-//         } catch (error) {
-//             throw error
-//         }
-//     };
-
-//     updateuserIsBlocked = async (buttonName: string, id: string) => {
-//         try {
-//             // console.log("Inside serviz ", buttonName, id);
-
-//             const isUserBlocked = buttonName === "Block";
-
-//             // Update the document and return the updated user.
-//             const updatedUser = await this.userModel.findByIdAndUpdate(
-//                 id,
-//                 { isUserBlocked },
-//                 { new: true }
-//             );
-//             // console.log(updatedUser);
-
-//             return updatedUser;
-//         } catch (error) {
-//             console.error("Error updating user block status:", error);
-//             throw error;
-//         }
-//     };
-
-//     getWalletData = async (adminId: string) => {
-//         try {
-//             const wallet = await this.adminWalletModel.findOne({ adminId });
-//             return wallet; // or throw if not found
-//         } catch (error) {
-//             console.error('Error fetching doctor wallet:', error);
-//             throw new Error('Failed to fetch wallet');
-//         }
-//     };
-
-//     findDashBoardData = async () => {
-//         try {
-
-//             const adminId = "admin";
-//             const ge = this.adminWalletModel.find()
-//             console.log(ge);
-
-
-//             const result = await this.adminWalletModel.aggregate([
-//                 { $match: { adminId } },
-//                 { $unwind: '$transactions' },
-//                 { $match: { 'transactions.transactionType': 'credit' } },
-//                 {
-//                     $group: {
-//                         _id: null,
-//                         totalCredit: { $sum: '$transactions.amount' }
-//                     }
-//                 }
-//             ]);
-
-//             const adminRevenue = result[0]?.totalCredit || 0;
-//             console.log('Total Admin Revenue:', adminRevenue);
-
-//             const revenueResult = await this.doctorWalletModel.aggregate([
-//                 { $unwind: '$transactions' },
-//                 { $match: { 'transactions.transactionType': 'credit' } },
-//                 {
-//                     $group: {
-//                         _id: null,
-//                         totalRevenue: { $sum: '$transactions.amount' }
-//                     }
-//                 }
-//             ]);
-
-//             const doctorRevenue = revenueResult[0]?.totalRevenue || 0;
-//             console.log('Total Doctor Revenue:', doctorRevenue);
-//             const totalRevenue = adminRevenue + doctorRevenue;
-
-//             const totalUsers = await this.userModel.countDocuments();
-//             console.log('Total Users:', totalUsers);
-
-//             const activeUsers = await this.userModel.countDocuments({ isUserBlocked: false });
-//             console.log('Active Users:', activeUsers);
-
-//             const totalDoctors = await this.doctorModel.countDocuments();
-//             console.log('Total Doctors:', totalDoctors);
-
-//             const activeDoctors = await this.doctorModel.countDocuments({ kycStatus: 'Approved' });
-//             console.log('Active Doctors:', activeDoctors);
-
-//             const totalBookings = await this.bookingModel.countDocuments();
-//             console.log('Total Bookings:', totalBookings);
-
-//             return {
-//                 totalRevenue: totalRevenue,
-//                 totalUsers: totalUsers,
-//                 totalDoctors: totalDoctors,
-//                 activeUsers: activeUsers,
-//                 adminRevenue: adminRevenue,
-//                 doctorRevenue: doctorRevenue,
-//                 activeDoctors: activeDoctors,
-//                 totalBookings: totalBookings
-
-//             }
-//         } catch (error) {
-
-//         }
-//     }
-// };
-
-
-
-// export default AdminReprository
-
-
 import { IAdmin } from '../models/admin/adminModel'
 import { Model } from 'mongoose'
 import { IDepartment } from '../models/admin/departmentModel'
 import { IDoctor } from '../models/doctor/doctorModel'
 import { IUserModel } from '../interfaces/user/userModelInterface'
 import { IAdminWallet } from '../models/admin/adminWalletModel'
-
 
 
 class AdminReprository {
@@ -272,12 +35,11 @@ class AdminReprository {
 
     addDepartments = async (dept: String) => {
         try {
-            // console.log(dept); 
 
             const data = await this.departmentModel.findOne({ departmentName: dept })
 
             if (data === null) {
-                // console.log(this.departmentModel);
+
                 try {
                     const obj = { departmentName: dept };
                     await this.departmentModel.create(obj);
@@ -294,17 +56,27 @@ class AdminReprository {
 
     };
 
-
-
-
-    getDepartments = async () => {
+    // Get departments with pagination
+    getDepartments = async (page: number, limit: number) => {
         try {
-            return await this.departmentModel.find()
+            const skip = (page - 1) * limit;
 
+            const [data, totalCount] = await Promise.all([
+                this.departmentModel.find().skip(skip).limit(limit),
+                this.departmentModel.countDocuments()
+            ]);
+
+            return {
+                data,
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+                currentPage: page
+            };
         } catch (error) {
-            throw error
+            throw error;
         }
     };
+
 
     updateListUnlist = async (departmentName: String) => {
         try {
@@ -324,20 +96,30 @@ class AdminReprository {
         }
     };
 
-
-    getDoctors = async () => {
+    getDoctors = async (page: number, limit: number) => {
         try {
-            return await this.doctorModel.find()
+            const skip = (page - 1) * limit;
+
+            const [data, totalCount] = await Promise.all([
+                this.doctorModel.find().skip(skip).limit(limit),
+                this.doctorModel.countDocuments()
+            ]);
+
+            return {
+                data,
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+                currentPage: page
+            };
         } catch (error) {
-            throw error
+            throw error;
         }
     };
 
+
     updateKycStatus = async (status: String, doctorId: String) => {
         try {
-            console.log(status, doctorId);
 
-            // const validDoctorId = new mongoose.Types.ObjectId(doctorId);
             const updatedDoctor = await this.doctorModel.findByIdAndUpdate(
                 doctorId,
                 { $set: { kycStatus: status } }, // Updating the kycStatus field
@@ -351,18 +133,29 @@ class AdminReprository {
     };
 
 
-    getPatients = async () => {
+    getPatients = async (page: number, limit: number) => {
         try {
-            const getData = await this.userModel.find()
-            return getData
+            const skip = (page - 1) * limit;
+
+            const [data, totalCount] = await Promise.all([
+                this.userModel.find().skip(skip).limit(limit),
+                this.userModel.countDocuments()
+            ]);
+
+            return {
+                data,
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+                currentPage: page
+            };
         } catch (error) {
-            throw error
+            throw error;
         }
     };
 
+
     updateuserIsBlocked = async (buttonName: string, id: string) => {
         try {
-            // console.log("Inside serviz ", buttonName, id);
 
             const isUserBlocked = buttonName === "Block";
 
@@ -372,7 +165,7 @@ class AdminReprository {
                 { isUserBlocked },
                 { new: true }
             );
-            // console.log(updatedUser);
+
 
             return updatedUser;
         } catch (error) {
@@ -381,15 +174,39 @@ class AdminReprository {
         }
     };
 
-    getWalletData = async (adminId: string) => {
+
+    getWalletData = async (adminId: string, page: number, limit: number) => {
         try {
             const wallet = await this.adminWalletModel.findOne({ adminId });
-            return wallet; // or throw if not found
+
+            if (!wallet) {
+                throw new Error('Wallet not found');
+            }
+
+            // Sort transactions by date in descending order (latest first)
+            const sortedTransactions = wallet.transactions.sort(
+                (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime()
+            );
+
+            const totalTransactions = sortedTransactions.length;
+            const startIndex = (page - 1) * limit;
+            const paginatedTransactions = sortedTransactions.slice(startIndex, startIndex + limit);
+
+            return {
+                _id: wallet._id,
+                adminId: wallet.adminId,
+                balance: wallet.balance,
+                transactions: paginatedTransactions,
+                totalTransactions,
+                createdAt: wallet.createdAt,
+                updatedAt: wallet.updatedAt,
+            };
         } catch (error) {
-            console.error('Error fetching doctor wallet:', error);
             throw new Error('Failed to fetch wallet');
         }
     };
+
+
     findDashBoardData = async () => {
         try {
 
@@ -407,7 +224,7 @@ class AdminReprository {
             ]);
 
             const adminRevenue = result[0]?.totalCredit || 0;
-            console.log('Total Admin Revenue:', adminRevenue);
+
 
             const revenueResult = await this.doctorWalletModel.aggregate([
                 { $unwind: '$transactions' },
@@ -421,26 +238,24 @@ class AdminReprository {
             ]);
 
             const doctorRevenue = revenueResult[0]?.totalRevenue || 0;
-            console.log('Total Doctor Revenue:', doctorRevenue);
+
             const totalRevenue = adminRevenue + doctorRevenue;
-            console.log("Total Revenue :", totalRevenue);
 
             const totalUsers = await this.userModel.countDocuments();
-            console.log('Total Users:', totalUsers);
 
             const activeUsers = await this.userModel.countDocuments({ isUserBlocked: false });
-            console.log('Active Users:', activeUsers);
+
 
             const totalDoctors = await this.doctorModel.countDocuments();
-            console.log('Total Doctors:', totalDoctors);
+
 
             const activeDoctors = await this.doctorModel.countDocuments({ kycStatus: 'Approved' });
-            console.log('Active Doctors:', activeDoctors);
+
 
             const totalBookings = await this.bookingModel.countDocuments();
-            console.log('Total Bookings:', totalBookings);
+
             const data = await this.getMonthlyDashboardData()
-            console.log("data", data);
+
 
             return {
                 totalRevenue: totalRevenue,
@@ -456,7 +271,8 @@ class AdminReprository {
         } catch (error) {
             throw error
         }
-    }
+    };
+
     getMonthlyDashboardData = async () => {
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -552,7 +368,7 @@ class AdminReprository {
         );
 
         return sortedData;
-    }
+    };
 
 
 };

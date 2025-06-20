@@ -6,17 +6,18 @@ import HTTP_statusCode from '../../enums/httpStatusCode'
 import cloudinary from '../../config/cloudinary_config'
 import { Express } from 'express'
 import multer from 'multer';
+import { IDoctorService } from '../../interfaces/doctor/IDoctorService'
 
 class DoctorController {
-    private doctorService: DoctorService
+    private doctorService: IDoctorService
 
-    constructor(doctorService: DoctorService) {
+    constructor(doctorService: IDoctorService) {
         this.doctorService = doctorService
     }
 
     register = async (req: Request, res: Response) => {
         const { email } = req.body
-        // console.log(email);
+
         await this.doctorService.register(email)
         res.status(HTTP_statusCode.OK).send("OTP Sent to mail")
     }
@@ -25,13 +26,11 @@ class DoctorController {
         try {
 
             const { email } = req.body
-            // console.log("doctorLoginWorked", email);
 
             await this.doctorService.doctorLogin(email)
             res.status(HTTP_statusCode.OK).send("OTP Sent to mail")
 
         } catch (error: any) {
-            // console.log("con",error);
 
             if (error.message === "Email not Registered") {
                 res.status(HTTP_statusCode.NotFound).json({ message: "Email not Registered" });
@@ -43,7 +42,6 @@ class DoctorController {
 
             }
             else {
-                console.log(error);
 
                 res.status(HTTP_statusCode.InternalServerError).json({ message: "Something wrong please try again later" });
             };
@@ -57,8 +55,6 @@ class DoctorController {
 
         try {
             const { enteredOtp } = req.body
-            console.log(enteredOtp);
-
 
             const serviceResponse = await this.doctorService.otpVerification(
                 enteredOtp
@@ -143,27 +139,12 @@ class DoctorController {
             const fileName = req.files as Express.Multer.File[]
 
 
-            // console.log("This is doctor data inside controller ", doctorData)
-            // console.log(fileName);
+
             const { email } = doctorData
-            // console.log("destructered email", email)
-            // console.log("doctorRegister Controller Worked for changing logic", doctorData)
-
-
-            //testing cloudinary weather connected
-
-            // cloudinary.api.ping((error, result) => {
-            //   if (error) {
-            //     console.error("Cloudinary ping failed:", error);
-            //   } else {
-            //     console.log("Cloudinary ping result:", result);
-            //     // A successful ping typically returns an object with a status "ok".
-            //   }
-            // });
 
 
             let uploadToCloudinary = (buffer: Buffer) => {
-                console.log("uploadToCloudinary");
+
 
                 return new Promise((resolve, reject) => {
                     const uploadStream = cloudinary.uploader.upload_stream(
@@ -184,17 +165,14 @@ class DoctorController {
             const imgObject: any = {}
 
             const isEmailRegistered = await this.doctorService.findRegisteredEmail(email)
-            console.log("Inside isEmailRegistered", isEmailRegistered)
+
 
             if (isEmailRegistered?.email === email) {
-                console.log("inside cloud upload condition");
 
                 for (const file of fileName!) {
                     const upload: any = await uploadToCloudinary(file.buffer)
 
                     imgObject[file.fieldname] = upload
-                    // console.log(imgObject)
-                    // console.log(`Uploaded file name :${file.fieldname} and url = `, result);
 
                 }
 
@@ -202,13 +180,11 @@ class DoctorController {
 
 
             await this.doctorService.doctorKycRegister(doctorData, imgObject)
-            // const doc =  await this.doctorService.register(userData);
-            // const fileNames = req.body.fileNames ? JSON.parse(req.body.fileNames) : [];
             res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
             res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
             res.status(200).json({ message: "Logged out successfully" });
         } catch (error: any) {
-            console.log(error.message);
+
             return res.status(400).json({ error: error.message });
 
         }
@@ -224,12 +200,11 @@ class DoctorController {
         try {
             const doctorData: any = req.body
             const fileName = req.files as Express.Multer.File[]
-            // console.log(doctorData);
-            // console.log(fileName);
+
 
 
             let uploadToCloudinary = (buffer: Buffer) => {
-                console.log("uploadToCloudinary");
+
 
                 return new Promise((resolve, reject) => {
                     const uploadStream = cloudinary.uploader.upload_stream(
@@ -254,8 +229,7 @@ class DoctorController {
                 const upload: any = await uploadToCloudinary(file.buffer)
 
                 imgObject[file.fieldname] = upload
-                console.log(imgObject)
-                // console.log(`Uploaded file name :${file.fieldname} and url = `, result);
+
 
             }
             const docData = await this.doctorService.updateDoctorProfile(doctorData, imgObject)
@@ -281,13 +255,13 @@ class DoctorController {
 
     addDoctorSlots = async (req: Request, res: Response) => {
         try {
-            // console.log("Inside doctor controller add slots", req.body);
+
             const slotData = req.body
             const addSlot = await this.doctorService.addDoctorSlots(slotData)
 
             res.status(200).json({ message: "Slot added successfully!" });
         } catch (error: any) {
-            // console.log("inside controller",error);
+
 
             if (error.message) {
                 res
@@ -302,35 +276,61 @@ class DoctorController {
         }
     };
 
-    getDoctorSlots = async (req: Request, res: Response) => {
-
+    getDoctorSlotsForBooking = async (req: Request, res: Response) => {
 
         const { doctorId } = req.params;
-        const getData = await this.doctorService.getDoctorSlots(doctorId)
+        const getData = await this.doctorService.getDoctorSlotsForBooking(doctorId)
         res.status(HTTP_statusCode.OK).json(getData);
 
     };
 
+    getDoctorSlots = async (req: Request, res: Response) => {
+        const { doctorId } = req.params;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+
+        const getData = await this.doctorService.getDoctorSlots(doctorId, page, limit);
+        res.status(HTTP_statusCode.OK).json(getData);
+    };
+
+
     getMyBookings = async (req: Request, res: Response) => {
         try {
-            const doctorId = req.body.doctorId
-            // console.log("Inside doctorcontrollers getUserBookings methord , this is userID :",doctorId);
-            const getBookingData = await this.doctorService.getMyBookings(doctorId)
-            res.status(HTTP_statusCode.OK).json(getBookingData)
+            const { doctorId, page = 1, limit = 6 } = req.body;
+            const result = await this.doctorService.getMyBookings(doctorId, Number(page), Number(limit));
+            res.status(HTTP_statusCode.OK).json(result);
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
         }
     };
 
+
+    // getWalletData = async (req: Request, res: Response) => {
+    //     try {
+    //         const { doctorId } = req.params;
+    //         const getData = await this.doctorService.getWalletData(doctorId)
+    //         res.status(HTTP_statusCode.OK).json(getData)
+    //     } catch (error) {
+    //         res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+    //     }
+    // };
     getWalletData = async (req: Request, res: Response) => {
         try {
             const { doctorId } = req.params;
-            const getData = await this.doctorService.getWalletData(doctorId)
-            res.status(HTTP_statusCode.OK).json(getData)
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+
+            const walletData = await this.doctorService.getWalletData(doctorId, page, limit);
+
+            res.status(HTTP_statusCode.OK).json(walletData);
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({
+                message: "Something went wrong",
+                error,
+            });
         }
     };
+
 
     bookedUsers = async (req: Request, res: Response) => {
         try {
@@ -362,7 +362,7 @@ class DoctorController {
     messages = async (req: Request, res: Response) => {
         try {
             const { receiverId, senderId } = req.query;
-            // console.log("Recived both",receiverId,senderId);
+
             const getData = await this.doctorService.getMessages(receiverId as string, senderId as string)
             res.status(HTTP_statusCode.OK).json(getData)
 
@@ -376,7 +376,6 @@ class DoctorController {
     savePrescription = async (req: Request, res: Response) => {
         try {
             const presData = req.body
-            console.log("This is prescription", presData);
             const saveData = await this.doctorService.savePrescription(presData)
             res.status(HTTP_statusCode.OK).json(saveData)
         } catch (error) {
@@ -408,10 +407,22 @@ class DoctorController {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
 
         }
+    };
+
+    updateDepartment = async (req: Request, res: Response) => {
+        try {
+            const { departmentId, departmentName } = req.body
+          
+            let updatedData = await this.doctorService.updateDepartment(departmentId, departmentName)
+            res.status(HTTP_statusCode.OK).json(updatedData)
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+
+        }
     }
 
 }
 
 
+export default DoctorController;
 
-export default DoctorController

@@ -2,9 +2,9 @@ import IDoctorModel from "../interfaces/doctor/doctorModelInterface";
 import IDoctorReprository from "../interfaces/doctor/IDoctorReprository";
 import sendEmail from "../config/email_config";
 import { createToken, createRefreshToken } from "../config/jwt_config";
+import { IDoctorService } from "../interfaces/doctor/IDoctorService";
 
-
-class DoctorService {
+class DoctorService implements IDoctorService {
     private doctorReprository: IDoctorReprository
 
     private doctorEmail: string | null = null;
@@ -46,7 +46,6 @@ class DoctorService {
     doctorLogin = async (email: string) => {
         try {
             const alreadyApprovedDoctor = await this.doctorReprository.findEmailForLogin(email)
-            // console.log("this is null", alreadyApprovedDoctor);
 
             this.doctorEmail = email
 
@@ -76,7 +75,7 @@ class DoctorService {
 
             const OTP_createdTime = new Date();
             this.expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
-            // console.log(this.expiryOTP_time)
+
             return;
         } catch (error) {
             throw error
@@ -84,19 +83,14 @@ class DoctorService {
     }
 
     otpVerification = async (enteredOtp: string) => {
-        // console.log("inside doctor verification ");
+
 
         try {
             if (enteredOtp !== this.OTP) {
-                console.log("Wrong Otp");
 
                 throw new Error("Incorrect OTP")
             }
             const currentTime = new Date();
-            // console.log(currentTime.toLocaleString())
-            // console.log(this.expiryOTP_time?.toLocaleString())
-
-            // console.log(currentTime > this.expiryOTP_time!);
 
             if (currentTime > this.expiryOTP_time!) {
                 console.log("Otp expired");
@@ -116,14 +110,14 @@ class DoctorService {
             return { doctorData, doctorToken, doctorRefreshToken }
 
         } catch (error) {
-            console.log(error);
+
 
             throw error
         }
     }
 
     verifyDoctorOtp = async (enteredOtp: string) => {
-        // console.log("inside doctor verification ");
+
 
         try {
             if (enteredOtp !== this.OTP) {
@@ -132,10 +126,7 @@ class DoctorService {
                 throw new Error("Incorrect OTP")
             }
             const currentTime = new Date();
-            // console.log(currentTime.toLocaleString())
-            // console.log(this.expiryOTP_time?.toLocaleString())
 
-            // console.log(currentTime > this.expiryOTP_time!);
 
             if (currentTime > this.expiryOTP_time!) {
                 console.log("Otp expired");
@@ -155,7 +146,7 @@ class DoctorService {
             return { doctorData, doctorToken, doctorRefreshToken }
 
         } catch (error) {
-            console.log(error);
+
 
             throw error
         }
@@ -201,42 +192,46 @@ class DoctorService {
             const updateDoctorData = await this.doctorReprository.updateDoctor(doctorData, imgObject)
             return updateDoctorData;
         } catch (error: any) {
-            console.log("Inside service", error.message)
+
             throw new Error(error.message)
         }
     }
     addDoctorSlots = async (slotData: any) => {
         try {
             const updateSlotData = await this.doctorReprository.addDoctorSlots(slotData)
-            // console.log(updateSlotData);
+
             return updateSlotData
 
         } catch (error: any) {
             throw error
         }
 
-    }
-    getDoctorSlots = async (doctorId: string) => {
-        const getSlots = await this.doctorReprository.getDoctorSlots(doctorId)
+    };
+
+    getDoctorSlotsForBooking = async (doctorId: string) => {
+        const getSlots = await this.doctorReprository.getDoctorSlotsForBooking(doctorId)
         return getSlots
     };
-    getMyBookings = async (doctorId: string) => {
-        try {
 
-            // console.log("Inside UserServices getUserBookings methord , this is userID :",userId);
-            return await this.doctorReprository.getMyBookings(doctorId)
-        } catch {
-
-        }
+    getDoctorSlots = async (doctorId: string, page: number, limit: number) => {
+        return await this.doctorReprository.getDoctorSlots(doctorId, page, limit);
     };
-    getWalletData = async (doctorId: string) => {
+
+
+
+    getMyBookings = async (doctorId: string, page: number, limit: number) => {
+        return await this.doctorReprository.getMyBookings(doctorId, page, limit);
+    };
+
+    getWalletData = async (doctorId: string, page: number, limit: number) => {
         try {
-            const getData = await this.doctorReprository.getWalletData(doctorId)
-            return getData;
+            const walletData = await this.doctorReprository.getWalletData(doctorId, page, limit);
+            return walletData;
         } catch (error) {
-            return error
+            throw new Error('Service error: ' + error);
         }
     };
+
     deleteSlot = async (slotId: string) => {
         try {
             const update = await this.doctorReprository.deleteSlot(slotId)
@@ -294,13 +289,17 @@ class DoctorService {
     }
     doctorDashBoard = async (doctorId: string) => {
         try {
-            
-           
-            
             const dashData = await this.doctorReprository.doctorDashboard(doctorId)
-            
-            
-            return  dashData 
+            return dashData
+        } catch (error) {
+            return error
+        }
+    };
+
+    updateDepartment = async (departmentId: string, departmentName: string) => {
+        try {
+            const updateData = await this.doctorReprository.updateDepartment(departmentId, departmentName)
+            return updateData
         } catch (error) {
             return error
         }

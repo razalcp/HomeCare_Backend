@@ -37,7 +37,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     }
 
     findByEmail = async (email: string): Promise<IDoctorModel | null> => {
-        // console.log("Inside Doctor Reprository ", email);
+
         try {
             return await this.doctorModel.findOne({ email })
         } catch (error) {
@@ -86,14 +86,9 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
     updateDoctor = async (doctorData: any, imgObject: any) => {
 
-
-        // console.log("repo doctorData ", doctorData);
-        // console.log("repo imgObject ", imgObject);
-
         const existingUser = await this.doctorModel.findOne({ email: doctorData.email })
 
         if (existingUser) {
-            // console.log("Inside existingUser");
 
             const updatedUser = await this.doctorModel.findOneAndUpdate(
                 { email: doctorData.email },
@@ -112,7 +107,6 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     };
 
     register = async (regEmail: string | null) => {
-        console.log("Inside regi ", regEmail);
 
         const obj = { email: regEmail }
 
@@ -133,7 +127,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             { isListed: true }, // Filter: isListed should be true
             { _id: 0, departmentName: 1 } // Projection: Only return departmentName, exclude _id
         );
-        // console.log("This is departments " , data);
+
         return data
 
     };
@@ -180,44 +174,82 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
             return { success: true, message: "Slot(s) added successfully" };
         } catch (error: any) {
-            console.log("error.message", error.message);
-
             throw new Error(error.message)
         }
     };
 
-    getDoctorSlots = async (doctorId: string) => {
+    getDoctorSlotsForBooking = async (doctorId: string) => {
         return await this.slotModel.find({ doctorId });
     };
 
-    getMyBookings = async (doctorId: string) => {
+    getDoctorSlots = async (doctorId: string, page: number, limit: number) => {
+        const skip = (page - 1) * limit;
+        const [slots, total] = await Promise.all([
+            this.slotModel.find({ doctorId }).skip(skip).limit(limit),
+            this.slotModel.countDocuments({ doctorId }),
+        ]);
+
+        return { slots, total };
+    };
+
+    getMyBookings = async (doctorId: string, page: number, limit: number) => {
         try {
-            // console.log("Inside UserRepository getUserBookings method, this is userID:", userId);
+            const skip = (page - 1) * limit;
 
-            const bookings = await this.bookingModel.find({ doctorId })
-                .populate('doctorId') // populate doctor details
-                .populate('slotId')   // populate slot details
-                .populate('userId');  // optional: to populate user info if needed
-            // console.log("doctorside", bookings);
+            const [bookings, totalCount] = await Promise.all([
+                this.bookingModel
+                    .find({ doctorId })
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .populate('doctorId')
+                    .populate('slotId')
+                    .populate('userId'),
+                this.bookingModel.countDocuments({ doctorId })
+            ]);
 
-            return bookings;
+            const totalPages = Math.ceil(totalCount / limit);
+            return { bookings, totalPages };
         } catch (error) {
-            console.error("Error fetching user bookings:", error);
+            console.error("Error fetching paginated bookings:", error);
             throw error;
         }
     };
 
 
-
-    getWalletData = async (doctorId: string) => {
+    getWalletData = async (doctorId: string, page: number, limit: number) => {
         try {
+            const skip = (page - 1) * limit;
+
+            // Find the wallet
             const wallet = await this.doctorWalletModel.findOne({ doctorId });
-            return wallet; // or throw if not found
+
+            if (!wallet) return null;
+
+            // Clone the transactions array for pagination
+            const totalTransactions = wallet.transactions.length;
+            const paginatedTransactions = wallet.transactions
+                .slice()
+                .reverse()
+                .slice(skip, skip + limit); // Latest transactions first
+
+            return {
+                wallet: {
+                    _id: wallet._id,
+                    doctorId: wallet.doctorId,
+                    balance: wallet.balance,
+                    transactions: paginatedTransactions,
+                    createdAt: wallet.createdAt,
+                    updatedAt: wallet.updatedAt
+                },
+                totalPages: Math.ceil(totalTransactions / limit),
+            };
         } catch (error) {
-            console.error('Error fetching doctor wallet:', error);
+            console.error('Repository error fetching doctor wallet:', error);
             throw new Error('Failed to fetch wallet');
         }
     };
+
 
     getBookedUser = async (doctorId: string) => {
         try {
@@ -225,7 +257,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                 .populate('userId')
                 .populate('slotId')   // only select needed fields
                 .exec();
-            // console.log("This is booked users", bookings)
+
             // Extract user data from populated bookings
             // const users = bookings.map(booking => booking.userId);
             const users = bookings.map(booking => {
@@ -266,9 +298,6 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     saveMessages = async (messageData: { senderId: string; receiverId: string; message: string; image: string; }) => {
         try {
             const { senderId, receiverId, message, image } = messageData;
-
-            // console.log("Inside repo", messageData);
-
 
             let conversation = await this.conversationModel.findOne({
                 participants: { $all: [senderId, receiverId] },
@@ -311,7 +340,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             if (!conversation) {
                 return [];
             }
-            // console.log(conversation.messages);
+
 
             return conversation.messages;
         } catch (error) {
@@ -361,16 +390,15 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
     doctorDashboard = async (doctorId: string) => {
 
-
         try {
             const totalAppointments = await this.bookingModel.countDocuments({
 
                 doctorId: doctorId
             });
-            // console.log("totalAppointments : ", totalAppointments);
+
 
             const activePatients = await this.userModel.countDocuments({ isUserBlocked: false });
-            // console.log('Active Users:', activePatients);
+
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -391,7 +419,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             // Filter out bookings where slotId didn't match (populate returns null)
             const filtered = upcomingAppointments.filter(b => b.slotId);
 
-            // console.log("Upcoming Appointments:", filtered);
+
 
             const revenueResult = await this.doctorWalletModel.aggregate([
                 { $unwind: '$transactions' },
@@ -405,14 +433,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             ]);
 
             const doctorRevenue = revenueResult[0]?.totalRevenue || 0;
-            // console.log('Total Doctor Revenue:', doctorRevenue);
-            // console.log({
-            //     totalAppointments: totalAppointments,
-            //     activePatients: activePatients,
-            //     upcomingAppointments: filtered,
-            //     doctorRevenue: doctorRevenue
 
-            // });
 
             return {
                 totalAppointments: totalAppointments,
@@ -424,9 +445,27 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
 
         } catch (error) {
-
+            throw error
         }
-    }
+    };
+
+        updateDepartment = async (departmentId: string, departmentName: string) => {
+        try {
+            const updatedDepartment = await this.departmentModel.findByIdAndUpdate(
+                departmentId,
+                { departmentName },
+                { new: true } // returns the updated document
+            );
+
+            if (!updatedDepartment) {
+                throw new Error("Department not found");
+            }
+
+            return updatedDepartment;
+        } catch (error: any) {
+            throw new Error(error.message || "Failed to update department");
+        }
+    };
 }
 
 

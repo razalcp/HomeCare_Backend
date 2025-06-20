@@ -77,6 +77,6 @@ const DoctorSchema = new Schema<IDoctor>({
 
 
 
-const DoctorModel = model<IDoctorModel>('Doctor', DoctorSchema);
+const DoctorModel = model<IDoctor>('Doctor', DoctorSchema);
 
 export default DoctorModel;

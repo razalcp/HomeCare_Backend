@@ -4,7 +4,8 @@
   "description": "this is the backend of homecare doctor booking app",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/app.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "build": "tsc"
   },
   "author": "Razal Nazim",
   "license": "ISC",

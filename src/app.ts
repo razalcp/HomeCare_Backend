@@ -23,7 +23,8 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: "https://home-care-frontend-five.vercel.app",
+    // origin: "https://home-care-frontend-five.vercel.app",
+    origin: "http://localhost:1234",
     methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS",
     // allowedHeaders: 'Content-Type, Authorization', // Allowed headers
     credentials: true // Allow credentials (cookies, HTTP authentication)
@@ -35,10 +36,13 @@ const server = http.createServer(app);
 startSocket(server)
 
 
-app.use("/", userRouter);
-app.use("/doctors", doctorRouter)
-app.use("/admin", adminRouter)
-// app.use("/messages", messageRoutes);
+// app.use("/", userRouter);
+// app.use("/doctors", doctorRouter)
+// app.use("/admin", adminRouter)
+
+app.use("/api", userRouter);
+app.use("/api/doctors", doctorRouter);
+app.use("/api/admin", adminRouter);
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => {

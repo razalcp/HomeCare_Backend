@@ -18,7 +18,7 @@ const sendEmail = async (email: string, otp: string): Promise<boolean> => {
 
 
   const mailOptions = {
-    from: process.env.Email_User as string,
+    from: process.env.EMAIL_USER as string,
     to: email,
     subject: `HomeCare OTP Verification`,
     html: ` <div style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f3f4f6;">
@@ -84,21 +84,21 @@ const sendEmail = async (email: string, otp: string): Promise<boolean> => {
 };
 
 
-const sendDoctorEmail = async (email: string, status: String,docName:String): Promise<boolean> => {
+const sendDoctorEmail = async (email: string, status: String, docName: String): Promise<boolean> => {
 
 
 
 
   const mailOptions = {
-    from: process.env.Email_User as string,
+    from: process.env.EMAIL_USER as string,
     to: email,
     subject: `Your Registration Status: ${status}`,
     html: `
         <h2>Hello Dr. ${docName},</h2>
         <p>Your registration status has been updated to: <strong>${status}</strong>.</p>
-        ${status === "Approved" ? 
-            `<p>🎉 Congratulations! You can now log in and start using our platform.</p>` : 
-            `<p>⚠️ Unfortunately, your registration has been rejected. Please contact support for more details.</p>`}
+        ${status === "Approved" ?
+        `<p>🎉 Congratulations! You can now log in and start using our platform.</p>` :
+        `<p>⚠️ Unfortunately, your registration has been rejected. Please contact support for more details.</p>`}
         <br>
         <p>Best Regards,</p>
         <p>HomeCareOg Team</p>

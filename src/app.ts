@@ -23,8 +23,8 @@ app.use(express.json());
 
 app.use(
   cors({
-    // origin: "https://home-care-frontend-five.vercel.app",
-    origin: "http://localhost:1234",
+    origin: "https://home-care-frontend-five.vercel.app",
+    // origin: "http://localhost:1234",
     methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS",
     // allowedHeaders: 'Content-Type, Authorization', // Allowed headers
     credentials: true // Allow credentials (cookies, HTTP authentication)

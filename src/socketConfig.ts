@@ -15,7 +15,9 @@ const startSocket = (server: HttpServer) => {
 
     io = new SocketIoserver(server, {
         cors: {
-            origin: `http://localhost:1234`,
+            // origin: `http://localhost:1234`,
+            origin: "https://home-care-frontend-five.vercel.app",
+
             methods: ["GET", "POST"],
             credentials: true,
         },
@@ -61,8 +63,8 @@ const startSocket = (server: HttpServer) => {
         });
 
         socket.on("reject-call", (data) => {
-            console.log("call rejected by user",data);
-            
+            console.log("call rejected by user", data);
+
             const friendSocketId = getReceiverSocketId(data.to);
             if (friendSocketId) {
                 socket.to(friendSocketId).emit("call-rejected");
@@ -116,7 +118,7 @@ const startSocket = (server: HttpServer) => {
 
         socket.on("leave-room", (data) => {
             const friendSocketId = getReceiverSocketId(data.to);
-            console.log('friendSocketId when leave',friendSocketId, 'data', data.to);
+            console.log('friendSocketId when leave', friendSocketId, 'data', data.to);
             if (friendSocketId) {
                 socket.to(friendSocketId).emit("user-left", data.to);
             }

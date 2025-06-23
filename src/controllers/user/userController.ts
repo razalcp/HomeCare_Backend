@@ -173,8 +173,8 @@ class userController {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      success_url: `https://homecare.razal.live/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
-      cancel_url: "https://homecare.razal.live/paymentFailed",
+      success_url: `http://localhost:1234/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
+      cancel_url: "http://localhost:1234/paymentFailed",
       customer_email: req.body.userEmail, // Optional: associate user with payment
       line_items: [
         {

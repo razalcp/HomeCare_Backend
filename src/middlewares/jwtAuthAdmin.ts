@@ -11,14 +11,14 @@ const adminAuthMiddleware = (req: Request, res: Response, next: NextFunction) =>
     const accessToken = req.cookies?.adminAccessToken;
     const refreshToken = req.cookies?.adminRefreshToken;
 
-    // console.log("Admin Access Token --->", accessToken);
-    // console.log("Admin  Refresh Token ---->", refreshToken);
+    console.log("Admin Access Token --->", accessToken);
+    console.log("Admin  Refresh Token ---->", refreshToken);
 
     if (!accessToken) {
-        if (!refreshToken) {
-            res.status(HTTP_statusCode.Unauthorized).json({ message: "Access Denied. No token provided." });
-            return
-        }
+        // if (!refreshToken) {
+        //     res.status(HTTP_statusCode.Unauthorized).json({ message: "Access Denied. No token provided." });
+        //     return
+        // }
 
         try {
             // Verify refresh token and generate new access token
@@ -42,13 +42,13 @@ const adminAuthMiddleware = (req: Request, res: Response, next: NextFunction) =>
         const decoded = jwt.verify(accessToken, secret_key) as { user_id: string, role: string };
         (req as any).user = decoded; // Attach user data to request object
 
-            
 
-            if ((req as any).user.role === 'admin') {
-                console.log("admn cond");
-                
-                next();
-            }
+
+        if ((req as any).user.role === 'admin') {
+            console.log("admn cond");
+
+            next();
+        }
         // next();
     } catch (error) {
         res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid access token." });

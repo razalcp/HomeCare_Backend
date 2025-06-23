@@ -12,12 +12,12 @@ function getReceiverSocketId(receiverId: string) {
     return onlineuser[receiverId]
 }
 const startSocket = (server: HttpServer) => {
+    console.log("startSocket Worked");
 
     io = new SocketIoserver(server, {
         cors: {
-            // origin: `http://localhost:1234`,
             origin: "https://home-care-frontend-five.vercel.app",
-
+            // origin: `http://localhost:1234`,
             methods: ["GET", "POST"],
             credentials: true,
         },

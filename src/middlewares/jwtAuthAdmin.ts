@@ -11,14 +11,14 @@ const adminAuthMiddleware = (req: Request, res: Response, next: NextFunction) =>
     const accessToken = req.cookies?.adminAccessToken;
     const refreshToken = req.cookies?.adminRefreshToken;
 
-    console.log("Admin Access Token --->", accessToken);
-    console.log("Admin  Refresh Token ---->", refreshToken);
+    // console.log("Admin Access Token --->", accessToken);
+    // console.log("Admin  Refresh Token ---->", refreshToken);
 
     if (!accessToken) {
-        // if (!refreshToken) {
-        //     res.status(HTTP_statusCode.Unauthorized).json({ message: "Access Denied. No token provided." });
-        //     return
-        // }
+        if (!refreshToken) {
+            res.status(HTTP_statusCode.Unauthorized).json({ message: "Access Denied. No token provided." });
+            return
+        }
 
         try {
             // Verify refresh token and generate new access token

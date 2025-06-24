@@ -19,14 +19,14 @@ class AdminController {
 
             res.cookie("adminRefreshToken", serviceResponse?.adminRefreshToken, {
                 httpOnly: true,
-                // sameSite: 'none',
-                // secure: false,
+                sameSite: 'none',
+                secure: true,
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             });
             res.cookie("adminAccessToken", serviceResponse?.adminToken, {
                 httpOnly: true,
-                // sameSite: 'none',
-                // secure:false,
+                sameSite: 'none',
+                secure:true,
                 maxAge: 15 * 60 * 1000,
             });
 

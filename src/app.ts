@@ -40,11 +40,10 @@ app.use("/", userRouter);
 app.use("/doctors", doctorRouter)
 app.use("/admin", adminRouter)
 
-// app.use("/api", userRouter);
-// app.use("/api/doctors", doctorRouter);
-// app.use("/api/admin", adminRouter);
+
 
 const PORT = process.env.PORT;
+
 // server.listen(PORT, () => {
 //   console.log(`Server is running on http://localhost:${PORT}`);
 // });

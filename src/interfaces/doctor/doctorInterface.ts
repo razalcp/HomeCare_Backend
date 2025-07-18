@@ -1,5 +1,8 @@
+import { Types } from "mongoose";
 import { IMedication } from "../../models/doctor/prescriptionModel";
 import { ISlot } from "../../models/doctor/slotModel";
+import { IUserModel } from "../user/userModelInterface";
+import IDoctorModel from "./doctorModelInterface";
 
 export interface IDoctorKycRegisterInput {
     name: string;
@@ -91,4 +94,50 @@ export interface IPrescriptionResponse {
 }
 
 
+export interface IBooking {
+    _id: string;
+    doctorId: IDoctorModel;
+    userId: IUserModel;
+    slotId: ISlot;
+    paymentStatus: string;
+    bookingStatus: string;
+    consultationStatus: string;
+    createdAt: string;
+    updatedAt: string;
+    __v?: number;
+}
 
+export interface IGetMyBookingsResponse {
+    bookings: IBooking[];
+    totalPages: number;
+}
+
+export interface IWalletResponse {
+    _id: string;
+    doctorId: string;
+    balance: number;
+    transactions: IWalletTransaction[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+
+export interface IUpcomingAppointment {
+    _id: Types.ObjectId;
+    doctorId: Types.ObjectId;
+    userId: Types.ObjectId;
+    slotId: ISlot;
+    paymentStatus: 'paid' | 'refunded';
+    bookingStatus: 'booked' | 'cancelled';
+    consultationStatus: 'completed' | 'pending';
+    createdAt: Date;
+    updatedAt: Date;
+    __v: number;
+}
+
+export interface IDoctorDashboard {
+    totalAppointments: number;
+    activePatients: number;
+    upcomingAppointments: IUpcomingAppointment[];
+    doctorRevenue: number;
+}

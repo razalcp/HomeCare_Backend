@@ -235,6 +235,7 @@ class DoctorService implements IDoctorService {
             bookings: result.bookings.map(mapBookingToDTO),
             totalPages: result.totalPages,
         };
+
     };
 
 
@@ -262,10 +263,10 @@ class DoctorService implements IDoctorService {
 
     getBookedUsers = async (doctorId: string) => {
         try {
-            const userData = await this.doctorReprository.getBookedUser(doctorId)
+            const userData = await this.doctorReprository.getBookedUsers(doctorId)
             return userData
         } catch (error) {
-            return error
+            throw new Error('error in getting booked users ' + error);
         }
     };
 
@@ -274,7 +275,7 @@ class DoctorService implements IDoctorService {
             const saveData = await this.doctorReprository.saveMessages(messageData)
             return saveData
         } catch (error) {
-            return error
+            throw new Error('Service error saving message: ' + error);
         }
     };
 
@@ -283,7 +284,7 @@ class DoctorService implements IDoctorService {
             const messageData = await this.doctorReprository.findMessage(receiverId, senderId)
             return messageData
         } catch (error) {
-            return error
+            throw new Error('error in getting messages ' + error);
         }
     };
 
@@ -293,7 +294,7 @@ class DoctorService implements IDoctorService {
             const saveData = await this.doctorReprository.savePrescription(presData)
             return saveData
         } catch (error) {
-            return error
+            throw new Error('error in saving prescription: ' + error);
         }
     };
 
@@ -302,7 +303,7 @@ class DoctorService implements IDoctorService {
             const prescriptionData = await this.doctorReprository.getPrescription(bookingId)
             return prescriptionData
         } catch (error) {
-            return error
+            throw new Error('error in getting your prerscription' + error);
         }
     };
 
@@ -311,7 +312,7 @@ class DoctorService implements IDoctorService {
             const dashData = await this.doctorReprository.doctorDashboard(doctorId)
             return dashData
         } catch (error) {
-            return error
+            throw new Error('Doctor Dashboard data not found' + error);
         }
     };
 

@@ -3,7 +3,7 @@ import IDoctorModel from "./doctorModelInterface";
 import { ISlot } from "../../models/doctor/slotModel";
 import { IDepartment } from "../../models/admin/departmentModel";
 import { IWallet } from "../../models/doctor/doctorWalletModel";
-import { IBookedUser, IDoctorImageUpload, IDoctorKycRegisterInput, IMessageFromDoctor, IPrescriptionRequest, IPrescriptionResponse, IWalletTransaction, SlotInput } from "./doctorInterface";
+import { IBookedUser, IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IMessageFromDoctor, IPrescriptionRequest, IPrescriptionResponse, IWalletResponse, IWalletTransaction, SlotInput } from "./doctorInterface";
 import { IBookingListResponseDTO } from "../../dtos/doctor.dto";
 
 
@@ -66,10 +66,7 @@ export interface IDoctorService {
     doctorId: string,
     page: number,
     limit: number
-  ): Promise<{
-    wallet: IWallet & { transactions: IWalletTransaction[] };
-    totalPages: number;
-  }>;
+  ): Promise<{ wallet: IWalletResponse; totalPages: number } | null>;
 
   deleteSlot(slotId: string): Promise<string>;
 
@@ -93,10 +90,5 @@ export interface IDoctorService {
 
   getPrescription(bookingId: string): Promise<IPrescriptionResponse>;
 
-  doctorDashBoard(doctorId: string): Promise<{
-    totalAppointments: number;
-    activePatients: number;
-    upcomingAppointments: number;
-    doctorRevenue: number;
-  }>;
+  doctorDashBoard(doctorId: string): Promise<IDoctorDashboard>;
 }

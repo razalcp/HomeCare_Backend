@@ -8,6 +8,7 @@ import { IBooking } from "../models/user/bookingModel"
 import { IWallet } from "../models/doctor/doctorWalletModel"
 import BaseRepository from "./baseRepository"
 import { IUserModel } from "../interfaces/user/userModelInterface"
+import { IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IGetMyBookingsResponse, IPrescriptionRequest, IUpcomingAppointment, IWalletTransaction } from "../interfaces/doctor/doctorInterface"
 
 
 
@@ -46,25 +47,17 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     }
 
     findEmailForLogin = async (email: string): Promise<IDoctorModel | null> => {
-
         try {
             const doct = await this.doctorModel.findOne({ email })
-
-
             return doct
         } catch (error) {
             throw error
         }
     }
 
-    doctorRepoKycRegister = async (doctorData: any, imgObject: any) => {
-
-
+    doctorRepoKycRegister = async (doctorData: IDoctorKycRegisterInput, imgObject: IDoctorImageUpload) => {
         const existingUser = await this.doctorModel.findOne({ email: doctorData.email })
-
         if (existingUser) {
-
-
             const updatedUser = await this.doctorModel.findOneAndUpdate(
                 { email: doctorData.email },
                 { $set: { ...doctorData, ...imgObject } },
@@ -74,10 +67,6 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         } else {
             throw new Error("Email not registered")
         }
-
-        // const mergedObj = { ...doctorData, ...imgObject }
-
-        // return await this.doctorModel.create(mergedObj);
 
     };
 
@@ -96,10 +85,6 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         } else {
             throw new Error("Email not registered")
         }
-
-        // const mergedObj = { ...doctorData, ...imgObject }
-
-        // return await this.doctorModel.create(mergedObj);
 
     };
 
@@ -124,14 +109,12 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             { isListed: true }, // Filter: isListed should be true
             { _id: 0, departmentName: 1 } // Projection: Only return departmentName, exclude _id
         );
-
         return data
 
     };
 
 
     addDoctorSlots = async (slotData: ISlot | ISlot[]) => {
-
         try {
             if (Array.isArray(slotData)) {
                 // Handling array case
@@ -189,7 +172,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         return { slots, total };
     };
 
-    getMyBookings = async (doctorId: string, page: number, limit: number) => {
+    getMyBookings = async (doctorId: string, page: number, limit: number): Promise<IGetMyBookingsResponse> => {
         try {
             const skip = (page - 1) * limit;
 
@@ -248,8 +231,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         }
     };
 
-
-    getBookedUser = async (doctorId: string) => {
+    getBookedUsers = async (doctorId: string) => {
         try {
             const bookings = await this.bookingModel.find({ doctorId })
                 .populate('userId')
@@ -257,7 +239,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                 .exec();
 
             // Extract user data from populated bookings
-            // const users = bookings.map(booking => booking.userId);
+
             const users = bookings.map(booking => {
                 const user = booking.userId as any;
                 const slot = booking.slotId as any;
@@ -295,6 +277,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
     saveMessages = async (messageData: { senderId: string; receiverId: string; message: string; image: string; }) => {
         try {
+
             const { senderId, receiverId, message, image } = messageData;
 
             let conversation = await this.conversationModel.findOne({
@@ -339,7 +322,6 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                 return [];
             }
 
-
             return conversation.messages;
         } catch (error) {
             console.error('Error finding conversation:', error);
@@ -362,7 +344,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     };
 
 
-    savePrescription = async (presData: any) => {
+    savePrescription = async (presData: IPrescriptionRequest): Promise<string> => {
         try {
 
 
@@ -378,7 +360,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             await newPrescription.save();
             return "Prescription added successfully"
         } catch (error) {
-            return error
+            throw new Error('error in saving prescription: ' + error);
         }
     };
 
@@ -393,17 +375,14 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         }
     }
 
-    doctorDashboard = async (doctorId: string) => {
+    doctorDashboard = async (doctorId: string): Promise<IDoctorDashboard> => {
 
         try {
             const totalAppointments = await this.bookingModel.countDocuments({
-
                 doctorId: doctorId
             });
 
-
             const activePatients = await this.userModel.countDocuments({ isUserBlocked: false });
-
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -424,8 +403,6 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             // Filter out bookings where slotId didn't match (populate returns null)
             const filtered = upcomingAppointments.filter(b => b.slotId);
 
-
-
             const revenueResult = await this.doctorWalletModel.aggregate([
                 { $unwind: '$transactions' },
                 { $match: { 'transactions.transactionType': 'credit' } },
@@ -439,22 +416,20 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
             const doctorRevenue = revenueResult[0]?.totalRevenue || 0;
 
-
             return {
                 totalAppointments: totalAppointments,
                 activePatients: activePatients,
-                upcomingAppointments: filtered,
+                upcomingAppointments: filtered as IUpcomingAppointment[],
                 doctorRevenue: doctorRevenue
 
             }
-
 
         } catch (error) {
             throw error
         }
     };
 
-    
+
 }
 
 

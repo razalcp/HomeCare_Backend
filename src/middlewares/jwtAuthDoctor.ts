@@ -26,7 +26,7 @@ const doctorAuthMiddleware = (req: Request, res: Response, next: NextFunction) =
             const newAccessToken = createToken(decoded.user_id, decoded.role);
 
             // Set new access token in cookies
-            res.cookie("AdminAccessToken", newAccessToken, { httpOnly: true, secure: true });
+            res.cookie("doctorAccessToken", newAccessToken, { httpOnly: true, secure: true });
 
             // Attach user data to request object
             (req as any).user = decoded;

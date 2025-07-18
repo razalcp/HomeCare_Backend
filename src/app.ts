@@ -23,8 +23,8 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: "https://home-care-frontend-five.vercel.app",
-    // origin: "http://localhost:1234",
+    // origin: "https://home-care-frontend-five.vercel.app",
+    origin: "http://localhost:1234",
     methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS",
     // allowedHeaders: 'Content-Type, Authorization', // Allowed headers
     credentials: true // Allow credentials (cookies, HTTP authentication)
@@ -44,10 +44,10 @@ app.use("/admin", adminRouter)
 
 const PORT = process.env.PORT;
 
-// server.listen(PORT, () => {
-//   console.log(`Server is running on http://localhost:${PORT}`);
-// });
-
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server is running on http://0.0.0.0:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// server.listen(PORT, "0.0.0.0", () => {
+//   console.log(`Server is running on http://0.0.0.0:${PORT}`);
+// });

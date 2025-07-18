@@ -1,13 +1,15 @@
 
 import IDoctorModel from "./doctorModelInterface";
 import { ISlot } from "../../models/doctor/slotModel";
-import { IBooking } from "../../models/user/bookingModel";
 import { IDepartment } from "../../models/admin/departmentModel";
 import { IWallet } from "../../models/doctor/doctorWalletModel";
+import { IBookedUser, IDoctorImageUpload, IDoctorKycRegisterInput, IMessageFromDoctor, IPrescriptionRequest, IPrescriptionResponse, IWalletTransaction, SlotInput } from "./doctorInterface";
+import { IBookingListResponseDTO } from "../../dtos/doctor.dto";
+
 
 export interface IDoctorService {
-  [x: string]: any
-  findRegisteredEmail(email: string): Promise<IDoctorModel | null>;
+
+  findRegisteredEmail(email: string): Promise<{ email?: string } | null>;
   register(email: string): Promise<void>;
   doctorLogin(email: string): Promise<void>;
 
@@ -26,18 +28,19 @@ export interface IDoctorService {
   resendOTP(): Promise<void>;
 
   doctorKycRegister(
-    doctorData: any,
-    imgObject: any
-  ): Promise<void | IDoctorModel | null>;
+    doctorData: IDoctorKycRegisterInput,
+    imgObject: IDoctorImageUpload
+  ): Promise<void | string | null>;
 
   getDepartments(): Promise<Pick<IDepartment, "departmentName">[]>;
 
   updateDoctorProfile(
-    doctorData: any,
-    imgObject: any
+    doctorData: IDoctorModel,
+    imgObject: { profileImage: string }
   ): Promise<void | IDoctorModel | null>;
 
-  addDoctorSlots(slotData: any): Promise<{
+
+  addDoctorSlots(slotData: SlotInput): Promise<{
     success: boolean;
     message: string;
   }>;
@@ -57,34 +60,38 @@ export interface IDoctorService {
     doctorId: string,
     page: number,
     limit: number
-  ): Promise<{
-    bookings: IBooking[];
-    totalPages: number;
-  }>;
+  ): Promise<IBookingListResponseDTO>;
 
   getWalletData(
     doctorId: string,
     page: number,
     limit: number
   ): Promise<{
-    wallet: IWallet & { transactions: any[] };
+    wallet: IWallet & { transactions: IWalletTransaction[] };
     totalPages: number;
   }>;
 
-  deleteSlot(slotId: string): Promise<any>;
+  deleteSlot(slotId: string): Promise<string>;
 
-  getBookedUsers(doctorId: string): Promise<any[]>;
+  getBookedUsers(doctorId: string): Promise<IBookedUser[]>;
 
-  saveMessages(messageData: any): Promise<any>;
+
+  saveMessages(messageData: {
+    senderId: string;
+    receiverId: string;
+    message: string;
+    image: string | null;
+  }): Promise<IMessageFromDoctor>;
+
 
   getMessages(
     receiverId: string,
     senderId: string
-  ): Promise<any[]>;
+  ): Promise<IMessageFromDoctor[]>;
 
-  savePrescription(presData: any): Promise<void | Error>;
+  savePrescription(presData: IPrescriptionRequest): Promise<string>;
 
-  getPrescription(bookingId: string): Promise<any>;
+  getPrescription(bookingId: string): Promise<IPrescriptionResponse>;
 
   doctorDashBoard(doctorId: string): Promise<{
     totalAppointments: number;

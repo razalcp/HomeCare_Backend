@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { Request, Response, NextFunction } from 'express'
-import HTTP_statusCode from '../enums/httpStatusCode'
+
 
 const secret_key = process.env.jwt_secret as string;
 const accessTokenTime = process.env.Access_Token_Expirey_Time as string;

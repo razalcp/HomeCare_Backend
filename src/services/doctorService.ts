@@ -3,6 +3,9 @@ import IDoctorReprository from "../interfaces/doctor/IDoctorReprository";
 import sendEmail from "../config/email_config";
 import { createToken, createRefreshToken } from "../config/jwt_config";
 import { IDoctorService } from "../interfaces/doctor/IDoctorService";
+import { IDoctorImageUpload, IDoctorKycRegisterInput, IMessageFromDoctor, IPrescriptionRequest, SlotInput } from "../interfaces/doctor/doctorInterface";
+import { IBookingListResponseDTO } from "../dtos/doctor.dto";
+import { mapBookingToDTO } from "../mappers/doctor.mapper";
 
 class DoctorService implements IDoctorService {
     private doctorReprository: IDoctorReprository
@@ -15,7 +18,7 @@ class DoctorService implements IDoctorService {
         this.doctorReprository = doctorReprository
     }
 
-    findRegisteredEmail = async (email: any) => {
+    findRegisteredEmail = async (email: string) => {
         return await this.doctorReprository.findByEmail(email)
     }
 
@@ -83,8 +86,6 @@ class DoctorService implements IDoctorService {
     }
 
     otpVerification = async (enteredOtp: string) => {
-
-
         try {
             if (enteredOtp !== this.OTP) {
 
@@ -110,8 +111,6 @@ class DoctorService implements IDoctorService {
             return { doctorData, doctorToken, doctorRefreshToken }
 
         } catch (error) {
-
-
             throw error
         }
     }
@@ -143,6 +142,7 @@ class DoctorService implements IDoctorService {
 
             const doctorRefreshToken = createRefreshToken(doctorData._id?.toString() || "", process.env.doctorRole as string);
 
+
             return { doctorData, doctorToken, doctorRefreshToken }
 
         } catch (error) {
@@ -170,40 +170,49 @@ class DoctorService implements IDoctorService {
         }
     };
 
-    doctorKycRegister = async (doctorData: any, imgObject: any) => {
+    doctorKycRegister = async (doctorData: IDoctorKycRegisterInput, imgObject: IDoctorImageUpload) => {
         try {
-
-
             const saveDoctorData = await this.doctorReprository.doctorRepoKycRegister(doctorData, imgObject)
-
-            return saveDoctorData
-        } catch (error: any) {
-
-            throw new Error(error.message)
+            return saveDoctorData?.kycStatus?.toString() ?? null;
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                throw new Error(error.message);
+            } else {
+                throw new Error("An unexpected error occurred");
+            }
         }
     }
+
     getDepartments = async () => {
         const getDeptData = await this.doctorReprository.getDepartments()
         return getDeptData
     }
 
-    updateDoctorProfile = async (doctorData: any, imgObject: any) => {
+    updateDoctorProfile = async (doctorData: IDoctorModel, imgObject: { profileImage: string }) => {
         try {
             const updateDoctorData = await this.doctorReprository.updateDoctor(doctorData, imgObject)
             return updateDoctorData;
-        } catch (error: any) {
-
-            throw new Error(error.message)
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                throw new Error(error.message);
+            } else {
+                throw new Error("An unknown error occurred during profile update.");
+            }
         }
-    }
-    addDoctorSlots = async (slotData: any) => {
+    };
+
+    addDoctorSlots = async (slotData: SlotInput) => {
+
         try {
             const updateSlotData = await this.doctorReprository.addDoctorSlots(slotData)
 
             return updateSlotData
 
-        } catch (error: any) {
-            throw error
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                throw new Error(error.message);
+            }
+            throw new Error("An unexpected error occurred");
         }
 
     };
@@ -219,9 +228,15 @@ class DoctorService implements IDoctorService {
 
 
 
-    getMyBookings = async (doctorId: string, page: number, limit: number) => {
-        return await this.doctorReprository.getMyBookings(doctorId, page, limit);
+    getMyBookings = async (doctorId: string, page: number, limit: number): Promise<IBookingListResponseDTO> => {
+        const result = await this.doctorReprository.getMyBookings(doctorId, page, limit);
+
+        return {
+            bookings: result.bookings.map(mapBookingToDTO),
+            totalPages: result.totalPages,
+        };
     };
+
 
     getWalletData = async (doctorId: string, page: number, limit: number) => {
         try {
@@ -232,15 +247,19 @@ class DoctorService implements IDoctorService {
         }
     };
 
-    deleteSlot = async (slotId: string) => {
+    deleteSlot = async (slotId: string): Promise<string> => {
         try {
             const update = await this.doctorReprository.deleteSlot(slotId)
             return update
         } catch (error) {
-            return error
+            if (error instanceof Error) {
+                throw new Error(error.message);
+            }
+            throw new Error("Unknown error occurred while deleting the slot.");
         }
 
     };
+
     getBookedUsers = async (doctorId: string) => {
         try {
             const userData = await this.doctorReprository.getBookedUser(doctorId)
@@ -250,9 +269,8 @@ class DoctorService implements IDoctorService {
         }
     };
 
-    saveMessages = async (messageData: any) => {
+    saveMessages = async (messageData: IMessageFromDoctor) => {
         try {
-
             const saveData = await this.doctorReprository.saveMessages(messageData)
             return saveData
         } catch (error) {
@@ -263,22 +281,22 @@ class DoctorService implements IDoctorService {
     getMessages = async (receiverId: string, senderId: string) => {
         try {
             const messageData = await this.doctorReprository.findMessage(receiverId, senderId)
-
             return messageData
         } catch (error) {
             return error
         }
-    }
+    };
 
 
-    savePrescription = async (presData: any) => {
+    savePrescription = async (presData: IPrescriptionRequest) => {
         try {
             const saveData = await this.doctorReprository.savePrescription(presData)
             return saveData
         } catch (error) {
             return error
         }
-    }
+    };
+
     getPrescription = async (bookingId: string) => {
         try {
             const prescriptionData = await this.doctorReprository.getPrescription(bookingId)
@@ -286,7 +304,8 @@ class DoctorService implements IDoctorService {
         } catch (error) {
             return error
         }
-    }
+    };
+
     doctorDashBoard = async (doctorId: string) => {
         try {
             const dashData = await this.doctorReprository.doctorDashboard(doctorId)
@@ -296,15 +315,7 @@ class DoctorService implements IDoctorService {
         }
     };
 
-    updateDepartment = async (departmentId: string, departmentName: string) => {
-        try {
-            const updateData = await this.doctorReprository.updateDepartment(departmentId, departmentName)
-            return updateData
-        } catch (error) {
-            return error
-        }
-    }
 
 }
 
-export default DoctorService
+export default DoctorService;

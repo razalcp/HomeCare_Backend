@@ -26,7 +26,7 @@ const adminAuthMiddleware = (req: Request, res: Response, next: NextFunction) =>
             const newAccessToken = createToken(decoded.user_id, decoded.role);
 
             // Set new access token in cookies
-            res.cookie("AdminAccessToken", newAccessToken, { httpOnly: true, secure: true });
+            res.cookie("adminAccessToken", newAccessToken, { httpOnly: true, secure: true });
 
             // Attach user data to request object
             (req as any).user = decoded;
@@ -45,11 +45,9 @@ const adminAuthMiddleware = (req: Request, res: Response, next: NextFunction) =>
 
 
         if ((req as any).user.role === 'admin') {
-            console.log("admn cond");
-
             next();
         }
-        // next();
+       
     } catch (error) {
         res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid access token." });
         return

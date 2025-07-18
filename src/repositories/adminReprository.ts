@@ -4,17 +4,22 @@ import { IDepartment } from '../models/admin/departmentModel'
 import { IDoctor } from '../models/doctor/doctorModel'
 import { IUserModel } from '../interfaces/user/userModelInterface'
 import { IAdminWallet } from '../models/admin/adminWalletModel'
+import IDoctorModel from '../interfaces/doctor/doctorModelInterface'
+import { IAdminRepository } from '../interfaces/admin/IAdminRepository'
+import { IAdminAuth, IDoctorData } from '../interfaces/admin/AdminInterface'
+import { IWallet } from '../models/doctor/doctorWalletModel'
+import { IBooking } from '../models/user/bookingModel'
 
 
-class AdminReprository {
+class AdminReprository implements IAdminRepository {
     private adminModel: Model<IAdmin>
     private departmentModel: Model<IDepartment>
     private doctorModel: Model<IDoctor>
     private userModel: Model<IUserModel>
     private adminWalletModel: Model<IAdminWallet>
-    private doctorWalletModel: any
-    private bookingModel: any
-    constructor(adminModel: Model<IAdmin>, departmentModel: Model<IDepartment>, doctorModel: Model<IDoctor>, userModel: Model<IUserModel>, adminWalletModel: Model<IAdminWallet>, doctorWalletModel: any, bookingModel: any) {
+    private doctorWalletModel: Model<IWallet>
+    private bookingModel: Model<IBooking>
+    constructor(adminModel: Model<IAdmin>, departmentModel: Model<IDepartment>, doctorModel: Model<IDoctor>, userModel: Model<IUserModel>, adminWalletModel: Model<IAdminWallet>, doctorWalletModel: Model<IWallet>, bookingModel: Model<IBooking>) {
 
 
         this.adminModel = adminModel
@@ -26,20 +31,23 @@ class AdminReprository {
         this.bookingModel = bookingModel
     }
 
-    getEmailAndPassword = async (email: String, password: String) => {
+    getEmailAndPassword = async (email: string): Promise<IAdminAuth | null> => {
+        const admin = await this.adminModel.findOne({ email });
 
-        return await this.adminModel.findOne({ email });
+        if (!admin) return null;
 
-
+        return {
+            _id: admin._id,
+            email: admin.email,
+            password: admin.password,
+        };
     };
+
 
     addDepartments = async (dept: String) => {
         try {
-
             const data = await this.departmentModel.findOne({ departmentName: dept })
-
             if (data === null) {
-
                 try {
                     const obj = { departmentName: dept };
                     await this.departmentModel.create(obj);
@@ -62,7 +70,7 @@ class AdminReprository {
             const skip = (page - 1) * limit;
 
             const [data, totalCount] = await Promise.all([
-                this.departmentModel.find().skip(skip).limit(limit),
+                this.departmentModel.find().sort({ _id: -1 }).skip(skip).limit(limit).lean(),
                 this.departmentModel.countDocuments()
             ]);
 
@@ -78,14 +86,13 @@ class AdminReprository {
     };
 
 
-    updateListUnlist = async (departmentName: String) => {
+    updateListUnlist = async (departmentName: string) => {
         try {
 
             const department = await this.departmentModel.findOne({ departmentName });
 
             if (!department) {
-
-                return null;
+                return [];
             }
             department.isListed = !department.isListed;
             const updatedDepartment = await department.save();
@@ -96,13 +103,26 @@ class AdminReprository {
         }
     };
 
+
     getDoctors = async (page: number, limit: number) => {
         try {
             const skip = (page - 1) * limit;
 
+            const query = {
+                name: { $exists: true, $ne: "" },
+                degree: { $exists: true, $ne: "" },
+                profileImage: { $exists: true, $ne: "" },
+                medicalLicenceNumber: { $exists: true, $ne: "" }
+            };
+
             const [data, totalCount] = await Promise.all([
-                this.doctorModel.find().skip(skip).limit(limit),
-                this.doctorModel.countDocuments()
+                this.doctorModel
+                    .find(query)
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean<IDoctorModel[]>(),
+                this.doctorModel.countDocuments(query)
             ]);
 
             return {
@@ -117,18 +137,20 @@ class AdminReprository {
     };
 
 
-    updateKycStatus = async (status: String, doctorId: String) => {
+
+    updateKycStatus = async (status: string, doctorId: string): Promise<IDoctorData | null> => {
         try {
 
             const updatedDoctor = await this.doctorModel.findByIdAndUpdate(
                 doctorId,
-                { $set: { kycStatus: status } }, // Updating the kycStatus field
+                { $set: { kycStatus: status } },
                 { new: true } // Return the updated document
-            );
-            return updatedDoctor
+            )
+
+            return updatedDoctor as IDoctorData | null;
 
         } catch (error) {
-
+            throw error;
         }
     };
 
@@ -141,6 +163,7 @@ class AdminReprository {
                 this.userModel.find().skip(skip).limit(limit),
                 this.userModel.countDocuments()
             ]);
+
 
             return {
                 data,
@@ -156,7 +179,6 @@ class AdminReprository {
 
     updateuserIsBlocked = async (buttonName: string, id: string) => {
         try {
-
             const isUserBlocked = buttonName === "Block";
 
             // Update the document and return the updated user.
@@ -165,9 +187,7 @@ class AdminReprository {
                 { isUserBlocked },
                 { new: true }
             );
-
-
-            return updatedUser;
+            return buttonName
         } catch (error) {
             console.error("Error updating user block status:", error);
             throw error;
@@ -368,6 +388,32 @@ class AdminReprository {
         );
 
         return sortedData;
+    };
+
+    updateDepartment = async (departmentId: string, departmentName: string) => {
+        try {
+            const updatedDepartment = await this.departmentModel.findByIdAndUpdate(
+                departmentId,
+                { departmentName },
+                { new: true } // returns the updated document
+            );
+
+            if (!updatedDepartment) {
+                throw new Error("Department not found");
+            }
+
+            return {
+                _id: updatedDepartment._id.toString(),
+                departmentName: updatedDepartment.departmentName,
+                isListed: updatedDepartment.isListed,
+            };
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                throw new Error(error.message);
+            } else {
+                throw new Error("Failed to update department");
+            }
+        }
     };
 
 

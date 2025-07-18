@@ -1,37 +1,38 @@
 import { Document, Schema, Types, model } from 'mongoose';
 
 export interface ITransaction {
- amount: number;
- transactionId: string;
- transactionType: 'credit' | 'debit';
- date?: Date;
- appointmentId?: string;
+    _id: Types.ObjectId;
+    amount: number;
+    transactionId: string;
+    transactionType: 'credit' | 'debit';
+    date?: Date;
+    appointmentId?: string;
 }
 
 export interface IAdminWallet extends Document {
- _id: Types.ObjectId;
- adminId: string;
- balance: number;
- transactions: ITransaction[];
- createdAt?: Date;
- updatedAt?: Date;
+    _id: Types.ObjectId;
+    adminId: string;
+    balance: number;
+    transactions: ITransaction[];
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 const transactionSchema = new Schema<ITransaction>({
- amount: { type: Number, required: true },
- transactionId: { type: String, required: true },
- transactionType: { type: String, enum: ['credit', 'debit'], required: true },
- appointmentId: { type: String, default: '' },
- date: { type: Date, default: Date.now },
+    amount: { type: Number, required: true },
+    transactionId: { type: String, required: true },
+    transactionType: { type: String, enum: ['credit', 'debit'], required: true },
+    appointmentId: { type: String, default: '' },
+    date: { type: Date, default: Date.now },
 });
 
 const adminWalletSchema = new Schema<IAdminWallet>(
- {
-  adminId: { type: String, required: true },
-  balance: { type: Number, required: true, default: 0 },
-  transactions: [transactionSchema],
- },
- { timestamps: true }
+    {
+        adminId: { type: String, required: true },
+        balance: { type: Number, required: true, default: 0 },
+        transactions: [transactionSchema],
+    },
+    { timestamps: true }
 );
 
 export const adminWalletModel = model<IAdminWallet>('adminWallet', adminWalletSchema);

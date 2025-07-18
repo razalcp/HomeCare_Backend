@@ -35,7 +35,7 @@ export interface IDoctor extends Document {
   consultationFee?: number;
   certifications?: string[];
   isVerified: Boolean;
-  kycStatus?: String
+  kycStatus?: string
 
 }
 

@@ -1,6 +1,6 @@
 import { Schema, model, Document } from "mongoose";
 import { IUserModel } from "../../interfaces/user/userModelInterface";
-import { IMedicalRecords } from "../../interfaces/user/userInterface";
+
 
 const medicalRecordSchema = new Schema({
   fileName: { type: String },

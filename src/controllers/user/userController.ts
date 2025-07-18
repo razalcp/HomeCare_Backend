@@ -173,8 +173,11 @@ class userController {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      success_url: `https://home-care-frontend-five.vercel.app/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
-      cancel_url: "https://home-care-frontend-five.vercel.app/paymentFailed",
+      success_url: `http://localhost:1234/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
+      cancel_url: "http://localhost:1234/paymentFailed",
+
+      // success_url: `https://home-care-frontend-five.vercel.app/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
+      // cancel_url: "https://home-care-frontend-five.vercel.app/paymentFailed",
       customer_email: req.body.userEmail, // Optional: associate user with payment
       line_items: [
         {
@@ -205,7 +208,7 @@ class userController {
       const saveData = await this.userService.saveBookingToDb(slotId, userId, doctorId)
 
     } catch (error) {
-
+      throw error
     }
   }
 
@@ -423,6 +426,12 @@ class userController {
     }
   };
 
+  getDoctorSlotsForBooking = async (req: Request, res: Response) => {
+    const { doctorId } = req.params;
+    const getData = await this.userService.getDoctorSlotsForBooking(doctorId)
+    res.status(HTTP_statusCode.OK).json(getData);
+
+  };
 }
 
 

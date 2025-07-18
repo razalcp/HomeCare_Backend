@@ -8,7 +8,7 @@ import { IBooking } from "../models/user/bookingModel"
 import { IWallet } from "../models/doctor/doctorWalletModel"
 import BaseRepository from "./baseRepository"
 import { IUserModel } from "../interfaces/user/userModelInterface"
-import { log } from "console"
+
 
 
 class DoctorReprository extends BaseRepository<any> implements IDoctorReprository {
@@ -36,10 +36,10 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
     }
 
-    findByEmail = async (email: string): Promise<IDoctorModel | null> => {
+    findByEmail = async (email: string): Promise<{ email?: string } | null> => {
 
         try {
-            return await this.doctorModel.findOne({ email })
+            return await this.doctorModel.findOne({ email }).select('email').lean()
         } catch (error) {
             throw error
         }
@@ -58,9 +58,6 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     }
 
     doctorRepoKycRegister = async (doctorData: any, imgObject: any) => {
-
-
-
 
 
         const existingUser = await this.doctorModel.findOne({ email: doctorData.email })
@@ -84,7 +81,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
     };
 
-    updateDoctor = async (doctorData: any, imgObject: any) => {
+    updateDoctor = async (doctorData: IDoctorModel, imgObject: { profileImage: string }): Promise<void | IDoctorModel | null> => {
 
         const existingUser = await this.doctorModel.findOne({ email: doctorData.email })
 
@@ -209,6 +206,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             ]);
 
             const totalPages = Math.ceil(totalCount / limit);
+
             return { bookings, totalPages };
         } catch (error) {
             console.error("Error fetching paginated bookings:", error);
@@ -349,14 +347,20 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         }
     };
 
-    deleteSlot = async (slotId: string) => {
+    deleteSlot = async (slotId: string): Promise<string> => {
         try {
-            return await this.slotModel.findByIdAndDelete(slotId)
+            const deleted = await this.slotModel.findByIdAndDelete(slotId);
 
+            if (!deleted) {
+                throw new Error("Slot not found");
+            }
+
+            return "Slot deleted successfully";
         } catch (error) {
-            return error
+            throw error;
         }
-    }
+    };
+
 
     savePrescription = async (presData: any) => {
         try {
@@ -372,6 +376,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             }
             const newPrescription = new this.prescriptionModel(presData);
             await newPrescription.save();
+            return "Prescription added successfully"
         } catch (error) {
             return error
         }
@@ -449,25 +454,8 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         }
     };
 
-        updateDepartment = async (departmentId: string, departmentName: string) => {
-        try {
-            const updatedDepartment = await this.departmentModel.findByIdAndUpdate(
-                departmentId,
-                { departmentName },
-                { new: true } // returns the updated document
-            );
-
-            if (!updatedDepartment) {
-                throw new Error("Department not found");
-            }
-
-            return updatedDepartment;
-        } catch (error: any) {
-            throw new Error(error.message || "Failed to update department");
-        }
-    };
+    
 }
-
 
 
 export default DoctorReprository

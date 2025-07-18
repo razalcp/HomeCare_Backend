@@ -41,5 +41,5 @@ router.delete('/deleteSlot/:slotId', doctorAuthMiddleware, doctorController.dele
 router.post('/savePrescription', doctorAuthMiddleware, doctorController.savePrescription)
 router.get('/prescription', doctorAuthMiddleware, doctorController.getPrescription)
 router.get('/doctorDashBoard', doctorAuthMiddleware, doctorController.doctorDashBoard)
-router.patch('/editDepartment', doctorAuthMiddleware, doctorController.updateDepartment)
+
 export default router;

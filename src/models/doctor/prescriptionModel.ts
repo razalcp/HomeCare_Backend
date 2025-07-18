@@ -1,6 +1,6 @@
 import mongoose, { Schema, model, Document } from "mongoose";
 
-interface IMedication {
+export interface IMedication {
   name: string;
   dosage: string;
   count: string;

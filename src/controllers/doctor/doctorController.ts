@@ -81,8 +81,6 @@ class DoctorController {
         try {
             const { enteredOtp } = req.body
 
-
-
             const serviceResponse = await this.doctorService.verifyDoctorOtp(enteredOtp);
             res.cookie("doctorRefreshToken", serviceResponse.doctorRefreshToken, {
                 httpOnly: true,
@@ -97,8 +95,8 @@ class DoctorController {
                 secure: true,
                 maxAge: 15 * 60 * 1000,
             });
-
-            res.status(HTTP_statusCode.OK).json(serviceResponse);
+            const { doctorData } = serviceResponse;
+            res.status(HTTP_statusCode.OK).json({ doctorData });
         } catch (error: any) {
             if (error.message === "Incorrect OTP") {
                 res
@@ -180,8 +178,8 @@ class DoctorController {
 
 
             await this.doctorService.doctorKycRegister(doctorData, imgObject)
-            res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
-            res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
+            // res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
+            // res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
             res.status(200).json({ message: "Logged out successfully" });
         } catch (error: any) {
 
@@ -305,15 +303,6 @@ class DoctorController {
     };
 
 
-    // getWalletData = async (req: Request, res: Response) => {
-    //     try {
-    //         const { doctorId } = req.params;
-    //         const getData = await this.doctorService.getWalletData(doctorId)
-    //         res.status(HTTP_statusCode.OK).json(getData)
-    //     } catch (error) {
-    //         res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
-    //     }
-    // };
     getWalletData = async (req: Request, res: Response) => {
         try {
             const { doctorId } = req.params;
@@ -409,17 +398,6 @@ class DoctorController {
         }
     };
 
-    updateDepartment = async (req: Request, res: Response) => {
-        try {
-            const { departmentId, departmentName } = req.body
-          
-            let updatedData = await this.doctorService.updateDepartment(departmentId, departmentName)
-            res.status(HTTP_statusCode.OK).json(updatedData)
-        } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
-
-        }
-    }
 
 }
 

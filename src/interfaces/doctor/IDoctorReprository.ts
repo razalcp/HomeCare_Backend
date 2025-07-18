@@ -1,8 +1,7 @@
 import { IDepartment } from "../../models/admin/departmentModel"
-import { IWallet } from "../../models/doctor/doctorWalletModel"
 import { ISlot } from "../../models/doctor/slotModel"
-import { IBooking } from "../../models/user/bookingModel"
 import IDoctorModel from "./doctorModelInterface"
+
 
 interface IDoctorReprository {
     [x: string]: any
@@ -13,9 +12,14 @@ interface IDoctorReprository {
     findEmailForLogin(email: string): Promise<IDoctorModel | null>
     addDoctorSlots(slotData: ISlot | ISlot[]): Promise<{ success: boolean; message: string }>;
     getDoctorSlots(doctorId: string, page: number, limit: number): Promise<any>
-    updateDoctor(doctorId: string, updateData: Partial<IDoctorModel>, imgObject?: any): Promise<IDoctorModel | null | void>;
+    // updateDoctor(doctorId: string, updateData: Partial<IDoctorModel>, imgObject?: any): Promise<IDoctorModel | null | void>;
+    updateDoctor(
+        doctorData: IDoctorModel,
+        imgObject: { profileImage: string }
+    ): Promise<void | IDoctorModel | null>;
     getMyBookings(doctorId: string, page: number, limit: number): Promise<any>;
     getWalletData(doctorId: string, page: number, limit: number): Promise<any>;
+    deleteSlot(slotId: string): Promise<string>;
 }
 
 

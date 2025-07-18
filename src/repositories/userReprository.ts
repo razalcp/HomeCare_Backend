@@ -10,6 +10,7 @@ import { IAdminWallet } from "../models/admin/adminWalletModel";
 import { IUserWallet } from "../models/user/userWalletModel";
 import BaseRepository from "./baseRepository";
 
+
 class UserReprository extends BaseRepository<any> implements IUserRepository {
   private userModel = Model<IUserModel>;
   private doctorModel = Model<IDoctor>
@@ -661,7 +662,12 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
     } catch (error) {
       throw error
     }
-  }
+  };
+
+  getDoctorSlotsForBooking = async (doctorId: string) => {
+    return await this.slotModel.find({ doctorId, status: "Available" });
+  };
+
 
 };
 

@@ -1,6 +1,7 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 
-export interface IDepartment extends Document {
+export interface IDepartment {
+    _id: Types.ObjectId;
     departmentName: string;
     isListed: boolean;
 }

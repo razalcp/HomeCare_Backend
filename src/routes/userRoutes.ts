@@ -47,5 +47,5 @@ router.delete('/deleteMessage', authMiddleware, userController.deleteMessage)
 router.post('/walletBooking', authMiddleware, userController.walletBooking)
 router.post('/submitReview', authMiddleware, userController.submitReview)
 router.get('/reviewDetails', authMiddleware, userController.reviewDetails)
-
+router.get('/findDoctorSlots/:doctorId', authMiddleware, userController.getDoctorSlotsForBooking)
 export default router;

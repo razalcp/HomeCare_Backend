@@ -1,12 +1,12 @@
 import { Request, Response } from 'express'
 import AdminService from '../../services/adminService'
 import HTTP_statusCode from '../../enums/httpStatusCode'
-
+import IAdminService from '../../interfaces/admin/IAdminService';
 
 class AdminController {
-    private adminService: AdminService;
+    private adminService: IAdminService;
 
-    constructor(adminService: AdminService) {
+    constructor(adminService: IAdminService) {
         this.adminService = adminService
     }
 
@@ -26,7 +26,7 @@ class AdminController {
             res.cookie("adminAccessToken", serviceResponse?.adminToken, {
                 httpOnly: true,
                 sameSite: 'none',
-                secure:true,
+                secure: true,
                 maxAge: 15 * 60 * 1000,
             });
 
@@ -34,17 +34,25 @@ class AdminController {
             res.status(HTTP_statusCode.OK).json({ data: serviceResponse });
 
 
-        } catch (error: any) {
-            if (error.message === "Check Credentials") {
-                res.status(HTTP_statusCode.NotFound).json({ message: "Check Credentials" });
-            } else if (error.message === "Wrong password") {
-                res.status(HTTP_statusCode.Unauthorized).json({ message: "Wrong password" });
-            } else if (error.message === "User is blocked") {
-                res.status(HTTP_statusCode.NoAccess).json({ message: "User is blocked" });
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if (error.message === "Check Credentials") {
+                    res.status(HTTP_statusCode.NotFound).json({ message: "Check Credentials" });
+                } else if (error.message === "Wrong password") {
+                    res.status(HTTP_statusCode.Unauthorized).json({ message: "Wrong password" });
+                } else if (error.message === "User is blocked") {
+                    res.status(HTTP_statusCode.NoAccess).json({ message: "User is blocked" });
+                } else {
+                    res.status(HTTP_statusCode.InternalServerError).json({
+                        message: "Something went wrong, please reconnect internet and try again",
+                    });
+                }
             } else {
-                res.status(HTTP_statusCode.InternalServerError).json({ message: "Something wrong please re-connect internet and try again" });
-            };
-        };
+                res.status(HTTP_statusCode.InternalServerError).json({
+                    message: "Unexpected error occurred",
+                });
+            }
+        }
     }
 
     logoutAdmin = async (req: Request, res: Response) => {
@@ -180,7 +188,19 @@ class AdminController {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
 
         }
-    }
+    };
+
+    updateDepartment = async (req: Request, res: Response) => {
+        try {
+            const { departmentId, departmentName } = req.body
+
+            let updatedData = await this.adminService.updateDepartment(departmentId, departmentName)
+            res.status(HTTP_statusCode.OK).json(updatedData)
+        } catch (error) {
+            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+
+        }
+    };
 
 }
 

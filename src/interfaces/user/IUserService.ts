@@ -2,6 +2,7 @@ import { IUserAuth, IUser } from "./userInterface";
 import { IUserModel } from "./userModelInterface";
 
 export interface IUserService {
+    getDoctorSlotsForBooking(doctorId: string): unknown;
     register(userData: IUser): Promise<void>;
     otpVerification(enteredOtp: { enteredOtp: string }): Promise<void>;
     resendOTP(): Promise<void>;

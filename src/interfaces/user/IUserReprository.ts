@@ -1,10 +1,8 @@
 import { IUserModel } from "./userModelInterface";
 import { IUser, IUserAuth } from "./userInterface";
-import { IUserWallet } from "../../models/user/userWalletModel";
 
-// export interface ICancelBookingResponse {
-//     message: string;
-//   }
+
+
 
 export interface IUserRepository {
     register(userData: IUser): Promise<IUser>;

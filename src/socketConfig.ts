@@ -12,20 +12,19 @@ function getReceiverSocketId(receiverId: string) {
     return onlineuser[receiverId]
 }
 const startSocket = (server: HttpServer) => {
-    console.log("startSocket Worked");
 
     io = new SocketIoserver(server, {
         cors: {
-            origin: "https://home-care-frontend-five.vercel.app",
-            // origin: `http://localhost:1234`,
+            // origin: "https://home-care-frontend-five.vercel.app",
+            origin: `http://localhost:1234`,
             methods: ["GET", "POST"],
             credentials: true,
         },
     });
 
     io.on("connection", (socket) => {
-        console.log("A user connected:", socket.id);
-        console.log("Handshake:", socket.handshake.query.userId);
+        // console.log("A user connected:", socket.id);
+        // console.log("Handshake:", socket.handshake.query.userId);
         let userId
         if (socket.handshake.query.userId) {
             userId = socket.handshake.query.userId.toString()

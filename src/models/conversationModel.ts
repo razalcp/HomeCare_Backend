@@ -1,16 +1,26 @@
-import mongoose from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
-const conversationSchema = new mongoose.Schema(
+
+export interface IConversation extends Document {
+    participants: Types.ObjectId[];
+    messages: Types.ObjectId[];
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+
+const conversationSchema = new Schema<IConversation>(
     {
         participants: [
             {
-                type: mongoose.Schema.Types.ObjectId,
+                type: Schema.Types.ObjectId,
                 ref: "User",
+                required: true,
             },
         ],
         messages: [
             {
-                type: mongoose.Schema.Types.ObjectId,
+                type: Schema.Types.ObjectId,
                 ref: "Message",
                 default: [],
             },
@@ -19,6 +29,7 @@ const conversationSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-const conversationModel = mongoose.model("Conversation", conversationSchema);
+const conversationModel = model<IConversation>("Conversation", conversationSchema);
 
 export default conversationModel;
+

@@ -1,3 +1,4 @@
+import { IPrescriptionResponse } from "../doctor/doctorInterface";
 import { IUserAuth, IUser } from "./userInterface";
 import { IUserModel } from "./userModelInterface";
 
@@ -63,4 +64,6 @@ export interface IUserService {
     submitReview(reviewData: any): Promise<any>;
 
     reviewDetails(doctorId: string): Promise<any>;
+    getPrescription(bookingId: string): Promise<IPrescriptionResponse>;
+
 }

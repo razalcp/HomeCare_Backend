@@ -432,6 +432,19 @@ class userController {
     res.status(HTTP_statusCode.OK).json(getData);
 
   };
+
+  getPrescription = async (req: Request, res: Response) => {
+    try {
+      const { bookingId } = req.query
+
+      const presData = await this.userService.getPrescription(bookingId as string)
+
+      res.status(HTTP_statusCode.OK).json(presData)
+    } catch (error) {
+      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+
+    }
+  };
 }
 
 

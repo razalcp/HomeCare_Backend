@@ -1,5 +1,6 @@
 import { IUserModel } from "./userModelInterface";
 import { IUser, IUserAuth } from "./userInterface";
+import { IPrescriptionResponse } from "../doctor/doctorInterface";
 
 
 
@@ -28,5 +29,7 @@ export interface IUserRepository {
     saveWalletBookingToDb(slotId: string, userId: string, doctorId: string, doctorFees: number): Promise<string>
     reviewDetails(doctorId: string): Promise<any>
     submitReview(reviewData: any): Promise<any>
+    getPrescription(bookingId: string): Promise<IPrescriptionResponse>;
+
 }
 

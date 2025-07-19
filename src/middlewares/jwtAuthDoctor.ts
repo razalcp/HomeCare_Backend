@@ -1,56 +1,70 @@
+
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import HTTP_statusCode from '../enums/httpStatusCode';
-import { createToken, createRefreshToken } from '../config/jwt_config';
-
+import { createToken } from '../config/jwt_config';
 
 const secret_key = process.env.jwt_secret as string;
-const doctorAuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    // console.log("Cookies received in backend: doctor middleware", req.cookies)
 
+const doctorAuthMiddleware = (req: Request, res: Response, next: NextFunction): void => {
     const accessToken = req.cookies?.doctorAccessToken;
     const refreshToken = req.cookies?.doctorRefreshToken;
-
-    // console.log("Admin Access Token --->", accessToken);
-    // console.log("Admin  Refresh Token ---->", refreshToken);
 
     if (!accessToken) {
         if (!refreshToken) {
             res.status(HTTP_statusCode.Unauthorized).json({ message: "Access Denied. No token provided." });
-            return
+            return;
         }
 
         try {
-            // Verify refresh token and generate new access token
-            const decoded = jwt.verify(refreshToken, secret_key) as { user_id: string, role: string };
+            const decoded = jwt.verify(refreshToken, secret_key) as { user_id: string; role: string };
             const newAccessToken = createToken(decoded.user_id, decoded.role);
 
-            // Set new access token in cookies
-            res.cookie("doctorAccessToken", newAccessToken, { httpOnly: true, secure: true });
+            res.cookie("doctorAccessToken", newAccessToken, {
+                httpOnly: true,
+                sameSite: 'none',
+                secure: true,
+                maxAge: 15 * 60 * 1000,
+            });
 
-            // Attach user data to request object
             (req as any).user = decoded;
             next();
-            return
         } catch (error) {
             res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid refresh token." });
-            return
         }
+        return;
     }
 
     try {
-        const decoded = jwt.verify(accessToken, secret_key) as { user_id: string, role: string };
-        (req as any).user = decoded; // Attach user data to request object
-        // console.log("This is role", (req as any).user);
+        const decoded = jwt.verify(accessToken, secret_key) as { user_id: string; role: string };
+        (req as any).user = decoded;
 
-        if ((req as any).user.role === 'doctor') {
+        if (decoded.role === 'doctor') {
             next();
+        } else {
+            res.status(HTTP_statusCode.NoAccess).json({ message: "Access denied. Not a doctor." });
         }
+    } catch (error: any) {
+        if (error.name === 'TokenExpiredError' && refreshToken) {
+            try {
+                const decoded = jwt.verify(refreshToken, secret_key) as { user_id: string; role: string };
+                const newAccessToken = createToken(decoded.user_id, decoded.role);
 
-        // next();
-    } catch (error) {
-        res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid access token." });
-        return
+                res.cookie("doctorAccessToken", newAccessToken, {
+                    httpOnly: true,
+                    sameSite: 'none',
+                    secure: true,
+                    maxAge: 15 * 60 * 1000,
+                });
+
+                (req as any).user = decoded;
+                next();
+            } catch (refreshErr) {
+                res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid refresh token." });
+            }
+        } else {
+            res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid access token." });
+        }
     }
 };
 

@@ -298,14 +298,7 @@ class DoctorService implements IDoctorService {
         }
     };
 
-    getPrescription = async (bookingId: string) => {
-        try {
-            const prescriptionData = await this.doctorReprository.getPrescription(bookingId)
-            return prescriptionData
-        } catch (error) {
-            throw new Error('error in getting your prerscription' + error);
-        }
-    };
+
 
     doctorDashBoard = async (doctorId: string) => {
         try {

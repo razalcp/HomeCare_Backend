@@ -1,4 +1,3 @@
-import { Router } from 'express'
 import express from 'express'
 import DoctorController from '../controllers/doctor/doctorController'
 import DoctorService from '../services/doctorService'
@@ -9,15 +8,17 @@ import upload from '../config/multer_config'
 import DepartmentModel from '../models/admin/departmentModel'
 import doctorAuthMiddleware from '../middlewares/jwtAuthDoctor'
 import SlotModel from '../models/doctor/slotModel'
-import BookingModel from "../models/user/bookingModel";
+import BookingModel, { IBooking } from "../models/user/bookingModel";
 import doctorWalletModel from '../models/doctor/doctorWalletModel'
 import messageModel from '../models/messageModel'
-import conversationModel from '../models/conversationModel'
+import conversationModel, { IConversation } from '../models/conversationModel'
 import PrescriptionModel from '../models/doctor/prescriptionModel'
 import User from '../models/user/userModel'
+import { Model } from 'mongoose'
+import { IMessage } from '../models/messageModel'
 
 const router = express.Router()
-const doctorReprository = new DoctorReprository(DoctorModel as any, DepartmentModel, SlotModel as any, BookingModel as any, doctorWalletModel as any, messageModel as any, conversationModel as any, PrescriptionModel as any, User)
+const doctorReprository = new DoctorReprository(DoctorModel as any, DepartmentModel, SlotModel as any, BookingModel as Model<IBooking>, doctorWalletModel as any, messageModel as Model<IMessage>, conversationModel as Model<IConversation>, PrescriptionModel as any, User)
 const doctorService = new DoctorService(doctorReprository)
 const doctorController: any = new DoctorController(doctorService)
 
@@ -39,7 +40,7 @@ router.post('/saveMessages', doctorAuthMiddleware, upload.any(), doctorControlle
 router.get('/messages', doctorAuthMiddleware, doctorController.messages)
 router.delete('/deleteSlot/:slotId', doctorAuthMiddleware, doctorController.deleteSlot)
 router.post('/savePrescription', doctorAuthMiddleware, doctorController.savePrescription)
-router.get('/prescription', doctorAuthMiddleware, doctorController.getPrescription)
+
 router.get('/doctorDashBoard', doctorAuthMiddleware, doctorController.doctorDashBoard)
 
 export default router;

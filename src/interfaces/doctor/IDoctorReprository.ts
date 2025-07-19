@@ -56,7 +56,6 @@ interface IDoctorReprository {
 
     deleteSlot(slotId: string): Promise<string>;
     savePrescription(presData: IPrescriptionRequest): Promise<string>;
-    getPrescription(bookingId: string): Promise<IPrescriptionResponse>;
     doctorDashboard(doctorId: string): Promise<IDoctorDashboard>;
 
 }

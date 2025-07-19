@@ -264,6 +264,15 @@ class UserService implements IUserService {
     const getSlots = await this.userReprository.getDoctorSlotsForBooking(doctorId)
     return getSlots
   };
+
+  getPrescription = async (bookingId: string) => {
+    try {
+      const prescriptionData = await this.userReprository.getPrescription(bookingId)
+      return prescriptionData
+    } catch (error) {
+      throw new Error('error in getting your prerscription' + error);
+    }
+  };
 }
 
 export default UserService;

@@ -33,12 +33,12 @@ export interface IDoctorImageUpload {
 export type SlotInput = ISlot | ISlot[];
 
 export interface IWalletTransaction {
-    _id: string;
+    _id: Types.ObjectId;
     amount: number;
     transactionId: string;
     transactionType: "credit" | "debit";
-    appointmentId: string;
-    date: string; // ISO date string
+    appointmentId?: string;
+    date?: Date;
 }
 
 
@@ -52,7 +52,7 @@ interface IBookedDoctorSlot {
 
 export interface IBookedUser {
     bookingId: string;
-    _id: string;
+    _id: Types.ObjectId;
     name: string;
     email: string;
     mobile: string;
@@ -65,13 +65,13 @@ export interface IBookedUser {
 };
 
 export interface IMessageFromDoctor {
-    _id: string;
+    _id: Types.ObjectId;
     senderId: string;
     receiverId: string;
     message: string;
     image: string | null;
-    createdAt: string;
-    updatedAt: string;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface IPrescriptionRequest {
@@ -107,19 +107,32 @@ export interface IBooking {
     __v?: number;
 }
 
+export interface IBookingLean {
+    doctorId: Types.ObjectId;
+    userId: Types.ObjectId;
+    slotId: Types.ObjectId;
+    paymentStatus: "processing" | "paid" | "failed" | "refunded";
+    bookingStatus: "processing" | "booked" | "cancelled";
+    consultationStatus: "pending" | "completed";
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 export interface IGetMyBookingsResponse {
-    bookings: IBooking[];
+    bookings: IBookingLean[];
     totalPages: number;
 }
 
 export interface IWalletResponse {
-    _id: string;
+    _id: Types.ObjectId;
     doctorId: string;
     balance: number;
     transactions: IWalletTransaction[];
     createdAt: Date;
     updatedAt: Date;
 }
+
+export type PopulatedBookingDashBoard = IBooking & { slotId: ISlot };
 
 
 export interface IUpcomingAppointment {
@@ -130,9 +143,9 @@ export interface IUpcomingAppointment {
     paymentStatus: 'paid' | 'refunded';
     bookingStatus: 'booked' | 'cancelled';
     consultationStatus: 'completed' | 'pending';
-    createdAt: Date;
-    updatedAt: Date;
-    __v: number;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    __v?: number;
 }
 
 export interface IDoctorDashboard {
@@ -140,4 +153,46 @@ export interface IDoctorDashboard {
     activePatients: number;
     upcomingAppointments: IUpcomingAppointment[];
     doctorRevenue: number;
+}
+
+export type PopulatedBooking = IBooking & {
+    userId: IUserModel;
+    slotId: ISlot;
+};
+
+export interface IMessage {
+    _id?: Types.ObjectId;
+    senderId: Types.ObjectId;
+    receiverId: Types.ObjectId;
+    message?: string;
+    image?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+
+export interface IUserBooked {
+    _id: Types.ObjectId;
+    name: string;
+    email: string;
+    mobile: string;
+    profileIMG?: string;
+    bloodGroup?: string;
+    age?: number;
+    gender?: string;
+}
+
+export interface IBookedSlot {
+    _id: Types.ObjectId;
+    date: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+}
+
+export interface IBookingWithPopulatedFields {
+    _id: Types.ObjectId;
+    userId: IUserBooked;
+    slotId: IBookedSlot;
+    consultationStatus: "pending" | "completed" | "cancelled";
 }

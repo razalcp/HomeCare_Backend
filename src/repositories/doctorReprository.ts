@@ -1,29 +1,32 @@
 
 import IDoctorModel from "../interfaces/doctor/doctorModelInterface"
 import IDoctorReprository from "../interfaces/doctor/IDoctorReprository"
-import mongoose, { Model } from 'mongoose'
+import mongoose, { Model, Types } from 'mongoose'
 import { IDepartment } from "../models/admin/departmentModel"
 import { ISlot } from "../models/doctor/slotModel"
 import { IBooking } from "../models/user/bookingModel"
 import { IWallet } from "../models/doctor/doctorWalletModel"
 import BaseRepository from "./baseRepository"
 import { IUserModel } from "../interfaces/user/userModelInterface"
-import { IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IGetMyBookingsResponse, IPrescriptionRequest, IUpcomingAppointment, IWalletTransaction } from "../interfaces/doctor/doctorInterface"
-
+import { IBookedUser, IBookingLean, IBookingWithPopulatedFields, IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IGetMyBookingsResponse, IMessageFromDoctor, IPrescriptionRequest, IUpcomingAppointment, IWalletTransaction, PopulatedBookingDashBoard } from "../interfaces/doctor/doctorInterface"
+import { PopulatedBooking } from "../interfaces/doctor/doctorInterface"
+import { IMessage } from "../models/messageModel"
+import { IConversation } from "../models/conversationModel"
+import { IPrescription } from "../models/doctor/prescriptionModel"
 
 
 class DoctorReprository extends BaseRepository<any> implements IDoctorReprository {
     private doctorModel: Model<IDoctorModel>
     private departmentModel: Model<IDepartment>
     private slotModel: Model<ISlot>
-    private bookingModel = Model<IBooking>
-    private doctorWalletModel = Model<IWallet>
-    private messageModel = Model as any
-    private conversationModel = Model as any
-    private prescriptionModel = Model as any
+    private bookingModel: Model<IBooking>
+    private doctorWalletModel: Model<IWallet>
+    private messageModel: Model<IMessage>
+    private conversationModel: Model<IConversation>
+    private prescriptionModel: Model<IPrescription>
     private userModel: Model<IUserModel>
 
-    constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, messageModel: any, conversationModel: any, prescriptionModel: any, userModel: Model<IUserModel>) {
+    constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, messageModel: Model<IMessage>, conversationModel: Model<IConversation>, prescriptionModel: Model<IPrescription>, userModel: Model<IUserModel>) {
         super(doctorModel)
         this.doctorModel = doctorModel
         this.departmentModel = departmentModel
@@ -153,9 +156,14 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             }
 
             return { success: true, message: "Slot(s) added successfully" };
-        } catch (error: any) {
-            throw new Error(error.message)
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                throw new Error(error.message);
+            } else {
+                throw new Error("An unknown error occurred");
+            }
         }
+
     };
 
     getDoctorSlotsForBooking = async (doctorId: string) => {
@@ -184,7 +192,8 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                     .limit(limit)
                     .populate('doctorId')
                     .populate('slotId')
-                    .populate('userId'),
+                    .populate('userId')
+                    .lean<IBookingLean[]>(),
                 this.bookingModel.countDocuments({ doctorId })
             ]);
 
@@ -220,8 +229,8 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                     doctorId: wallet.doctorId,
                     balance: wallet.balance,
                     transactions: paginatedTransactions,
-                    createdAt: wallet.createdAt,
-                    updatedAt: wallet.updatedAt
+                    createdAt: wallet.createdAt ?? new Date(),
+                    updatedAt: wallet.updatedAt ?? new Date(),
                 },
                 totalPages: Math.ceil(totalTransactions / limit),
             };
@@ -231,44 +240,42 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         }
     };
 
-    getBookedUsers = async (doctorId: string) => {
+    getBookedUsers = async (doctorId: string): Promise<IBookedUser[]> => {
         try {
             const bookings = await this.bookingModel.find({ doctorId })
                 .populate('userId')
                 .populate('slotId')   // only select needed fields
-                .exec();
+                .exec() as unknown as PopulatedBooking[];
 
             // Extract user data from populated bookings
 
-            const users = bookings.map(booking => {
-                const user = booking.userId as any;
-                const slot = booking.slotId as any;
+            const users = ((bookings as unknown) as IBookingWithPopulatedFields[]).map((booking) => {
+                const user = booking.userId;
+                const slot = booking.slotId;
 
                 return {
-                    bookingId: booking._id,
+                    bookingId: booking._id.toString(),
                     _id: user._id,
                     name: user.name,
                     email: user.email,
                     mobile: user.mobile,
-                    profileIMG: user.profileIMG,
-                    bloodGroup: user.bloodGroup,
-                    age: user.age,
-                    gender: user.gender,
+                    profileIMG: user.profileIMG ?? "",
+                    bloodGroup: user.bloodGroup ?? "",
+                    age: user.age ?? 0,
+                    gender: user.gender ?? "Not specified",
                     consultationStatus: booking.consultationStatus,
-
-                    // Include slot info
                     slotId: {
-                        _id: slot._id,
+                        _id: slot._id.toString(),
                         date: slot.date,
                         startTime: slot.startTime,
                         endTime: slot.endTime,
-                        status: slot.status,
-                    }
+                        status: slot.status as "Available" | "Booked" | "Cancelled",
+                    },
                 };
+
             });
 
             return users;
-
 
         } catch (error) {
             throw new Error('Failed to fetch booked user data');
@@ -303,7 +310,17 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             conversation.messages.push(newMessage._id);
             await conversation.save();
 
-            return newMessage;
+            return {
+                _id: newMessage._id as Types.ObjectId,
+                senderId: newMessage.senderId.toString(),
+                receiverId: newMessage.receiverId.toString(),
+                message: newMessage.message ?? '',
+                image: newMessage.image ?? null,
+                createdAt: newMessage.createdAt!,
+                updatedAt: newMessage.updatedAt!,
+            };
+
+
         } catch (error) {
             console.error("Error in saveMessages:", error);
             throw error;
@@ -311,20 +328,34 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     };
 
 
-
-    findMessage = async (receiverId: string, senderId: string) => {
+    findMessage = async (
+        receiverId: string,
+        senderId: string
+    ): Promise<IMessageFromDoctor[]> => {
         try {
-            const conversation = await this.conversationModel.findOne({
-                participants: { $all: [receiverId, senderId] },
-            }).populate('messages');
+            const conversation = await this.conversationModel
+                .findOne({
+                    participants: { $all: [receiverId, senderId] },
+                })
+                .populate("messages");
 
             if (!conversation) {
                 return [];
             }
 
-            return conversation.messages;
+            const messages = conversation.messages as unknown as IMessage[];
+
+            return messages.map((msg) => ({
+                _id: msg._id,
+                senderId: msg.senderId.toString(),
+                receiverId: msg.receiverId.toString(),
+                message: msg.message ?? "",
+                image: msg.image ?? null,
+                createdAt: msg.createdAt,
+                updatedAt: msg.updatedAt,
+            }));
         } catch (error) {
-            console.error('Error finding conversation:', error);
+            console.error("Error finding conversation:", error);
             throw error;
         }
     };
@@ -364,16 +395,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         }
     };
 
-    getPrescription = async (bookingId: string) => {
-        try {
-            const data = await this.prescriptionModel.findOne({ bookingId });
 
-            return data
-        } catch (error) {
-            console.error("Error fetching prescription:", error);
-            throw error;
-        }
-    }
 
     doctorDashboard = async (doctorId: string): Promise<IDoctorDashboard> => {
 
@@ -398,7 +420,9 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                     },
                 })
                 .sort({ "slotId.date": 1 })
-                .lean();
+                .lean()
+                .exec() as unknown as PopulatedBookingDashBoard[];
+
 
             // Filter out bookings where slotId didn't match (populate returns null)
             const filtered = upcomingAppointments.filter(b => b.slotId);
@@ -416,10 +440,32 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
             const doctorRevenue = revenueResult[0]?.totalRevenue || 0;
 
+
+            const mappedAppointments: IUpcomingAppointment[] = filtered.map(booking => ({
+                _id: new Types.ObjectId(booking._id),
+                doctorId: booking.doctorId as Types.ObjectId,
+                userId: new Types.ObjectId(
+                    typeof booking.userId === 'string' ? booking.userId : (booking.userId as IUserModel)._id
+                ),
+                slotId: booking.slotId as ISlot,
+                paymentStatus: booking.paymentStatus === "paid" || booking.paymentStatus === "refunded"
+                    ? booking.paymentStatus
+                    : "paid", // fallback
+                bookingStatus: booking.bookingStatus === "booked" || booking.bookingStatus === "cancelled"
+                    ? booking.bookingStatus
+                    : "booked",
+                consultationStatus: booking.consultationStatus === "completed"
+                    ? "completed"
+                    : "pending",
+                createdAt: new Date(booking.createdAt),
+                updatedAt: new Date(booking.updatedAt),
+                __v: booking.__v ?? 0
+            }));
+
             return {
                 totalAppointments: totalAppointments,
                 activePatients: activePatients,
-                upcomingAppointments: filtered as IUpcomingAppointment[],
+                upcomingAppointments: mappedAppointments,
                 doctorRevenue: doctorRevenue
 
             }

@@ -16,10 +16,10 @@ import upload from '../config/multer_config'
 import conversationModel from '../models/conversationModel'
 import messageModel from '../models/messageModel'
 import ReviewModel from "../models/user/reviewModel";
+import PrescriptionModel, { IPrescription } from '../models/doctor/prescriptionModel'
 
 
-
-const userReprository = new UserReprository(User, DoctorModel as any, SlotModel as any, BookingModel as any, doctorWalletModel as any, AdminWalletModel as any, userWalletModel as any, conversationModel as any, messageModel as any, ReviewModel as any);
+const userReprository = new UserReprository(User, DoctorModel as any, SlotModel as any, BookingModel as any, doctorWalletModel as any, AdminWalletModel as any, userWalletModel as any, conversationModel as any, messageModel as any, ReviewModel as any,PrescriptionModel as Modal<IPrescription>);
 const userService = new UserService(userReprository as any);
 const userController = new UserController(userService);
 
@@ -48,4 +48,5 @@ router.post('/walletBooking', authMiddleware, userController.walletBooking)
 router.post('/submitReview', authMiddleware, userController.submitReview)
 router.get('/reviewDetails', authMiddleware, userController.reviewDetails)
 router.get('/findDoctorSlots/:doctorId', authMiddleware, userController.getDoctorSlotsForBooking)
+router.get('/prescription', authMiddleware, userController.getPrescription)
 export default router;

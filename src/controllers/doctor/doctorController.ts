@@ -1,12 +1,9 @@
-
-
 import { Request, Response } from 'express'
-import DoctorService from '../../services/doctorService'
 import HTTP_statusCode from '../../enums/httpStatusCode'
 import cloudinary from '../../config/cloudinary_config'
-import { Express } from 'express'
 import multer from 'multer';
 import { IDoctorService } from '../../interfaces/doctor/IDoctorService'
+import { IDoctorRequestData } from '../../interfaces/doctor/doctorControllerInterface';
 
 class DoctorController {
     private doctorService: IDoctorService
@@ -30,29 +27,28 @@ class DoctorController {
             await this.doctorService.doctorLogin(email)
             res.status(HTTP_statusCode.OK).send("OTP Sent to mail")
 
-        } catch (error: any) {
-
-            if (error.message === "Email not Registered") {
-                res.status(HTTP_statusCode.NotFound).json({ message: "Email not Registered" });
-            } else if (error.message === "Your Kyc Verification is Rejected") {
-                res.status(HTTP_statusCode.NotFound).json({ message: "Your Kyc Verification is Rejected" });
-
-            } else if (error.message === "Your Kyc Request is Under Review. Please Wait for Conformation Email") {
-                res.status(HTTP_statusCode.NotFound).json({ message: "Your Kyc Request is Under Review. Please Wait for Conformation Email" });
-
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if (error.message === "Email not Registered") {
+                    res.status(HTTP_statusCode.NotFound).json({ message: "Email not Registered" });
+                } else if (error.message === "Your Kyc Verification is Rejected") {
+                    res.status(HTTP_statusCode.NotFound).json({ message: "Your Kyc Verification is Rejected" });
+                } else if (error.message === "Your Kyc Request is Under Review. Please Wait for Conformation Email") {
+                    res.status(HTTP_statusCode.NotFound).json({ message: "Your Kyc Request is Under Review. Please Wait for Conformation Email" });
+                } else {
+                    res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong, please try again later" });
+                }
+            } else {
+                // fallback in case it's not an instance of Error
+                res.status(HTTP_statusCode.InternalServerError).json({ message: "Unknown error occurred" });
             }
-            else {
-
-                res.status(HTTP_statusCode.InternalServerError).json({ message: "Something wrong please try again later" });
-            };
         }
+
 
 
     }
 
     verifyOtp = async (req: Request, res: Response) => {
-
-
         try {
             const { enteredOtp } = req.body
 
@@ -60,24 +56,32 @@ class DoctorController {
                 enteredOtp
             );
             res.status(HTTP_statusCode.OK).json(serviceResponse);
-        } catch (error: any) {
-            if (error.message === "Incorrect OTP") {
-                res
-                    .status(HTTP_statusCode.Unauthorized)
-                    .json({ message: "Incorrect OTP" });
-            } else if (error.message === "OTP is expired") {
-                res.status(HTTP_statusCode.Expired).json({ message: "OTP is expired" });
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if (error.message === "Incorrect OTP") {
+                    res
+                        .status(HTTP_statusCode.Unauthorized)
+                        .json({ message: "Incorrect OTP" });
+                } else if (error.message === "OTP is expired") {
+                    res
+                        .status(HTTP_statusCode.Expired)
+                        .json({ message: "OTP is expired" });
+                } else {
+                    res
+                        .status(HTTP_statusCode.InternalServerError)
+                        .json({ message: "Something went wrong. Please try again later." });
+                }
             } else {
+                // Optional: fallback if error is not an Error instance
                 res
                     .status(HTTP_statusCode.InternalServerError)
-                    .json({ message: "Something went wrong. Please try again later." });
+                    .json({ message: "An unknown error occurred." });
             }
         }
+
     }
 
     verifyDoctorOtp = async (req: Request, res: Response) => {
-
-
         try {
             const { enteredOtp } = req.body
 
@@ -97,19 +101,27 @@ class DoctorController {
             });
             const { doctorData } = serviceResponse;
             res.status(HTTP_statusCode.OK).json({ doctorData });
-        } catch (error: any) {
-            if (error.message === "Incorrect OTP") {
-                res
-                    .status(HTTP_statusCode.Unauthorized)
-                    .json({ message: "Incorrect OTP" });
-            } else if (error.message === "OTP is expired") {
-                res.status(HTTP_statusCode.Expired).json({ message: "OTP is expired" });
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if (error.message === "Incorrect OTP") {
+                    res
+                        .status(HTTP_statusCode.Unauthorized)
+                        .json({ message: "Incorrect OTP" });
+                } else if (error.message === "OTP is expired") {
+                    res.status(HTTP_statusCode.Expired).json({ message: "OTP is expired" });
+                } else {
+                    res
+                        .status(HTTP_statusCode.InternalServerError)
+                        .json({ message: "Something went wrong. Please try again later." });
+                }
             } else {
+                // fallback if error is not an instance of Error
                 res
                     .status(HTTP_statusCode.InternalServerError)
-                    .json({ message: "Something went wrong. Please try again later." });
+                    .json({ message: "An unknown error occurred." });
             }
         }
+
     };
 
 
@@ -117,29 +129,34 @@ class DoctorController {
         try {
             await this.doctorService.resendOTP();
             res.status(HTTP_statusCode.OK).send("OTP sended");
-        } catch (error: any) {
-
-            if (error.message === "Email not send") {
-                res
-                    .status(HTTP_statusCode.InternalServerError)
-                    .json({ message: "Email not send" });
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if (error.message === "Email not send") {
+                    res
+                        .status(HTTP_statusCode.InternalServerError)
+                        .json({ message: "Email not send" });
+                } else {
+                    res
+                        .status(HTTP_statusCode.InternalServerError)
+                        .json({ message: "Something wrong please try again later" });
+                }
             } else {
+                // fallback in case error is not a standard Error object
                 res
                     .status(HTTP_statusCode.InternalServerError)
-                    .json({ message: "Something wrong please try again later" });
+                    .json({ message: "Unexpected error occurred" });
             }
         }
+
     };
 
     doctorRegister = async (req: Request, res: Response) => {
         try {
-            const doctorData: any = req.body
+            const doctorData: IDoctorRequestData = req.body
+
             const fileName = req.files as Express.Multer.File[]
 
-
-
             const { email } = doctorData
-
 
             let uploadToCloudinary = (buffer: Buffer) => {
 
@@ -160,7 +177,8 @@ class DoctorController {
 
 
             };
-            const imgObject: any = {}
+            const imgObject: any = {};
+
 
             const isEmailRegistered = await this.doctorService.findRegisteredEmail(email)
 
@@ -175,7 +193,6 @@ class DoctorController {
                 }
 
             }
-
 
             await this.doctorService.doctorKycRegister(doctorData, imgObject)
             // res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
@@ -372,18 +389,6 @@ class DoctorController {
 
         }
 
-    }
-    getPrescription = async (req: Request, res: Response) => {
-        try {
-            const { bookingId } = req.query
-
-            const presData = await this.doctorService.getPrescription(bookingId as string)
-
-            res.status(HTTP_statusCode.OK).json(presData)
-        } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
-
-        }
     };
 
     doctorDashBoard = async (req: Request, res: Response) => {

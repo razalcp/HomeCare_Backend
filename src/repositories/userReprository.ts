@@ -9,6 +9,7 @@ import doctorWalletModel, { IWallet } from "../models/doctor/doctorWalletModel";
 import { IAdminWallet } from "../models/admin/adminWalletModel";
 import { IUserWallet } from "../models/user/userWalletModel";
 import BaseRepository from "./baseRepository";
+import { IPrescription } from "../models/doctor/prescriptionModel";
 
 
 class UserReprository extends BaseRepository<any> implements IUserRepository {
@@ -19,11 +20,12 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
   private doctorWalletModel = Model<IWallet>
   private adminWalletModel = Model<IAdminWallet>
   private userWalletModel = Model<IUserWallet>
+  private prescriptionModel: Model<IPrescription>
   private conversationModel = Model as any
   private messageModel = Model as any
   private reviewModel = Model as any
 
-  constructor(userModel: Model<IUserModel>, doctorModel: Model<IDoctor>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, adminWalletModel: Model<IAdminWallet>, userWalletModel: Model<IUserWallet>, conversationModel: any, messageModel: any, reviewModel: any) {
+  constructor(userModel: Model<IUserModel>, doctorModel: Model<IDoctor>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, adminWalletModel: Model<IAdminWallet>, userWalletModel: Model<IUserWallet>, conversationModel: any, messageModel: any, reviewModel: any,prescriptionModel: Model<IPrescription>) {
     super(userModel)
     this.userModel = userModel;
     this.doctorModel = doctorModel
@@ -35,6 +37,7 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
     this.conversationModel = conversationModel
     this.messageModel = messageModel
     this.reviewModel = reviewModel
+     this.prescriptionModel = prescriptionModel
   }
 
   findByEmail = async (email: string): Promise<IUser | null> => {
@@ -668,6 +671,16 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
     return await this.slotModel.find({ doctorId, status: "Available" });
   };
 
+  getPrescription = async (bookingId: string) => {
+    try {
+      const data = await this.prescriptionModel.findOne({ bookingId });
+
+      return data
+    } catch (error) {
+      console.error("Error fetching prescription:", error);
+      throw error;
+    }
+  };
 
 };
 

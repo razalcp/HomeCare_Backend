@@ -87,8 +87,5 @@ export interface IDoctorService {
   ): Promise<IMessageFromDoctor[]>;
 
   savePrescription(presData: IPrescriptionRequest): Promise<string>;
-
-  getPrescription(bookingId: string): Promise<IPrescriptionResponse>;
-
   doctorDashBoard(doctorId: string): Promise<IDoctorDashboard>;
 }

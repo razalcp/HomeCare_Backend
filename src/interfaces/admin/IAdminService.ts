@@ -21,7 +21,7 @@ interface IAdminService {
     updateListUnlist: (departmentName: string) => Promise<IDepartment[]>;
     getDoctorData: (page: number, limit: number) => Promise<PaginatedDoctorResponse>;
     updateKycStatus(status: string, doctorId: string): Promise<void>;
-    getPatients(page: number, limit: number): Promise<PaginatedPatientResponseDTO>;
+    getPatients(page: number, limit: number,search:string): Promise<PaginatedPatientResponseDTO>;
     updateuserIsBlocked(buttonName: string, id: string): Promise<void>;
     getWalletData: (
         adminId: string,

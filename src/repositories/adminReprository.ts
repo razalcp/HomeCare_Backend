@@ -155,26 +155,57 @@ class AdminReprository implements IAdminRepository {
     };
 
 
-    getPatients = async (page: number, limit: number) => {
+    // getPatients = async (page: number, limit: number) => {
+    //     try {
+    //         const skip = (page - 1) * limit;
+
+    //         const [data, totalCount] = await Promise.all([
+    //             this.userModel.find().skip(skip).limit(limit),
+    //             this.userModel.countDocuments()
+    //         ]);
+
+
+    //         return {
+    //             data,
+    //             totalCount,
+    //             totalPages: Math.ceil(totalCount / limit),
+    //             currentPage: page
+    //         };
+    //     } catch (error) {
+    //         throw error;
+    //     }
+    // };
+
+    getPatients = async (page: number, limit: number, search: string) => {
         try {
             const skip = (page - 1) * limit;
 
-            const [data, totalCount] = await Promise.all([
-                this.userModel.find().skip(skip).limit(limit),
-                this.userModel.countDocuments()
-            ]);
+            const searchQuery = search
+                ? {
+                    $or: [
+                        { name: { $regex: search, $options: "i" } },
+                        { email: { $regex: search, $options: "i" } },
+                        { mobile: { $regex: search, $options: "i" } },
+                    ],
+                }
+                : {};
 
+            const [data, totalCount] = await Promise.all([
+                this.userModel.find(searchQuery).skip(skip).limit(limit),
+                this.userModel.countDocuments(searchQuery),
+            ]);
 
             return {
                 data,
                 totalCount,
                 totalPages: Math.ceil(totalCount / limit),
-                currentPage: page
+                currentPage: page,
             };
         } catch (error) {
             throw error;
         }
     };
+
 
 
     updateuserIsBlocked = async (buttonName: string, id: string) => {

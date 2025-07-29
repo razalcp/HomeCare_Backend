@@ -105,9 +105,21 @@ class AdminService implements IAdminService {
     };
 
 
-    getPatients = async (page: number, limit: number) => {
+    // getPatients = async (page: number, limit: number) => {
+    //     try {
+    //         const { data, totalCount, totalPages, currentPage } = await this.adminReprository.getPatients(page, limit);
+
+    //         const safeData = data.map(mapPatientToDTO);
+
+    //         return { data: safeData, totalCount, totalPages, currentPage };
+    //     } catch (error) {
+    //         throw error;
+    //     }
+    // };
+    getPatients = async (page: number, limit: number, search: string) => {
         try {
-            const { data, totalCount, totalPages, currentPage } = await this.adminReprository.getPatients(page, limit);
+            const { data, totalCount, totalPages, currentPage } =
+                await this.adminReprository.getPatients(page, limit, search);
 
             const safeData = data.map(mapPatientToDTO);
 

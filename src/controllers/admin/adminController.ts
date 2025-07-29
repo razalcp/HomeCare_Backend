@@ -136,18 +136,32 @@ class AdminController {
     }
 
 
+    // getPatients = async (req: Request, res: Response) => {
+    //     try {
+    //         const page = parseInt(req.query.page as string) || 1;
+    //         const limit = parseInt(req.query.limit as string) || 7;
+
+    //         const result = await this.adminService.getPatients(page, limit);
+
+    //         res.status(HTTP_statusCode.OK).json(result);
+    //     } catch (error) {
+    //         throw error;
+    //     }
+    // };
     getPatients = async (req: Request, res: Response) => {
         try {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 7;
+            const search = (req.query.search as string) || "";
 
-            const result = await this.adminService.getPatients(page, limit);
+            const result = await this.adminService.getPatients(page, limit, search);
 
             res.status(HTTP_statusCode.OK).json(result);
         } catch (error) {
             throw error;
         }
     };
+
 
 
     updateuserIsBlocked = async (req: Request, res: Response) => {

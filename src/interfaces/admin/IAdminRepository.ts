@@ -8,7 +8,7 @@ export interface IAdminRepository {
     updateListUnlist: (departmentName: string) => Promise<IDepartment[]>;
     getDoctors: (page: number, limit: number) => Promise<PaginatedDoctorResponse>;
     updateKycStatus: (status: string, doctorId: string) => Promise<IDoctorData | null>;
-    getPatients: (page: number, limit: number) => Promise<IPaginatedPatientResponse>;
+    getPatients: (page: number, limit: number,search:string) => Promise<IPaginatedPatientResponse>;
     updateuserIsBlocked: (buttonName: string, id: string) => Promise<string>;
     getWalletData: (
         adminId: string,

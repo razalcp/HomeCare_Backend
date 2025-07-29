@@ -33,8 +33,8 @@ app.use(
 
 //socket
 const server = http.createServer(app);
-startSocket(server)
 
+startSocket(server)
 
 app.use("/", userRouter);
 app.use("/doctors", doctorRouter)

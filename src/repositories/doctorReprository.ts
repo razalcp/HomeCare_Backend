@@ -8,7 +8,7 @@ import { IBooking } from "../models/user/bookingModel"
 import { IWallet } from "../models/doctor/doctorWalletModel"
 import BaseRepository from "./baseRepository"
 import { IUserModel } from "../interfaces/user/userModelInterface"
-import { IBookedUser, IBookingLean, IBookingWithPopulatedFields, IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IGetMyBookingsResponse, IMessageFromDoctor, IPrescriptionRequest, IUpcomingAppointment, IWalletTransaction, PopulatedBookingDashBoard } from "../interfaces/doctor/doctorInterface"
+import { IBookedUser, IBookingSummary, IBookingWithPopulatedFields, IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IGetMyBookingsResponse, ILeanPopulatedBooking, IMessageFromDoctor, IPrescriptionRequest, IUpcomingAppointment, IWalletTransaction, PopulatedBookingDashBoard } from "../interfaces/doctor/doctorInterface"
 import { PopulatedBooking } from "../interfaces/doctor/doctorInterface"
 import { IMessage } from "../models/messageModel"
 import { IConversation } from "../models/conversationModel"
@@ -180,7 +180,77 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         return { slots, total };
     };
 
-    getMyBookings = async (doctorId: string, page: number, limit: number): Promise<IGetMyBookingsResponse> => {
+    // getMyBookings = async (doctorId: string, page: number, limit: number): Promise<IGetMyBookingsResponse> => {
+    //     try {
+    //         const skip = (page - 1) * limit;
+
+    //         const [bookings, totalCount] = await Promise.all([
+    //             this.bookingModel
+    //                 .find({ doctorId })
+    //                 .sort({ createdAt: -1 })
+    //                 .skip(skip)
+    //                 .limit(limit)
+    //                 .populate('doctorId')
+    //                 .populate('slotId')
+    //                 .populate('userId')
+    //                 .lean<IBookingLean[]>(),
+    //             this.bookingModel.countDocuments({ doctorId })
+    //         ]);
+
+    //         const totalPages = Math.ceil(totalCount / limit);
+    //         console.log("This is my booking response : ",bookings)
+    //         return { bookings, totalPages };
+    //     } catch (error) {
+    //         console.error("Error fetching paginated bookings:", error);
+    //         throw error;
+    //     }
+    // };
+
+    // getMyBookings = async (
+    //     doctorId: string,
+    //     page: number,
+    //     limit: number
+    // ): Promise<IGetMyBookingsResponse> => {
+    //     try {
+    //         const skip = (page - 1) * limit;
+
+    //         const [bookings, totalCount] = await Promise.all([
+    //             this.bookingModel
+    //                 .find({ doctorId })
+    //                 .sort({ createdAt: -1 })
+    //                 .skip(skip)
+    //                 .limit(limit)
+    //                 .populate({
+    //                     path: 'userId',
+    //                     select: 'name'
+    //                 })
+    //                 .populate({
+    //                     path: 'slotId',
+    //                     select: 'date startTime endTime'
+    //                 })
+    //                 .select('userId slotId paymentStatus consultationStatus createdAt') // Main booking fields
+    //                 .lean(),
+    //             this.bookingModel.countDocuments({ doctorId })
+    //         ]);
+
+
+    //         const totalPages = Math.ceil(totalCount / limit);
+
+    //         console.log("Filtered Booking Response:", bookings);
+
+    //         return { bookings, totalPages };
+    //     } catch (error) {
+    //         console.error("Error fetching paginated bookings:", error);
+    //         throw error;
+    //     }
+    // };
+
+
+    getMyBookings = async (
+        doctorId: string,
+        page: number,
+        limit: number
+    ): Promise<IGetMyBookingsResponse> => {
         try {
             const skip = (page - 1) * limit;
 
@@ -190,21 +260,39 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                     .sort({ createdAt: -1 })
                     .skip(skip)
                     .limit(limit)
-                    .populate('doctorId')
-                    .populate('slotId')
-                    .populate('userId')
-                    .lean<IBookingLean[]>(),
-                this.bookingModel.countDocuments({ doctorId })
+                    .populate({ path: 'userId', select: 'name' })
+                    .populate({ path: 'slotId', select: 'date startTime endTime' })
+                    .select('userId slotId paymentStatus consultationStatus createdAt')
+                    .lean<ILeanPopulatedBooking[]>(),
+                this.bookingModel.countDocuments({ doctorId }),
             ]);
 
             const totalPages = Math.ceil(totalCount / limit);
 
-            return { bookings, totalPages };
+            const mappedBookings: IBookingSummary[] = bookings.map((b) => ({
+                _id: b._id.toString(),
+                userId: {
+                    _id: b.userId._id.toString(),
+                    name: b.userId.name,
+                },
+                slotId: {
+                    _id: b.slotId._id.toString(),
+                    date: b.slotId.date,
+                    startTime: b.slotId.startTime,
+                    endTime: b.slotId.endTime,
+                },
+                paymentStatus: b.paymentStatus,
+                consultationStatus: b.consultationStatus,
+                createdAt: b.createdAt,
+            }));
+
+            return { bookings: mappedBookings, totalPages };
         } catch (error) {
             console.error("Error fetching paginated bookings:", error);
             throw error;
         }
     };
+
 
 
     getWalletData = async (doctorId: string, page: number, limit: number) => {
@@ -264,6 +352,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                     age: user.age ?? 0,
                     gender: user.gender ?? "Not specified",
                     consultationStatus: booking.consultationStatus,
+                    bookingStatus:booking.bookingStatus,
                     slotId: {
                         _id: slot._id.toString(),
                         date: slot.date,

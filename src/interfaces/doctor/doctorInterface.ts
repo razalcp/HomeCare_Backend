@@ -3,6 +3,7 @@ import { IMedication } from "../../models/doctor/prescriptionModel";
 import { ISlot } from "../../models/doctor/slotModel";
 import { IUserModel } from "../user/userModelInterface";
 import IDoctorModel from "./doctorModelInterface";
+import { Request } from 'express';
 
 export interface IDoctorKycRegisterInput {
     name: string;
@@ -25,7 +26,7 @@ export interface IDoctorKycRegisterInput {
 export interface IDoctorImageUpload {
     certifications0?: string;
     certifications1?: string;
-    profileImage: string;
+    profileImage?: string;
 }
 
 
@@ -107,21 +108,63 @@ export interface IBooking {
     __v?: number;
 }
 
-export interface IBookingLean {
-    doctorId: Types.ObjectId;
-    userId: Types.ObjectId;
-    slotId: Types.ObjectId;
-    paymentStatus: "processing" | "paid" | "failed" | "refunded";
-    bookingStatus: "processing" | "booked" | "cancelled";
-    consultationStatus: "pending" | "completed";
-    createdAt: Date;
-    updatedAt: Date;
+// export interface IBookingLean {
+//     doctorId: Types.ObjectId;
+//     userId: Types.ObjectId;
+//     slotId: Types.ObjectId;
+//     paymentStatus: "processing" | "paid" | "failed" | "refunded";
+//     bookingStatus: "processing" | "booked" | "cancelled";
+//     consultationStatus: "pending" | "completed";
+//     createdAt: Date;
+//     updatedAt: Date;
+// }
+
+// export interface IGetMyBookingsResponse {
+//     bookings: IBookingLean[];
+//     totalPages: number;
+// }
+
+export interface IBookingSummary {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+  };
+  slotId: {
+    _id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+  };
+  paymentStatus: "processing" | "paid" | "failed" | "refunded";
+  consultationStatus: "pending" | "completed";
+  createdAt: Date;
 }
 
+
 export interface IGetMyBookingsResponse {
-    bookings: IBookingLean[];
+    bookings: IBookingSummary[];
     totalPages: number;
 }
+
+export interface ILeanPopulatedBooking {
+  _id: string | Types.ObjectId;
+  userId: {
+    _id: string | Types.ObjectId;
+    name: string;
+  };
+  slotId: {
+    _id: string | Types.ObjectId;
+    date: string;
+    startTime: string;
+    endTime: string;
+  };
+  paymentStatus: "processing" | "paid" | "failed" | "refunded";
+  consultationStatus: "pending" | "completed";
+  createdAt: Date;
+}
+
+
 
 export interface IWalletResponse {
     _id: Types.ObjectId;
@@ -195,4 +238,39 @@ export interface IBookingWithPopulatedFields {
     userId: IUserBooked;
     slotId: IBookedSlot;
     consultationStatus: "pending" | "completed" | "cancelled";
+    bookingStatus:"booked" | "cancelled"
 }
+
+export type DoctorImageObject = {
+    profileImage?: string;
+};
+
+export interface AuthenticatedRequest extends Request {
+    user: {
+        user_id: string;
+    };
+}
+
+
+export interface IBookingWithDetails {
+    _id: Types.ObjectId;
+    userId: {
+        _id: string;
+        name: string;
+        createdAt: string;
+    };
+    slotId: {
+        _id: string;
+        date: string;
+        startTime: string;
+        endTime: string;
+        status: string;
+        isBooked: boolean;
+    };
+    paymentStatus: "processing" | "paid" | "failed" | "refunded";
+    bookingStatus: "processing" | "booked" | "cancelled";
+    consultationStatus: "pending" | "completed";
+    createdAt: string;
+    updatedAt: string;
+}
+

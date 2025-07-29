@@ -13,14 +13,22 @@ import doctorWalletModel from "../models/doctor/doctorWalletModel";
 import AdminWalletModel from "../models/admin/adminWalletModel";
 import userWalletModel from "../models/user/userWalletModel";
 import upload from '../config/multer_config'
-import conversationModel from '../models/conversationModel'
+import conversationModel, { IConversation } from '../models/conversationModel'
 import messageModel from '../models/messageModel'
 import ReviewModel from "../models/user/reviewModel";
 import PrescriptionModel, { IPrescription } from '../models/doctor/prescriptionModel'
+import { Model } from "mongoose";
+import { IUserModel } from "../interfaces/user/userModelInterface";
+import { ISlot } from "../models/doctor/slotModel";
+import { IBooking } from "../models/user/bookingModel";
+import { IWallet } from "../models/doctor/doctorWalletModel";
+import { IAdminWallet } from "../models/admin/adminWalletModel";
+import { IUserWallet } from "../models/user/userWalletModel";
+import { IMessage } from "../models/messageModel";
+import { IReview } from "../models/user/reviewModel";
 
-
-const userReprository = new UserReprository(User, DoctorModel as any, SlotModel as any, BookingModel as any, doctorWalletModel as any, AdminWalletModel as any, userWalletModel as any, conversationModel as any, messageModel as any, ReviewModel as any,PrescriptionModel as Modal<IPrescription>);
-const userService = new UserService(userReprository as any);
+const userReprository = new UserReprository(User as Model<IUserModel>, DoctorModel as Model<IDoctor>, SlotModel as Model<ISlot>, BookingModel as Model<IBooking>, doctorWalletModel as Model<IWallet>, AdminWalletModel as Model<IAdminWallet>, userWalletModel as Model<IUserWallet>, conversationModel as Model<IConversation>, messageModel as Model<IMessage>, ReviewModel as Model<IReview>, PrescriptionModel as Model<IPrescription>);
+const userService = new UserService(userReprository);
 const userController = new UserController(userService);
 
 const router = express.Router();

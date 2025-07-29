@@ -5,6 +5,8 @@ import HTTP_statusCode from "../../enums/httpStatusCode";
 const stripe = require('stripe')("sk_test_51R6U86C1BfcS3nBm3F9VPOzMitLY6kndB9xIywEvFDKrPi8jDQ457NySmoSq2Nl0hBdT8vtGMvNZ5Wr8cNq736Kk00RPBZDxXt")
 import cloudinary from '../../config/cloudinary_config'
 import { IUserService } from "../../interfaces/user/IUserService";
+import { log } from "console";
+import { get } from "https";
 
 
 
@@ -20,19 +22,25 @@ class userController {
       const userData: IUser = req.body;
       await this.userService.register(userData);
       res.status(HTTP_statusCode.OK).send("OTP sent to mail");
-    } catch (error: any) {
-      if (error.message === "Email already exists") {
-        res
-          .status(HTTP_statusCode.Conflict)
-          .json({ message: "Email already exists" });
-      } else if (error.message === "Email not send") {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json({ message: "Email not send" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.message === "Email already exists") {
+          res
+            .status(HTTP_statusCode.Conflict)
+            .json({ message: "Email already exists" });
+        } else if (error.message === "Email not send") {
+          res
+            .status(HTTP_statusCode.InternalServerError)
+            .json({ message: "Email not send" });
+        } else {
+          res
+            .status(HTTP_statusCode.InternalServerError)
+            .json({ message: "Something wrong please try again later" });
+        }
       } else {
         res
           .status(HTTP_statusCode.InternalServerError)
-          .json({ message: "Something wrong please try again later" });
+          .json({ message: "Unknown error occurred" });
       }
     }
   };
@@ -47,18 +55,21 @@ class userController {
         enteredOtp
       );
       res.status(HTTP_statusCode.OK).json(serviceResponse);
-    } catch (error: any) {
-      if (error.message === "Incorrect OTP") {
-        res
-          .status(HTTP_statusCode.Unauthorized)
-          .json({ message: "Incorrect OTP" });
-      } else if (error.message === "OTP is expired") {
-        res.status(HTTP_statusCode.Expired).json({ message: "OTP is expired" });
-      } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json({ message: "Something went wrong. Please try again later." });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.message === "Incorrect OTP") {
+          res
+            .status(HTTP_statusCode.Unauthorized)
+            .json({ message: "Incorrect OTP" });
+        } else if (error.message === "OTP is expired") {
+          res.status(HTTP_statusCode.Expired).json({ message: "OTP is expired" });
+        } else {
+          res
+            .status(HTTP_statusCode.InternalServerError)
+            .json({ message: "Something went wrong. Please try again later." });
+        }
       }
+
     }
   };
 
@@ -66,16 +77,19 @@ class userController {
     try {
       await this.userService.resendOTP();
       res.status(HTTP_statusCode.OK).send("OTP sended");
-    } catch (error: any) {
-      console.log("User:= resend otp error", error);
-      if (error.message === "Email not send") {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json({ message: "Email not send" });
-      } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json({ message: "Something wrong please try again later" });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.message === "Incorrect OTP") {
+          res
+            .status(HTTP_statusCode.Unauthorized)
+            .json({ message: "Incorrect OTP" });
+        } else if (error.message === "OTP is expired") {
+          res.status(HTTP_statusCode.Expired).json({ message: "OTP is expired" });
+        } else {
+          res
+            .status(HTTP_statusCode.InternalServerError)
+            .json({ message: "Something went wrong. Please try again later." });
+        }
       }
     }
   };
@@ -104,17 +118,18 @@ class userController {
       res.json({ userData: serviceResponse.userData });
 
 
-    } catch (error: any) {
-
-      if (error.message === "Email not found") {
-        res.status(HTTP_statusCode.NotFound).json({ message: "Email not found" });
-      } else if (error.message === "Wrong password") {
-        res.status(HTTP_statusCode.Unauthorized).json({ message: "Wrong password" });
-      } else if (error.message === "User is blocked") {
-        res.status(HTTP_statusCode.NoAccess).json({ message: "User is blocked" });
-      } else {
-        res.status(HTTP_statusCode.InternalServerError).json({ message: "Something wrong please try again later" });
-      };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.message === "Email not found") {
+          res.status(HTTP_statusCode.NotFound).json({ message: "Email not found" });
+        } else if (error.message === "Wrong password") {
+          res.status(HTTP_statusCode.Unauthorized).json({ message: "Wrong password" });
+        } else if (error.message === "User is blocked") {
+          res.status(HTTP_statusCode.NoAccess).json({ message: "User is blocked" });
+        } else {
+          res.status(HTTP_statusCode.InternalServerError).json({ message: "Something wrong please try again later" });
+        };
+      }
     };
 
 
@@ -143,6 +158,7 @@ class userController {
         minFee,
         maxFee
       );
+
 
       res.status(200).json({
         data: result.data,
@@ -206,7 +222,6 @@ class userController {
       const userId = req.body.userId
       const doctorId = req.body.doctorId
       const saveData = await this.userService.saveBookingToDb(slotId, userId, doctorId)
-
     } catch (error) {
       throw error
     }
@@ -216,6 +231,8 @@ class userController {
     try {
       const userId = req.body.userId
       const getBookingData = await this.userService.getUserBookings(userId)
+      // console.log("getBookingData ",getBookingData);
+
       res.status(HTTP_statusCode.OK).json(getBookingData)
     } catch (error) {
       res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -252,10 +269,9 @@ class userController {
 
   updateUser = async (req: Request, res: Response) => {
     try {
-      const userData: any = req.body
+
+      const userData = req.body
       const fileName = req.files as Express.Multer.File[]
-
-
 
       let uploadToCloudinary = (buffer: Buffer) => {
 
@@ -276,20 +292,23 @@ class userController {
 
 
       };
-      const imgObject: any = {}
+      const imgObject: { [key: string]: string } = {};
 
       for (const file of fileName!) {
-        const upload: any = await uploadToCloudinary(file.buffer)
+        const upload: string = await uploadToCloudinary(file.buffer) as string
 
         imgObject[file.fieldname] = upload
 
-
       }
+
       const docData = await this.userService.updateUserProfile(userData, imgObject)
       res.status(HTTP_statusCode.OK).json(docData)
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(400).json({ error: error.message });
+      }
 
+      return res.status(400).json({ error: 'An unexpected error occurred' });
     }
 
   };

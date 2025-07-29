@@ -1,9 +1,11 @@
+import { IUserAuthDTO, IUserBookingDTO } from "../../dtos/user.dto";
 import { IPrescriptionResponse } from "../doctor/doctorInterface";
-import { IUserAuth, IUser } from "./userInterface";
+import { IUserAuth, IUser, IVerifiedDoctorsResponse, ICancelBookingResponse, IWalletData, IBookedDoctorForChat, IMessageUser, IMessageSaveResponse, ISaveMessageInput, IReviewResponse, IReviewSubmit, IDoctorSlot, IUpdateUserProfileInput, IUpdateUserProfileImage } from "./userInterface";
 import { IUserModel } from "./userModelInterface";
 
+
 export interface IUserService {
-    getDoctorSlotsForBooking(doctorId: string): unknown;
+    getDoctorSlotsForBooking(doctorId: string): Promise<IDoctorSlot[]>;
     register(userData: IUser): Promise<void>;
     otpVerification(enteredOtp: { enteredOtp: string }): Promise<void>;
     resendOTP(): Promise<void>;
@@ -11,7 +13,7 @@ export interface IUserService {
         email: string,
         password: string
     ): Promise<{
-        userData: IUserAuth;
+        userData: IUserAuthDTO;
         userToken: string;
         userRefreshToken: string;
     }>;
@@ -24,7 +26,7 @@ export interface IUserService {
         departments: string[],
         minFee: number,
         maxFee: number
-    ): Promise<any>;
+    ): Promise<IVerifiedDoctorsResponse>;
 
     saveBookingToDb(
         slotId: string,
@@ -32,27 +34,27 @@ export interface IUserService {
         doctorId: string
     ): Promise<void>;
 
-    getUserBookings(userId: string): Promise<any[]>;
+    getUserBookings(userId: string): Promise<IUserBookingDTO[]>;
 
-    cancelBooking(bookingId: string): Promise<any>;
+    cancelBooking(bookingId: string): Promise<ICancelBookingResponse>;
 
     getWalletData(
         userId: string,
         page: number,
         limit: number
-    ): Promise<any>;
+    ): Promise<IWalletData>;
 
-    updateUserProfile(userData: any, imgObject: any): Promise<IUserModel | null | void>;
+    updateUserProfile(userData: IUpdateUserProfileInput, imgObject: IUpdateUserProfileImage): Promise<IUserModel | null | void>;
 
     getUser(email: string): Promise<IUserAuth | null>;
 
-    getBookedDoctors(userId: string): Promise<any>;
+    getBookedDoctors(userId: string): Promise<IBookedDoctorForChat[]>;
 
-    getMessages(receiverId: string, senderId: string): Promise<any>;
+    getMessages(receiverId: string, senderId: string): Promise<IMessageUser[]>;
 
-    saveMessages(messageData: any): Promise<any>;
+    saveMessages(messageData: ISaveMessageInput): Promise<IMessageSaveResponse>;
 
-    deleteMessage(messageId: string): Promise<any>;
+    deleteMessage(messageId: string): Promise<IMessageSaveResponse | null>;
 
     saveWalletBookingToDb(
         slotId: string,
@@ -61,9 +63,9 @@ export interface IUserService {
         doctorFees: number
     ): Promise<string>;
 
-    submitReview(reviewData: any): Promise<any>;
+    submitReview(reviewData: IReviewSubmit): Promise<IReviewResponse>;
 
-    reviewDetails(doctorId: string): Promise<any>;
+    reviewDetails(doctorId: string): Promise<IReviewResponse>;
     getPrescription(bookingId: string): Promise<IPrescriptionResponse>;
 
 }

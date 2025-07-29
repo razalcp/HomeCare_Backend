@@ -3,7 +3,7 @@
 export interface IUserDTO {
     _id: string;
     name: string;
-    createdAt: string;
+    createdAt?: string;
 }
 
 export interface ISlotDTO {
@@ -11,17 +11,17 @@ export interface ISlotDTO {
     date: string;
     startTime: string;
     endTime: string;
-    status: string;
-    isBooked: boolean;
+    status?: string;
+    isBooked?: boolean;
 }
 
 export interface IBookingDTO {
     userId: IUserDTO;
     slotId: ISlotDTO;
     paymentStatus: string;
-    bookingStatus: string;
+    bookingStatus?: string;
     consultationStatus: string;
-    createdAt: string;
+    createdAt: Date;
 }
 
 export interface IBookingListResponseDTO {

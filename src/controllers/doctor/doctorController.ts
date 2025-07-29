@@ -4,6 +4,8 @@ import cloudinary from '../../config/cloudinary_config'
 import multer from 'multer';
 import { IDoctorService } from '../../interfaces/doctor/IDoctorService'
 import { IDoctorRequestData } from '../../interfaces/doctor/doctorControllerInterface';
+import { DoctorImageObject, IUpdateDoctorProfile } from '../../interfaces/user/userInterface';
+import { AuthenticatedRequest } from '../../interfaces/doctor/doctorInterface';
 
 class DoctorController {
     private doctorService: IDoctorService
@@ -158,7 +160,7 @@ class DoctorController {
 
             const { email } = doctorData
 
-            let uploadToCloudinary = (buffer: Buffer) => {
+            let uploadToCloudinary = (buffer: Buffer): Promise<string> => {
 
 
                 return new Promise((resolve, reject) => {
@@ -168,7 +170,7 @@ class DoctorController {
                             if (error) {
                                 reject(error);
                             } else {
-                                resolve(result?.secure_url); // Return uploaded image URL
+                                resolve(result?.secure_url || ""); // Return uploaded image URL
                             }
                         }
                     );
@@ -177,7 +179,8 @@ class DoctorController {
 
 
             };
-            const imgObject: any = {};
+
+            const imgObject: DoctorImageObject = {};
 
 
             const isEmailRegistered = await this.doctorService.findRegisteredEmail(email)
@@ -186,23 +189,22 @@ class DoctorController {
             if (isEmailRegistered?.email === email) {
 
                 for (const file of fileName!) {
-                    const upload: any = await uploadToCloudinary(file.buffer)
-
-                    imgObject[file.fieldname] = upload
+                    const upload: string = await uploadToCloudinary(file.buffer)
+                    imgObject[file.fieldname as keyof DoctorImageObject] = upload
 
                 }
 
             }
 
             await this.doctorService.doctorKycRegister(doctorData, imgObject)
-            // res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
-            // res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
             res.status(200).json({ message: "Logged out successfully" });
-        } catch (error: any) {
-
-            return res.status(400).json({ error: error.message });
-
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                return res.status(400).json({ error: error.message });
+            }
+            return res.status(500).json({ error: 'Unexpected error occurred' });
         }
+
     };
 
     getDepartments = async (req: Request, res: Response) => {
@@ -213,13 +215,11 @@ class DoctorController {
 
     updateDoctor = async (req: Request, res: Response) => {
         try {
-            const doctorData: any = req.body
+            const doctorData: IUpdateDoctorProfile = Object.assign({}, req.body);
+
             const fileName = req.files as Express.Multer.File[]
 
-
-
-            let uploadToCloudinary = (buffer: Buffer) => {
-
+            let uploadToCloudinary = (buffer: Buffer): Promise<string> => {
 
                 return new Promise((resolve, reject) => {
                     const uploadStream = cloudinary.uploader.upload_stream(
@@ -228,31 +228,32 @@ class DoctorController {
                             if (error) {
                                 reject(error);
                             } else {
-                                resolve(result?.secure_url); // Return uploaded image URL
+                                resolve(result?.secure_url || ""); // Return uploaded image URL
                             }
                         }
                     );
                     uploadStream.end(buffer); // Send buffer data to Cloudinary
                 });
 
-
-
             };
-            const imgObject: any = {}
+            const imgObject: Partial<DoctorImageObject> = {};
 
             for (const file of fileName!) {
-                const upload: any = await uploadToCloudinary(file.buffer)
-
-                imgObject[file.fieldname] = upload
-
+                const upload: string = await uploadToCloudinary(file.buffer)
+                imgObject[file.fieldname as keyof DoctorImageObject] = upload;
 
             }
+
             const docData = await this.doctorService.updateDoctorProfile(doctorData, imgObject)
             res.status(HTTP_statusCode.OK).json(docData)
-        } catch (error: any) {
-            return res.status(400).json({ error: error.message });
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                return res.status(400).json({ error: error.message });
+            }
 
+            return res.status(500).json({ error: 'Unexpected error occurred' });
         }
+
 
     };
 
@@ -275,20 +276,18 @@ class DoctorController {
             const addSlot = await this.doctorService.addDoctorSlots(slotData)
 
             res.status(200).json({ message: "Slot added successfully!" });
-        } catch (error: any) {
-
-
-            if (error.message) {
+        } catch (error: unknown) {
+            if (error instanceof Error && error.message) {
                 res
                     .status(HTTP_statusCode.BadRequest)
                     .json({ message: error.message });
             } else {
                 res
                     .status(HTTP_statusCode.InternalServerError)
-                    .json({ message: "Something wrong please try again later" });
+                    .json({ message: "Something went wrong, please try again later." });
             }
-
         }
+
     };
 
     getDoctorSlotsForBooking = async (req: Request, res: Response) => {
@@ -338,12 +337,11 @@ class DoctorController {
     };
 
 
-    bookedUsers = async (req: Request, res: Response) => {
+    bookedUsers = async (req: AuthenticatedRequest, res: Response) => {
         try {
-            const doctorId = (req as any).user.user_id
+            const doctorId = req.user.user_id
             const Userdata = await this.doctorService.getBookedUsers(doctorId)
             res.status(HTTP_statusCode.OK).json(Userdata)
-
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
         }

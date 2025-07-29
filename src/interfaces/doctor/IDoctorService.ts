@@ -36,7 +36,7 @@ export interface IDoctorService {
 
   updateDoctorProfile(
     doctorData: IDoctorModel,
-    imgObject: { profileImage: string }
+    imgObject?: { profileImage?: string }
   ): Promise<void | IDoctorModel | null>;
 
 

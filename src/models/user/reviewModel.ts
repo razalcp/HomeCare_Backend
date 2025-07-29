@@ -1,7 +1,7 @@
 import mongoose, { Schema, model } from 'mongoose'
 
 
-interface IReview {
+export interface IReview {
     userId: mongoose.Types.ObjectId
     doctorId: mongoose.Types.ObjectId
     rating: number

@@ -1,31 +1,40 @@
 import { IUserRepository } from "../interfaces/user/IUserReprository";
 import { IUserModel } from "../interfaces/user/userModelInterface";
-import { Model } from "mongoose";
-import { IUser, IUserAuth } from "../interfaces/user/userInterface";
+import { Model, ObjectId, SortOrder } from "mongoose";
+import { IBookedDoctorForChat, IDoctorSlot, IMessageSaveResponse, IMessageUser, IReviewResponse, IReviewSubmit, IUpdateUserProfileImage, IUpdateUserProfileInput, IUser, IUserBooking, IUserResponseFull, IVerifiedDoctorData, IVerifiedDoctorsResponse, TransformedImageObject } from "../interfaces/user/userInterface";
 import { IDoctor } from "../models/doctor/doctorModel";
 import { ISlot } from "../models/doctor/slotModel";
 import { IBooking } from "../models/user/bookingModel";
-import doctorWalletModel, { IWallet } from "../models/doctor/doctorWalletModel";
+import { IWallet } from "../models/doctor/doctorWalletModel";
 import { IAdminWallet } from "../models/admin/adminWalletModel";
 import { IUserWallet } from "../models/user/userWalletModel";
 import BaseRepository from "./baseRepository";
 import { IPrescription } from "../models/doctor/prescriptionModel";
+import { Types } from "mongoose";
+import { IConversation } from "../models/conversationModel";
+import { IMessage } from "../models/messageModel";
+import { IReview } from "../models/user/reviewModel";
+import { IPrescriptionResponse } from "../interfaces/doctor/doctorInterface";
+import { mapDoctorsToResponse } from "../helpers/mapDoctors";
+import { mapBookingsToUserResponse } from "../helpers/mapBookings";
+import { mapReviewDocument, PopulatedReviewDocument } from "../helpers/mapReview";
+import { mapMessages } from "../helpers/mapMessages";
 
 
 class UserReprository extends BaseRepository<any> implements IUserRepository {
-  private userModel = Model<IUserModel>;
-  private doctorModel = Model<IDoctor>
-  private slotModel = Model<ISlot>
-  private bookingModel = Model<IBooking>
-  private doctorWalletModel = Model<IWallet>
-  private adminWalletModel = Model<IAdminWallet>
-  private userWalletModel = Model<IUserWallet>
+  private userModel: Model<IUserModel>;
+  private doctorModel: Model<IDoctor>
+  private slotModel: Model<ISlot>
+  private bookingModel: Model<IBooking>
+  private doctorWalletModel: Model<IWallet>
+  private adminWalletModel: Model<IAdminWallet>
+  private userWalletModel: Model<IUserWallet>
   private prescriptionModel: Model<IPrescription>
-  private conversationModel = Model as any
-  private messageModel = Model as any
-  private reviewModel = Model as any
+  private conversationModel: Model<IConversation>
+  private messageModel: Model<IMessage>
+  private reviewModel: Model<IReview>
 
-  constructor(userModel: Model<IUserModel>, doctorModel: Model<IDoctor>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, adminWalletModel: Model<IAdminWallet>, userWalletModel: Model<IUserWallet>, conversationModel: any, messageModel: any, reviewModel: any,prescriptionModel: Model<IPrescription>) {
+  constructor(userModel: Model<IUserModel>, doctorModel: Model<IDoctor>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, adminWalletModel: Model<IAdminWallet>, userWalletModel: Model<IUserWallet>, conversationModel: Model<IConversation>, messageModel: Model<IMessage>, reviewModel: Model<IReview>, prescriptionModel: Model<IPrescription>) {
     super(userModel)
     this.userModel = userModel;
     this.doctorModel = doctorModel
@@ -37,7 +46,7 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
     this.conversationModel = conversationModel
     this.messageModel = messageModel
     this.reviewModel = reviewModel
-     this.prescriptionModel = prescriptionModel
+    this.prescriptionModel = prescriptionModel
   }
 
   findByEmail = async (email: string): Promise<IUser | null> => {
@@ -48,7 +57,7 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
     }
   };
 
-  register = async (userData: IUser): Promise<IUser> => {
+  register = async (userData: IUser): Promise<IUserModel> => {
     try {
       return await this.userModel.create(userData);
     } catch (error) {
@@ -56,16 +65,17 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
     }
   };
 
-  login = async (email: string): Promise<IUser | null> => {
+  login = async (email: string): Promise<IUserModel | null> => {
     try {
       const singleUser = await this.userModel.findOne({ email })
+      if (!singleUser) {
+        throw new Error("User not found")
+      }
 
       if (singleUser.isUserBlocked === false) {
 
         return singleUser;
       } else {
-
-
         throw new Error("User is blocked")
       }
 
@@ -73,7 +83,6 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
       throw error
     }
   }
-
 
 
   getVerifiedDoctors = async (
@@ -84,11 +93,16 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
     departments: string[],
     minFee: number,
     maxFee: number
-  ) => {
+  ): Promise<IVerifiedDoctorsResponse> => {
     try {
-      const query: any = {
-        kycStatus: "Approved"
+      const query: {
+        kycStatus: string, name?: { '$regex': string, '$options': string },
+        department?: { $in: string[] }, consultationFee?: { "$gte": number, "$lte": number };
+      } = {
+        kycStatus: "Approved",
+
       };
+
 
       if (search) {
         query.name = { $regex: search, $options: "i" };
@@ -102,7 +116,7 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
         query.consultationFee = { $gte: minFee, $lte: maxFee };
       }
 
-      const sortOption: any = {};
+      const sortOption: Record<string, SortOrder> = {};
       if (sort === "fee-asc") sortOption.consultationFee = 1;
       else if (sort === "fee-desc") sortOption.consultationFee = -1;
 
@@ -112,14 +126,14 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
         this.doctorModel.find(query).sort(sortOption).skip(skip).limit(limit),
         this.doctorModel.countDocuments(query)
       ]);
-
-      return { data, total };
+      const mappedDoctors = mapDoctorsToResponse(data);
+      return { data: mappedDoctors, total };
     } catch (error) {
       throw error;
     }
   };
 
-  saveWalletBookingToDb = async (slotId: any, userId: any, doctorId: any, docFees: number) => {
+  saveWalletBookingToDb = async (slotId: string, userId: string, doctorId: string, docFees: number) => {
     try {
       const wallet = await this.userWalletModel.findOne({ userId });
 
@@ -131,8 +145,6 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
       if (wallet.balance < docFees) {
         throw new Error("Insufficient Wallet Balance");
       }
-
-
 
       // await wallet.save()
 
@@ -165,21 +177,21 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
 
       await newBooking.save();
 
-
-
       // 3. Get doctor's fee
       const doctor = await this.doctorModel.findById(doctorId);
       if (!doctor) throw new Error("Doctor not found");
 
       const doctorFees = doctor.consultationFee; // assuming `fees` field exists in doctor collection
 
+      if (doctorFees === undefined) {
+        throw new Error("Consultation fee is not set for this doctor.");
+      }
 
       const doctorShare = Math.floor(doctorFees * 0.7);
       const adminShare = doctorFees - doctorShare;
 
-
-      const bookingId = newBooking._id.toString();
-
+      // const bookingId = newBooking._id.toString();
+      const bookingId = (newBooking._id as Types.ObjectId).toString();
 
       if (wallet) {
         wallet.balance -= docFees;
@@ -258,10 +270,8 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
   };
 
 
-  saveBookingToDb = async (slotId: any, userId: any, doctorId: any) => {
+  saveBookingToDb = async (slotId: string, userId: string, doctorId: string) => {
     try {
-
-
       if (slotId) {
         const slot = await this.slotModel.findById(slotId);
 
@@ -291,25 +301,23 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
 
       await newBooking.save();
 
-
       // 3. Get doctor's fee
       const doctor = await this.doctorModel.findById(doctorId);
       if (!doctor) throw new Error("Doctor not found");
 
       const doctorFees = doctor.consultationFee; // assuming `fees` field exists in doctor collection
 
-
+      if (doctorFees === undefined) {
+        throw new Error("Consultation fee is not set for this doctor.");
+      }
       const doctorShare = Math.floor(doctorFees * 0.7);
       const adminShare = doctorFees - doctorShare;
 
-
-      const bookingId = newBooking._id.toString();
-
-
+      // const bookingId = newBooking._id.toString();
+      const bookingId = (newBooking._id as Types.ObjectId).toString();
 
       // 4. Update Doctor Wallet
       const doctorWallet = await this.doctorWalletModel.findOne({ doctorId });
-
 
       if (doctorWallet) {
         doctorWallet.balance += doctorShare;
@@ -368,21 +376,20 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
       }
 
     } catch (error) {
-
+      throw error
     }
   }
 
-  getUserBookings = async (userId: string) => {
+  getUserBookings = async (userId: string): Promise<IUserBooking[]> => {
     try {
-
       const bookings = await this.bookingModel.find({ userId })
         .sort({ createdAt: -1 })
         .populate('doctorId') // populate doctor details
         .populate('slotId')   // populate slot details
-        .populate('userId');  // populate user info
+        .populate('userId')
+        .lean();
+      return mapBookingsToUserResponse(bookings);
 
-
-      return bookings;
     } catch (error) {
       console.error("Error fetching user bookings:", error);
       throw error;
@@ -410,8 +417,16 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
       if (!doctorWallet) throw new Error('Doctor wallet not found');
 
       const transaction = doctorWallet.transactions.find(
-        (tx: any) => tx.transactionId === bookingId
-      );
+        (tx: {
+          amount?: number;
+          transactionId?: string;
+          transactionType?: 'credit' | 'debit';
+          appointmentId?: string;
+          _id?: Types.ObjectId;
+          date?: Date;
+        }) => {
+          return tx.transactionId === bookingId
+        });
       if (!transaction) throw new Error('Transaction not found in doctor wallet');
 
       const amountToRefund = transaction.amount;
@@ -431,7 +446,7 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
       let userWallet = await this.userWalletModel.findOne({ userId });
 
       if (!userWallet) {
-        userWallet = this.userWalletModel.create({
+        userWallet = await this.userWalletModel.create({
           userId,
           balance: amountToRefund,
           transactions: [{
@@ -456,7 +471,7 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
       await userWallet.save();
 
       // Step 6: Delete the booking
-      // await this.bookingModel.findByIdAndDelete(bookingId);
+
       await this.bookingModel.findByIdAndUpdate(bookingId, {
         bookingStatus: 'cancelled',
         paymentStatus: 'refunded'
@@ -482,12 +497,41 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
       const startIndex = (page - 1) * limit;
 
       const paginatedTransactions = wallet.transactions
-        .sort((a: any, b: any) => new Date(b.date || '').getTime() - new Date(a.date || '').getTime())
-        .slice(startIndex, startIndex + limit);
+        .sort((a, b) => new Date(b.date || '').getTime() - new Date(a.date || '').getTime())
+        .slice(startIndex, startIndex + limit)
+        .map((tx: {
+          amount?: number;
+          transactionId?: string;
+          transactionType?: 'credit' | 'debit';
+          appointmentId?: string;
+          _id?: Types.ObjectId;
+          date?: Date;
+        }) => {
+          if (
+            !tx._id ||
+            tx.amount === undefined ||
+            !tx.transactionId ||
+            !tx.transactionType ||
+            !tx.appointmentId ||
+            !tx.date
+          ) {
+            throw new Error("Incomplete transaction data");
+          }
+
+          return {
+            _id: tx._id?.toString() || '',
+            amount: tx.amount,
+            transactionId: tx.transactionId,
+            transactionType: tx.transactionType,
+            appointmentId: tx.appointmentId,
+            date: tx.date,
+          }
+        });
+
 
       return {
-        _id: wallet._id,
-        userId: wallet.userId,
+        _id: wallet._id.toString(),
+        userId: wallet.userId.toString(),
         balance: wallet.balance,
         transactions: paginatedTransactions,
         totalTransactions,
@@ -501,24 +545,21 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
   };
 
 
-
-
-
-  updateUser = async (userData: any, imgObject: any) => {
-
+  updateUser = async (userData: IUpdateUserProfileInput, imgObject: IUpdateUserProfileImage) => {
 
     const existingUser = await this.userModel.findOne({ email: userData.email });
 
     if (existingUser) {
-      // Rename `profileImage` to `profileIMG`
+
+      let transformedImgObject: TransformedImageObject = {};
+
       if (imgObject?.profileImage) {
-        imgObject.profileIMG = imgObject.profileImage;
-        delete imgObject.profileImage;
+        transformedImgObject.profileIMG = imgObject.profileImage;
       }
 
       const updatedUser = await this.userModel.findOneAndUpdate(
         { email: userData.email },
-        { $set: { ...userData, ...imgObject } },
+        { $set: { ...userData, ...transformedImgObject } },
         { new: true }
       );
 
@@ -528,13 +569,22 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
     }
   };
 
-  getUser = async (email: string): Promise<IUserAuth | null> => {
 
+  getUser = async (email: string): Promise<IUserResponseFull | null> => {
     try {
-      const data = await this.userModel.findOne({ email })
-      return data
+      const data = await this.userModel.findOne({ email }).lean();
+
+      if (!data) return null;
+
+      const mappedUser: IUserResponseFull = {
+        ...data,
+        _id: data._id.toString(),
+        profileIMG: data.profileIMG ?? "",
+      };
+
+      return mappedUser;
     } catch (error) {
-      throw error
+      throw error;
     }
   };
 
@@ -543,19 +593,16 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
       const bookings = await this.bookingModel.find({ userId })
         .populate('doctorId', 'name email profileImage') // only select needed fields
         .exec();
-
-
       // Extract user data from populated bookings
-      const doctors = bookings.map(booking => booking.doctorId);
+      const doctors = bookings.map(booking => booking.doctorId as unknown as IBookedDoctorForChat);
       return doctors
-
 
     } catch (error) {
       throw new Error('Failed to fetch booked user data');
     }
   };
 
-  findMessage = async (receiverId: string, senderId: string) => {
+  findMessage = async (receiverId: string, senderId: string): Promise<IMessageUser[]> => {
     try {
       const conversation = await this.conversationModel.findOne({
         participants: { $all: [receiverId, senderId] },
@@ -565,20 +612,16 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
         return [];
       }
 
-
-      return conversation.messages;
+      return conversation.messages as unknown as IMessageUser[];
     } catch (error) {
       console.error('Error finding conversation:', error);
       throw error;
     }
   };
 
-  saveMessages: any = async (messageData: { senderId: string; receiverId: string; message: string, image: string; }) => {
+  saveMessages = async (messageData: { senderId: string; receiverId: string; message: string, image: string; }) => {
     try {
       const { senderId, receiverId, message, image } = messageData;
-
-
-
 
       let conversation = await this.conversationModel.findOne({
         participants: { $all: [senderId, receiverId] },
@@ -591,7 +634,6 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
         });
       }
 
-
       const newMessage = await this.messageModel.create({
         senderId,
         receiverId,
@@ -602,25 +644,34 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
       // Step 4: Push the message into conversation's messages array
       conversation.messages.push(newMessage._id);
       await conversation.save();
-
-      return newMessage;
+      return mapMessages(newMessage);
     } catch (error) {
       console.error("Error in saveMessages:", error);
       throw error;
     }
   };
 
-  deleteMessage = async (messageId: string) => {
-
+  deleteMessage = async (messageId: string): Promise<IMessageSaveResponse | null> => {
     if (!messageId) {
       throw new Error("Message ID is required.");
     }
 
     const deleted = await this.messageModel.findByIdAndDelete(messageId);
-    return deleted;
-  }
+    if (!deleted) throw new Error("Message not found.");
 
-  submitReview = async (reviewData: any) => {
+    return {
+      _id: deleted._id.toString(),
+      senderId: deleted.senderId.toString(),
+      receiverId: deleted.receiverId.toString(),
+      message: deleted.message,
+      image: deleted.image,
+      createdAt: deleted.createdAt,
+      updatedAt: deleted.updatedAt,
+    };
+  };
+
+
+  submitReview = async (reviewData: IReviewSubmit): Promise<IReviewResponse> => {
     try {
       const { userId, doctorId, rating, comment } = reviewData;
 
@@ -644,38 +695,62 @@ class UserReprository extends BaseRepository<any> implements IUserRepository {
 
       await newReview.save();
       const allReviews = await this.reviewModel.find({ doctorId }).populate('userId', 'name profileIMG');
+
+      const formattedReviews = (allReviews as unknown as PopulatedReviewDocument[]).map(mapReviewDocument);
       return {
         success: true,
         message: "Review submitted successfully",
-        data: allReviews,
+        data: formattedReviews,
       };
-    } catch (error: any) {
-      throw error.message
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw error.message;
+      }
+      throw 'An unknown error occurred';
     }
   };
 
   reviewDetails = async (doctorId: string) => {
     try {
       const allReviews = await this.reviewModel.find({ doctorId }).populate('userId', 'name profileIMG');
+      const formattedReviews = (allReviews as unknown as PopulatedReviewDocument[]).map(mapReviewDocument);
       return {
         success: true,
         message: "Review submitted successfully",
-        data: allReviews,
+        data: formattedReviews,
       };
     } catch (error) {
       throw error
     }
   };
 
-  getDoctorSlotsForBooking = async (doctorId: string) => {
-    return await this.slotModel.find({ doctorId, status: "Available" });
+
+
+  getDoctorSlotsForBooking = async (doctorId: string): Promise<IDoctorSlot[]> => {
+    const slots = await this.slotModel.find({ doctorId, status: "Available" }).lean();
+    return slots as unknown as IDoctorSlot[];
   };
 
-  getPrescription = async (bookingId: string) => {
+  getPrescription = async (bookingId: string): Promise<IPrescriptionResponse | null> => {
     try {
-      const data = await this.prescriptionModel.findOne({ bookingId });
 
-      return data
+      const data = await this.prescriptionModel.findOne({ bookingId }) as (IPrescription & { _id: Types.ObjectId, createdAt: Date, updatedAt: Date });
+
+      if (!data) {
+        throw new Error("Prescription not found");
+      }
+      const response: IPrescriptionResponse = {
+        _id: data._id.toString(),
+        bookingId: data.bookingId.toString(),
+        patientAdvice: data.patientAdvice,
+        medications: data.medications,
+        userId: data.userId.toString(),
+        doctorId: data.doctorId.toString(),
+        createdAt: data.createdAt.toISOString(),
+        updatedAt: data.updatedAt.toISOString(),
+      };
+
+      return response;
     } catch (error) {
       console.error("Error fetching prescription:", error);
       throw error;

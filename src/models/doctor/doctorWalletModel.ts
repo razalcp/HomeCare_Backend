@@ -1,7 +1,7 @@
 import { Document, Schema, Types, model } from 'mongoose';
 
 export interface ITransaction {
-  _id: Types.ObjectId;
+  _id?: Types.ObjectId;
   amount: number;
   transactionId: string;
   transactionType: 'credit' | 'debit';

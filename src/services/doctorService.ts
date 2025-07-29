@@ -8,6 +8,7 @@ import { IBookingListResponseDTO } from "../dtos/doctor.dto";
 import { mapBookingToDTO } from "../mappers/doctor.mapper";
 
 class DoctorService implements IDoctorService {
+
     private doctorReprository: IDoctorReprository
 
     private doctorEmail: string | null = null;
@@ -20,7 +21,7 @@ class DoctorService implements IDoctorService {
 
     findRegisteredEmail = async (email: string) => {
         return await this.doctorReprository.findByEmail(email)
-    }
+    };
 
     register = async (email: string) => {
         try {
@@ -45,8 +46,10 @@ class DoctorService implements IDoctorService {
         }
 
 
-    }
+    };
+
     doctorLogin = async (email: string) => {
+
         try {
             const alreadyApprovedDoctor = await this.doctorReprository.findEmailForLogin(email)
 
@@ -230,7 +233,7 @@ class DoctorService implements IDoctorService {
 
     getMyBookings = async (doctorId: string, page: number, limit: number): Promise<IBookingListResponseDTO> => {
         const result = await this.doctorReprository.getMyBookings(doctorId, page, limit);
-
+            
         return {
             bookings: result.bookings.map(mapBookingToDTO),
             totalPages: result.totalPages,

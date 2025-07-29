@@ -119,3 +119,4 @@ export interface IDepartmentResponse {
     isListed: boolean;
     
 }
+

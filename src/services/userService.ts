@@ -1,10 +1,13 @@
-import { IUser, IUserAuth } from "../interfaces/user/userInterface";
+import { IBookedDoctorForChat, ICancelBookingResponse, IMessageSaveResponse, IMessageUser, IReviewSubmit, ISaveMessageInput, IUpdateUserProfileImage, IUpdateUserProfileInput, IUser, IUserAuth, IVerifiedDoctorsResponse, IWalletData } from "../interfaces/user/userInterface";
 import { IUserRepository } from "../interfaces/user/IUserReprository";
 import sendEmail from "../config/email_config";
 import bcrypt from "bcrypt";
 import { IUserModel } from "../interfaces/user/userModelInterface";
 import { createToken, createRefreshToken } from "../config/jwt_config";
 import { IUserService } from "../interfaces/user/IUserService";
+import { mapToUserBookingDTO, mapUserToAuthDTO, mapUserToSafeDTO } from "../mappers/user.mapper";
+import { IUserAuthDTO, IUserBookingDTO } from "../dtos/user.dto";
+
 
 
 class UserService implements IUserService {
@@ -61,7 +64,7 @@ class UserService implements IUserService {
       );
 
       this.userData!.password = hashedPassword;
-      const response = this.userReprository.register(this.userData!);
+      const response = await this.userReprository.register(this.userData!);
     } catch (error) {
       throw error;
     }
@@ -74,6 +77,8 @@ class UserService implements IUserService {
       ).toString();
       this.OTP = Generated_OTP;
       console.log(`Re-generated OTP is : ${Generated_OTP}`);
+
+
       const isMailSended = await sendEmail(this.userData!.email, Generated_OTP);
       if (!isMailSended) {
         throw new Error("Email not send");
@@ -85,22 +90,20 @@ class UserService implements IUserService {
     }
   };
 
-  login = async (email: string, password: string): Promise<{ userData: IUserAuth; userToken: string; userRefreshToken: string; }> => {
-
-
+  login = async (email: string, password: string): Promise<{ userData: IUserAuthDTO; userToken: string; userRefreshToken: string; }> => {
     try {
       const userData = await this.userReprository.login(email);
-
-
       if (!userData) throw new Error("Email not found");
-
       const comparePassword = await bcrypt.compare(password, userData.password as string);
       if (!comparePassword) throw new Error("Wrong password");
       if (userData.isUserBlocked) throw new Error("User is blocked");
-      const userToken = createToken(userData._id as string, process.env.userRole as string);
-      const userRefreshToken = createRefreshToken(userData._id as string, process.env.userRole as string);
 
-      return { userData, userToken, userRefreshToken }
+      const userToken = createToken(userData._id as unknown as string, process.env.userRole as string);
+      const userRefreshToken = createRefreshToken(userData._id as unknown as string, process.env.userRole as string);
+      const safeUserData = mapUserToAuthDTO(userData);
+      return { userData: safeUserData, userToken, userRefreshToken };
+
+
 
     } catch (error) {
       throw error
@@ -115,7 +118,7 @@ class UserService implements IUserService {
     departments: string[],
     minFee: number,
     maxFee: number
-  ) => {
+  ): Promise<IVerifiedDoctorsResponse> => {
     try {
       return await this.userReprository.getVerifiedDoctors(
         page,
@@ -140,15 +143,28 @@ class UserService implements IUserService {
     }
   }
 
-  getUserBookings = async (userId: string) => {
-    try {
-      return await this.userReprository.getUserBookings(userId)
-    } catch (error) {
-      throw error
-    }
-  }
+  // getUserBookings = async (userId: string) => {
+  //   try {
+  //     return await this.userReprository.getUserBookings(userId)
+  //   } catch (error) {
+  //     throw error
+  //   }
+  // }
 
-  cancelBooking = async (bookingId: string) => {
+  getUserBookings = async (userId: string): Promise<IUserBookingDTO[]> => {
+    try {
+      const rawBookings = await this.userReprository.getUserBookings(userId);
+
+      const bookings: IUserBookingDTO[] = rawBookings.map(mapToUserBookingDTO);
+
+      return bookings;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+
+  cancelBooking = async (bookingId: string): Promise<ICancelBookingResponse> => {
     try {
       const cancelBookingData = await this.userReprository.cancelBooking(bookingId)
       return cancelBookingData
@@ -159,7 +175,7 @@ class UserService implements IUserService {
   };
 
 
-  getWalletData = async (userId: string, page: number, limit: number) => {
+  getWalletData = async (userId: string, page: number, limit: number): Promise<IWalletData> => {
     try {
       return await this.userReprository.getWalletData(userId, page, limit);
     } catch (error) {
@@ -168,68 +184,70 @@ class UserService implements IUserService {
   };
 
 
-
-
-  updateUserProfile = async (userData: any, imgObject: any) => {
+  updateUserProfile = async (userData: IUpdateUserProfileInput, imgObject: IUpdateUserProfileImage) => {
     try {
       // Hash password if it exists
       if (userData.password) {
         const hashedPassword = await bcrypt.hash(userData.password as string, 10);
         userData.password = hashedPassword;
       }
-
       const updateUserData = await this.userReprository.updateUser(userData, imgObject);
       return updateUserData;
-    } catch (error: any) {
-
-      throw new Error(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error("An unexpected error occurred");
     }
   };
 
   getUser = async (email: string) => {
     try {
       const getUserData = await this.userReprository.getUser(email)
-      return getUserData
+      if (!getUserData) return null;
+      const userDTO = mapUserToSafeDTO(getUserData);
+      return userDTO
     } catch (error) {
       throw error
     }
   };
 
-  getBookedDoctors = async (userId: string) => {
+  getBookedDoctors = async (userId: string): Promise<IBookedDoctorForChat[]> => {
     try {
       const userData = await this.userReprository.getBookedDoctor(userId)
       return userData
     } catch (error) {
-      return error
+      throw error
     };
 
   };
 
-  getMessages = async (receiverId: string, senderId: string) => {
+  getMessages = async (receiverId: string, senderId: string): Promise<IMessageUser[]> => {
     try {
       const messageData = await this.userReprository.findMessage(receiverId, senderId)
-
+      console.log(messageData);
+      
       return messageData
     } catch (error) {
-      return error
+      throw error
     }
   };
 
-  saveMessages = async (messageData: any) => {
+  saveMessages = async (messageData: ISaveMessageInput) => {
     try {
-
       const saveData = await this.userReprository.saveMessages(messageData)
       return saveData
     } catch (error) {
-      return error
+     throw error
     }
   };
-  deleteMessage = async (messageId: string) => {
+
+  deleteMessage = async (messageId: string): Promise<IMessageSaveResponse | null> => {
     try {
       const updateData = await this.userReprository.deleteMessage(messageId)
       return updateData
     } catch (error) {
-      return error
+      throw error
     }
   };
 
@@ -241,7 +259,8 @@ class UserService implements IUserService {
     }
   };
 
-  submitReview = async (reviewData: any) => {
+  submitReview = async (reviewData: IReviewSubmit) => {
+
     try {
       const saveData = await this.userReprository.submitReview(reviewData)
       return saveData
@@ -268,6 +287,9 @@ class UserService implements IUserService {
   getPrescription = async (bookingId: string) => {
     try {
       const prescriptionData = await this.userReprository.getPrescription(bookingId)
+      if (!prescriptionData) {
+        throw new Error('Prescription not found');
+      }
       return prescriptionData
     } catch (error) {
       throw new Error('error in getting your prerscription' + error);

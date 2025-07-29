@@ -17,7 +17,7 @@ interface IAdminService {
     >;
 
     addDepartments: (dept: string) => Promise<IDepartment[] | undefined>;
-    getDepartments: (page: number, limit: number) => Promise<PaginatedDepartmentResult>;
+    getDepartments: (page: number, limit: number,search:string) => Promise<PaginatedDepartmentResult>;
     updateListUnlist: (departmentName: string) => Promise<IDepartment[]>;
     getDoctorData: (page: number, limit: number) => Promise<PaginatedDoctorResponse>;
     updateKycStatus(status: string, doctorId: string): Promise<void>;

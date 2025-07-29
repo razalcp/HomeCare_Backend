@@ -51,8 +51,8 @@ class AdminService implements IAdminService {
 
     };
 
-    getDepartments = async (page: number, limit: number) => {
-        return await this.adminReprository.getDepartments(page, limit);
+    getDepartments = async (page: number, limit: number, search: string) => {
+        return await this.adminReprository.getDepartments(page, limit, search);
     };
 
 

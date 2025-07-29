@@ -64,26 +64,31 @@ class AdminReprository implements IAdminRepository {
 
     };
 
-    // Get departments with pagination
-    getDepartments = async (page: number, limit: number) => {
+
+    getDepartments = async (page: number, limit: number, search: string) => {
         try {
             const skip = (page - 1) * limit;
 
+            const filter = search
+                ? { departmentName: { $regex: search, $options: "i" } }
+                : {};
+
             const [data, totalCount] = await Promise.all([
-                this.departmentModel.find().sort({ _id: -1 }).skip(skip).limit(limit).lean(),
-                this.departmentModel.countDocuments()
+                this.departmentModel.find(filter).sort({ _id: -1 }).skip(skip).limit(limit).lean(),
+                this.departmentModel.countDocuments(filter),
             ]);
 
             return {
                 data,
                 totalCount,
                 totalPages: Math.ceil(totalCount / limit),
-                currentPage: page
+                currentPage: page,
             };
         } catch (error) {
             throw error;
         }
     };
+
 
 
     updateListUnlist = async (departmentName: string) => {

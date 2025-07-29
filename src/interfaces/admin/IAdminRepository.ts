@@ -4,7 +4,7 @@ import { IAdminAuth, IDashboardData, IDepartmentResponse, IDoctorData, IGetDepar
 export interface IAdminRepository {
     getEmailAndPassword(email: string): Promise<IAdminAuth | null>;
     addDepartments(dept: string): Promise<IDepartment[] | undefined>;
-    getDepartments(page: number, limit: number): Promise<IGetDepartmentsResponse>;
+    getDepartments(page: number, limit: number,search:string): Promise<IGetDepartmentsResponse>;
     updateListUnlist: (departmentName: string) => Promise<IDepartment[]>;
     getDoctors: (page: number, limit: number) => Promise<PaginatedDoctorResponse>;
     updateKycStatus: (status: string, doctorId: string) => Promise<IDoctorData | null>;

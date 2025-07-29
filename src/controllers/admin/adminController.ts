@@ -81,18 +81,33 @@ class AdminController {
 
 
 
+    // getDepartments = async (req: Request, res: Response) => {
+    //     try {
+    //         const page = parseInt(req.query.page as string) || 1;
+    //         const limit = parseInt(req.query.limit as string) || 5;
+
+    //         const getData = await this.adminService.getDepartments(page, limit);
+
+    //         res.status(HTTP_statusCode.OK).json(getData);
+    //     } catch (error) {
+    //         throw error;
+    //     }
+    // };
+
     getDepartments = async (req: Request, res: Response) => {
         try {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 5;
+            const search = (req.query.search as string) || "";
 
-            const getData = await this.adminService.getDepartments(page, limit);
+            const getData = await this.adminService.getDepartments(page, limit, search);
 
             res.status(HTTP_statusCode.OK).json(getData);
         } catch (error) {
             throw error;
         }
     };
+
 
 
     updateListUnlist = async (req: Request, res: Response) => {

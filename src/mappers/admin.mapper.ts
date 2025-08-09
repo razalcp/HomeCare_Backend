@@ -1,7 +1,8 @@
 import { IAdmin } from '../models/admin/adminModel';
-import { AdminDto, IPatientDTO } from '../dtos/admin.dto';
+import { AdminDto, DepartmentDTO, IPatientDTO } from '../dtos/admin.dto';
 import { IUserModel } from '../interfaces/user/userModelInterface';
 import { IAdminAuth } from '../interfaces/admin/AdminInterface';
+import { IDepartment } from '../models/admin/departmentModel';
 
 export const mapAdminToDto = (admin: IAdminAuth): AdminDto => {
   return {
@@ -18,4 +19,10 @@ export const mapPatientToDTO = (patient: IUserModel): IPatientDTO => ({
   isUserBlocked: patient.isUserBlocked,
   createdAt: patient.createdAt,
   updatedAt: patient.updatedAt,
+});
+
+export const toDepartmentDTO = (department: IDepartment): DepartmentDTO => ({
+    _id: department._id.toString(),
+    departmentName: department.departmentName,
+    isListed: department.isListed,
 });

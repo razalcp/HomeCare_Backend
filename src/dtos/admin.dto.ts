@@ -13,3 +13,9 @@ export interface IPatientDTO {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface DepartmentDTO {
+    _id: string;
+     departmentName: string;
+    isListed: boolean;
+}

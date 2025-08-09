@@ -1,29 +1,83 @@
-import { Model, Document } from 'mongoose';
+import {
+    Model,
+    Document,
+    FilterQuery,
+    UpdateQuery,
+    Types,
+} from 'mongoose';
 
-class BaseRepository<T extends Document> {
-    private _model: Model<T>;
+
+// type Lean<T> = Omit<T, "_id" | "__v"> & { _id: string };
+type Lean<T> = T extends Document ? Omit<T, keyof Document> : T;
+
+
+export default class BaseRepository<T extends Document> {
+    protected model: Model<T>;
+
     constructor(model: Model<T>) {
-        this._model = model;
+        this.model = model;
     }
-    async create(data: T): Promise<T> {
-        const document = new this._model(data);
-        return document.save();
-    }
-    async findOne(condition: object): Promise<T | null> {
-        return this._model.findOne(condition).exec();
-    }
-    async findAll(): Promise<T[]> {
-        return this._model.find().exec();
-    }
-    async update(id: string, data: Partial<T>): Promise<T | null> {
-        return this._model.findByIdAndUpdate(id, data, { new: true }).exec();
-    }
-    async delete(id: string): Promise<T | null> {
-        return this._model.findByIdAndDelete(id).exec();
-    }
-    async findWithCondition(condition: object): Promise<T[]> {
-        return this._model.find(condition).exec();
-    }
-}
 
-export default BaseRepository;
+    findOne(filter: FilterQuery<T>): Promise<T | null> {
+        return this.model.findOne(filter);
+    }
+
+
+    async findAll(): Promise<Lean<T>[]> {
+        return (await this.model.find().lean()) as unknown as Lean<T>[];
+    }
+
+
+    async findById(id: string): Promise<Lean<T> | null> {
+        return (await this.model.findById(id).lean()) as unknown as Lean<T> | null;
+    }
+
+
+    async create(data: Partial<T>): Promise<T> {
+        return await this.model.create(data);
+    }
+
+
+    async updateById(
+        id: string,
+        data: UpdateQuery<T>
+    ): Promise<Lean<T> | null> {
+        return (await this.model
+            .findByIdAndUpdate(id, data, { new: true })
+            .lean()) as unknown as Lean<T> | null;
+    }
+
+
+    async deleteById(id: string): Promise<Lean<T> | null> {
+        return (await this.model.findByIdAndDelete(id).lean()) as unknown as Lean<T> | null;
+    }
+
+
+    async findWithPagination(
+        filter: Record<string, any>,
+        page: number,
+        limit: number,
+        sort: Record<string, 1 | -1> = {}
+    ): Promise<{
+        data: Lean<T>[];
+        totalCount: number;
+        totalPages: number;
+        currentPage: number;
+    }> {
+        const skip = (page - 1) * limit;
+
+        const [data, totalCount] = await Promise.all([
+            this.model.find(filter).sort(sort).skip(skip).limit(limit).lean(),
+            this.model.countDocuments(filter),
+        ]);
+
+        return {
+            data: data as unknown as Lean<T>[],
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+        };
+    }
+
+
+}

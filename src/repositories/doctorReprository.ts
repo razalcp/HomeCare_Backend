@@ -6,7 +6,6 @@ import { IDepartment } from "../models/admin/departmentModel"
 import { ISlot } from "../models/doctor/slotModel"
 import { IBooking } from "../models/user/bookingModel"
 import { IWallet } from "../models/doctor/doctorWalletModel"
-import BaseRepository from "./baseRepository"
 import { IUserModel } from "../interfaces/user/userModelInterface"
 import { IBookedUser, IBookingSummary, IBookingWithPopulatedFields, IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IGetMyBookingsResponse, ILeanPopulatedBooking, IMessageFromDoctor, IPrescriptionRequest, IUpcomingAppointment, IWalletTransaction, PopulatedBookingDashBoard } from "../interfaces/doctor/doctorInterface"
 import { PopulatedBooking } from "../interfaces/doctor/doctorInterface"
@@ -15,35 +14,35 @@ import { IConversation } from "../models/conversationModel"
 import { IPrescription } from "../models/doctor/prescriptionModel"
 
 
-class DoctorReprository extends BaseRepository<any> implements IDoctorReprository {
-    private doctorModel: Model<IDoctorModel>
-    private departmentModel: Model<IDepartment>
-    private slotModel: Model<ISlot>
-    private bookingModel: Model<IBooking>
-    private doctorWalletModel: Model<IWallet>
-    private messageModel: Model<IMessage>
-    private conversationModel: Model<IConversation>
-    private prescriptionModel: Model<IPrescription>
-    private userModel: Model<IUserModel>
+class DoctorReprository implements IDoctorReprository {
+    private _doctorModel: Model<IDoctorModel>
+    private _departmentModel: Model<IDepartment>
+    private _slotModel: Model<ISlot>
+    private _bookingModel: Model<IBooking>
+    private _doctorWalletModel: Model<IWallet>
+    private _messageModel: Model<IMessage>
+    private _conversationModel: Model<IConversation>
+    private _prescriptionModel: Model<IPrescription>
+    private _userModel: Model<IUserModel>
 
     constructor(doctorModel: Model<IDoctorModel>, departmentModel: Model<IDepartment>, slotModel: Model<ISlot>, bookingModel: Model<IBooking>, doctorWalletModel: Model<IWallet>, messageModel: Model<IMessage>, conversationModel: Model<IConversation>, prescriptionModel: Model<IPrescription>, userModel: Model<IUserModel>) {
-        super(doctorModel)
-        this.doctorModel = doctorModel
-        this.departmentModel = departmentModel
-        this.slotModel = slotModel
-        this.bookingModel = bookingModel
-        this.doctorWalletModel = doctorWalletModel
-        this.messageModel = messageModel
-        this.conversationModel = conversationModel
-        this.prescriptionModel = prescriptionModel
-        this.userModel = userModel
+
+        this._doctorModel = doctorModel
+        this._departmentModel = departmentModel
+        this._slotModel = slotModel
+        this._bookingModel = bookingModel
+        this._doctorWalletModel = doctorWalletModel
+        this._messageModel = messageModel
+        this._conversationModel = conversationModel
+        this._prescriptionModel = prescriptionModel
+        this._userModel = userModel
 
     }
 
     findByEmail = async (email: string): Promise<{ email?: string } | null> => {
 
         try {
-            return await this.doctorModel.findOne({ email }).select('email').lean()
+            return await this._doctorModel.findOne({ email }).select('email').lean()
         } catch (error) {
             throw error
         }
@@ -51,7 +50,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
     findEmailForLogin = async (email: string): Promise<IDoctorModel | null> => {
         try {
-            const doct = await this.doctorModel.findOne({ email })
+            const doct = await this._doctorModel.findOne({ email })
             return doct
         } catch (error) {
             throw error
@@ -59,9 +58,9 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     }
 
     doctorRepoKycRegister = async (doctorData: IDoctorKycRegisterInput, imgObject: IDoctorImageUpload) => {
-        const existingUser = await this.doctorModel.findOne({ email: doctorData.email })
+        const existingUser = await this._doctorModel.findOne({ email: doctorData.email })
         if (existingUser) {
-            const updatedUser = await this.doctorModel.findOneAndUpdate(
+            const updatedUser = await this._doctorModel.findOneAndUpdate(
                 { email: doctorData.email },
                 { $set: { ...doctorData, ...imgObject } },
                 { new: true }
@@ -75,11 +74,11 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
     updateDoctor = async (doctorData: IDoctorModel, imgObject: { profileImage: string }): Promise<void | IDoctorModel | null> => {
 
-        const existingUser = await this.doctorModel.findOne({ email: doctorData.email })
+        const existingUser = await this._doctorModel.findOne({ email: doctorData.email })
 
         if (existingUser) {
 
-            const updatedUser = await this.doctorModel.findOneAndUpdate(
+            const updatedUser = await this._doctorModel.findOneAndUpdate(
                 { email: doctorData.email },
                 { $set: { ...doctorData, ...imgObject } },
                 { new: true }
@@ -96,9 +95,9 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         const obj = { email: regEmail }
 
         try {
-            const alreadyExistingUser = await this.doctorModel.findOne({ email: regEmail })
+            const alreadyExistingUser = await this._doctorModel.findOne({ email: regEmail })
             if (!alreadyExistingUser) {
-                return await this.doctorModel.create(obj)
+                return await this._doctorModel.create(obj)
             }
             return alreadyExistingUser
         } catch (error) {
@@ -108,7 +107,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     };
 
     getDepartments = async () => {
-        const data = await this.departmentModel.find(
+        const data = await this._departmentModel.find(
             { isListed: true }, // Filter: isListed should be true
             { _id: 0, departmentName: 1 } // Projection: Only return departmentName, exclude _id
         );
@@ -123,7 +122,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                 // Handling array case
 
                 for (const slot of slotData) {
-                    const existingSlot = await this.slotModel.findOne({
+                    const existingSlot = await this._slotModel.findOne({
                         doctorId: slot.doctorId,
                         date: slot.date,
                         startTime: slot.startTime,
@@ -136,10 +135,10 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                 }
 
                 // If no duplicate, insert all slots
-                await this.slotModel.insertMany(slotData);
+                await this._slotModel.insertMany(slotData);
             } else {
                 // Handling object case
-                const existingSlot = await this.slotModel.findOne({
+                const existingSlot = await this._slotModel.findOne({
                     doctorId: slotData.doctorId,
                     date: slotData.date,
                     startTime: slotData.startTime,
@@ -151,7 +150,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                 }
 
                 // Insert new slot
-                const newSlot = new this.slotModel(slotData);
+                const newSlot = new this._slotModel(slotData);
                 await newSlot.save();
             }
 
@@ -167,84 +166,18 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     };
 
     getDoctorSlotsForBooking = async (doctorId: string) => {
-        return await this.slotModel.find({ doctorId });
+        return await this._slotModel.find({ doctorId });
     };
 
     getDoctorSlots = async (doctorId: string, page: number, limit: number) => {
         const skip = (page - 1) * limit;
         const [slots, total] = await Promise.all([
-            this.slotModel.find({ doctorId }).skip(skip).limit(limit),
-            this.slotModel.countDocuments({ doctorId }),
+            this._slotModel.find({ doctorId }).skip(skip).limit(limit),
+            this._slotModel.countDocuments({ doctorId }),
         ]);
 
         return { slots, total };
     };
-
-    // getMyBookings = async (doctorId: string, page: number, limit: number): Promise<IGetMyBookingsResponse> => {
-    //     try {
-    //         const skip = (page - 1) * limit;
-
-    //         const [bookings, totalCount] = await Promise.all([
-    //             this.bookingModel
-    //                 .find({ doctorId })
-    //                 .sort({ createdAt: -1 })
-    //                 .skip(skip)
-    //                 .limit(limit)
-    //                 .populate('doctorId')
-    //                 .populate('slotId')
-    //                 .populate('userId')
-    //                 .lean<IBookingLean[]>(),
-    //             this.bookingModel.countDocuments({ doctorId })
-    //         ]);
-
-    //         const totalPages = Math.ceil(totalCount / limit);
-    //         console.log("This is my booking response : ",bookings)
-    //         return { bookings, totalPages };
-    //     } catch (error) {
-    //         console.error("Error fetching paginated bookings:", error);
-    //         throw error;
-    //     }
-    // };
-
-    // getMyBookings = async (
-    //     doctorId: string,
-    //     page: number,
-    //     limit: number
-    // ): Promise<IGetMyBookingsResponse> => {
-    //     try {
-    //         const skip = (page - 1) * limit;
-
-    //         const [bookings, totalCount] = await Promise.all([
-    //             this.bookingModel
-    //                 .find({ doctorId })
-    //                 .sort({ createdAt: -1 })
-    //                 .skip(skip)
-    //                 .limit(limit)
-    //                 .populate({
-    //                     path: 'userId',
-    //                     select: 'name'
-    //                 })
-    //                 .populate({
-    //                     path: 'slotId',
-    //                     select: 'date startTime endTime'
-    //                 })
-    //                 .select('userId slotId paymentStatus consultationStatus createdAt') // Main booking fields
-    //                 .lean(),
-    //             this.bookingModel.countDocuments({ doctorId })
-    //         ]);
-
-
-    //         const totalPages = Math.ceil(totalCount / limit);
-
-    //         console.log("Filtered Booking Response:", bookings);
-
-    //         return { bookings, totalPages };
-    //     } catch (error) {
-    //         console.error("Error fetching paginated bookings:", error);
-    //         throw error;
-    //     }
-    // };
-
 
     getMyBookings = async (
         doctorId: string,
@@ -255,7 +188,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             const skip = (page - 1) * limit;
 
             const [bookings, totalCount] = await Promise.all([
-                this.bookingModel
+                this._bookingModel
                     .find({ doctorId })
                     .sort({ createdAt: -1 })
                     .skip(skip)
@@ -264,7 +197,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                     .populate({ path: 'slotId', select: 'date startTime endTime' })
                     .select('userId slotId paymentStatus consultationStatus createdAt')
                     .lean<ILeanPopulatedBooking[]>(),
-                this.bookingModel.countDocuments({ doctorId }),
+                this._bookingModel.countDocuments({ doctorId }),
             ]);
 
             const totalPages = Math.ceil(totalCount / limit);
@@ -300,7 +233,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             const skip = (page - 1) * limit;
 
             // Find the wallet
-            const wallet = await this.doctorWalletModel.findOne({ doctorId });
+            const wallet = await this._doctorWalletModel.findOne({ doctorId });
 
             if (!wallet) return null;
 
@@ -316,7 +249,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                     _id: wallet._id,
                     doctorId: wallet.doctorId,
                     balance: wallet.balance,
-                    transactions: paginatedTransactions,
+                    transactions: paginatedTransactions.filter((tx): tx is IWalletTransaction => tx._id !== undefined),
                     createdAt: wallet.createdAt ?? new Date(),
                     updatedAt: wallet.updatedAt ?? new Date(),
                 },
@@ -330,7 +263,8 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
     getBookedUsers = async (doctorId: string): Promise<IBookedUser[]> => {
         try {
-            const bookings = await this.bookingModel.find({ doctorId })
+
+            const bookings = await this._bookingModel.find({ doctorId })
                 .populate('userId')
                 .populate('slotId')   // only select needed fields
                 .exec() as unknown as PopulatedBooking[];
@@ -352,7 +286,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
                     age: user.age ?? 0,
                     gender: user.gender ?? "Not specified",
                     consultationStatus: booking.consultationStatus,
-                    bookingStatus:booking.bookingStatus,
+                    bookingStatus: booking.bookingStatus,
                     slotId: {
                         _id: slot._id.toString(),
                         date: slot.date,
@@ -376,19 +310,19 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
             const { senderId, receiverId, message, image } = messageData;
 
-            let conversation = await this.conversationModel.findOne({
+            let conversation = await this._conversationModel.findOne({
                 participants: { $all: [senderId, receiverId] },
             });
 
             if (!conversation) {
-                conversation = await this.conversationModel.create({
+                conversation = await this._conversationModel.create({
                     participants: [senderId, receiverId],
                     messages: [],
                 });
             }
 
 
-            const newMessage = await this.messageModel.create({
+            const newMessage = await this._messageModel.create({
                 senderId,
                 receiverId,
                 message,
@@ -422,7 +356,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         senderId: string
     ): Promise<IMessageFromDoctor[]> => {
         try {
-            const conversation = await this.conversationModel
+            const conversation = await this._conversationModel
                 .findOne({
                     participants: { $all: [receiverId, senderId] },
                 })
@@ -451,7 +385,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
 
     deleteSlot = async (slotId: string): Promise<string> => {
         try {
-            const deleted = await this.slotModel.findByIdAndDelete(slotId);
+            const deleted = await this._slotModel.findByIdAndDelete(slotId);
 
             if (!deleted) {
                 throw new Error("Slot not found");
@@ -468,7 +402,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
         try {
 
 
-            const updatedBooking = await this.bookingModel.findByIdAndUpdate(
+            const updatedBooking = await this._bookingModel.findByIdAndUpdate(
                 presData.bookingId,
                 { consultationStatus: "completed" },
                 { new: true }
@@ -476,7 +410,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             if (!updatedBooking) {
                 throw new Error("Booking not found");
             }
-            const newPrescription = new this.prescriptionModel(presData);
+            const newPrescription = new this._prescriptionModel(presData);
             await newPrescription.save();
             return "Prescription added successfully"
         } catch (error) {
@@ -489,18 +423,18 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
     doctorDashboard = async (doctorId: string): Promise<IDoctorDashboard> => {
 
         try {
-            const totalAppointments = await this.bookingModel.countDocuments({
+            const totalAppointments = await this._bookingModel.countDocuments({
                 doctorId: doctorId
             });
 
-            const activePatients = await this.userModel.countDocuments({ isUserBlocked: false });
+            const activePatients = await this._userModel.countDocuments({ isUserBlocked: false });
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
             // Convert to string since your slot date is stored as a string (e.g., "2025-05-29")
             const todayStr = today.toISOString().split("T")[0];
 
-            const upcomingAppointments = await this.bookingModel.find()
+            const upcomingAppointments = await this._bookingModel.find()
                 .populate({
                     path: "slotId",
                     match: {
@@ -516,7 +450,7 @@ class DoctorReprository extends BaseRepository<any> implements IDoctorReprositor
             // Filter out bookings where slotId didn't match (populate returns null)
             const filtered = upcomingAppointments.filter(b => b.slotId);
 
-            const revenueResult = await this.doctorWalletModel.aggregate([
+            const revenueResult = await this._doctorWalletModel.aggregate([
                 { $unwind: '$transactions' },
                 { $match: { 'transactions.transactionType': 'credit' } },
                 {

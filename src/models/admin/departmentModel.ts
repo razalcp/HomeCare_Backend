@@ -5,8 +5,9 @@ export interface IDepartment {
     departmentName: string;
     isListed: boolean;
 }
+export type DepartmentDocument = IDepartment & Document
 
-const departmentSchema = new Schema<IDepartment>({
+const departmentSchema = new Schema<DepartmentDocument>({
     departmentName: { type: String },
     isListed: { type: Boolean, default: true },
 });

@@ -8,16 +8,16 @@ import { DoctorImageObject, IUpdateDoctorProfile } from '../../interfaces/user/u
 import { AuthenticatedRequest } from '../../interfaces/doctor/doctorInterface';
 
 class DoctorController {
-    private doctorService: IDoctorService
+    private _doctorService: IDoctorService
 
     constructor(doctorService: IDoctorService) {
-        this.doctorService = doctorService
+        this._doctorService = doctorService
     }
 
     register = async (req: Request, res: Response) => {
         const { email } = req.body
 
-        await this.doctorService.register(email)
+        await this._doctorService.register(email)
         res.status(HTTP_statusCode.OK).send("OTP Sent to mail")
     }
 
@@ -26,7 +26,7 @@ class DoctorController {
 
             const { email } = req.body
 
-            await this.doctorService.doctorLogin(email)
+            await this._doctorService.doctorLogin(email)
             res.status(HTTP_statusCode.OK).send("OTP Sent to mail")
 
         } catch (error: unknown) {
@@ -54,7 +54,7 @@ class DoctorController {
         try {
             const { enteredOtp } = req.body
 
-            const serviceResponse = await this.doctorService.otpVerification(
+            const serviceResponse = await this._doctorService.otpVerification(
                 enteredOtp
             );
             res.status(HTTP_statusCode.OK).json(serviceResponse);
@@ -87,7 +87,7 @@ class DoctorController {
         try {
             const { enteredOtp } = req.body
 
-            const serviceResponse = await this.doctorService.verifyDoctorOtp(enteredOtp);
+            const serviceResponse = await this._doctorService.verifyDoctorOtp(enteredOtp);
             res.cookie("doctorRefreshToken", serviceResponse.doctorRefreshToken, {
                 httpOnly: true,
                 sameSite: 'none',
@@ -129,7 +129,7 @@ class DoctorController {
 
     resendOtp = async (req: Request, res: Response) => {
         try {
-            await this.doctorService.resendOTP();
+            await this._doctorService.resendOTP();
             res.status(HTTP_statusCode.OK).send("OTP sended");
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -183,7 +183,7 @@ class DoctorController {
             const imgObject: DoctorImageObject = {};
 
 
-            const isEmailRegistered = await this.doctorService.findRegisteredEmail(email)
+            const isEmailRegistered = await this._doctorService.findRegisteredEmail(email)
 
 
             if (isEmailRegistered?.email === email) {
@@ -196,7 +196,7 @@ class DoctorController {
 
             }
 
-            await this.doctorService.doctorKycRegister(doctorData, imgObject)
+            await this._doctorService.doctorKycRegister(doctorData, imgObject)
             res.status(200).json({ message: "Logged out successfully" });
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -208,7 +208,7 @@ class DoctorController {
     };
 
     getDepartments = async (req: Request, res: Response) => {
-        const getData = await this.doctorService.getDepartments()
+        const getData = await this._doctorService.getDepartments()
         res.status(HTTP_statusCode.OK).json(getData);
 
     };
@@ -244,7 +244,7 @@ class DoctorController {
 
             }
 
-            const docData = await this.doctorService.updateDoctorProfile(doctorData, imgObject)
+            const docData = await this._doctorService.updateDoctorProfile(doctorData, imgObject)
             res.status(HTTP_statusCode.OK).json(docData)
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -273,7 +273,7 @@ class DoctorController {
         try {
 
             const slotData = req.body
-            const addSlot = await this.doctorService.addDoctorSlots(slotData)
+            const addSlot = await this._doctorService.addDoctorSlots(slotData)
 
             res.status(200).json({ message: "Slot added successfully!" });
         } catch (error: unknown) {
@@ -293,7 +293,7 @@ class DoctorController {
     getDoctorSlotsForBooking = async (req: Request, res: Response) => {
 
         const { doctorId } = req.params;
-        const getData = await this.doctorService.getDoctorSlotsForBooking(doctorId)
+        const getData = await this._doctorService.getDoctorSlotsForBooking(doctorId)
         res.status(HTTP_statusCode.OK).json(getData);
 
     };
@@ -303,7 +303,7 @@ class DoctorController {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
 
-        const getData = await this.doctorService.getDoctorSlots(doctorId, page, limit);
+        const getData = await this._doctorService.getDoctorSlots(doctorId, page, limit);
         res.status(HTTP_statusCode.OK).json(getData);
     };
 
@@ -311,7 +311,7 @@ class DoctorController {
     getMyBookings = async (req: Request, res: Response) => {
         try {
             const { doctorId, page = 1, limit = 6 } = req.body;
-            const result = await this.doctorService.getMyBookings(doctorId, Number(page), Number(limit));
+            const result = await this._doctorService.getMyBookings(doctorId, Number(page), Number(limit));
             res.status(HTTP_statusCode.OK).json(result);
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -325,7 +325,7 @@ class DoctorController {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
 
-            const walletData = await this.doctorService.getWalletData(doctorId, page, limit);
+            const walletData = await this._doctorService.getWalletData(doctorId, page, limit);
 
             res.status(HTTP_statusCode.OK).json(walletData);
         } catch (error) {
@@ -340,7 +340,7 @@ class DoctorController {
     bookedUsers = async (req: AuthenticatedRequest, res: Response) => {
         try {
             const doctorId = req.user.user_id
-            const Userdata = await this.doctorService.getBookedUsers(doctorId)
+            const Userdata = await this._doctorService.getBookedUsers(doctorId)
             res.status(HTTP_statusCode.OK).json(Userdata)
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -351,7 +351,7 @@ class DoctorController {
     saveMessages = async (req: Request, res: Response) => {
         try {
             const messageData = req.body
-            const saveData = await this.doctorService.saveMessages(messageData)
+            const saveData = await this._doctorService.saveMessages(messageData)
             res.status(HTTP_statusCode.OK).json(saveData)
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -359,7 +359,7 @@ class DoctorController {
     };
     deleteSlot = async (req: Request, res: Response) => {
         const { slotId } = req.params;
-        const update = await this.doctorService.deleteSlot(slotId)
+        const update = await this._doctorService.deleteSlot(slotId)
         res.status(200).json({ message: "Slot deleted" });
     };
 
@@ -367,7 +367,7 @@ class DoctorController {
         try {
             const { receiverId, senderId } = req.query;
 
-            const getData = await this.doctorService.getMessages(receiverId as string, senderId as string)
+            const getData = await this._doctorService.getMessages(receiverId as string, senderId as string)
             res.status(HTTP_statusCode.OK).json(getData)
 
         } catch (error) {
@@ -380,7 +380,7 @@ class DoctorController {
     savePrescription = async (req: Request, res: Response) => {
         try {
             const presData = req.body
-            const saveData = await this.doctorService.savePrescription(presData)
+            const saveData = await this._doctorService.savePrescription(presData)
             res.status(HTTP_statusCode.OK).json(saveData)
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -392,7 +392,7 @@ class DoctorController {
     doctorDashBoard = async (req: Request, res: Response) => {
         try {
             const { doctorId } = req.query
-            const dashData = await this.doctorService.doctorDashBoard(doctorId as string)
+            const dashData = await this._doctorService.doctorDashBoard(doctorId as string)
 
             res.status(HTTP_statusCode.OK).json(dashData)
         } catch (error) {

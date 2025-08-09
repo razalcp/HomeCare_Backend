@@ -1,0 +1,5 @@
+::1 - - [08/Aug/2025:09:14:30 +0000] "POST /userLogout HTTP/1.1" 200 37 "http://localhost:1234/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0"
+::1 - - [08/Aug/2025:09:14:37 +0000] "OPTIONS /login HTTP/1.1" 204 0 "http://localhost:1234/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0"
+::1 - - [08/Aug/2025:09:14:37 +0000] "POST /login HTTP/1.1" 200 458 "http://localhost:1234/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0"
+::1 - - [08/Aug/2025:09:14:59 +0000] "GET /getUser/sachin@gmail.com HTTP/1.1" 200 445 "http://localhost:1234/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0"
+::1 - - [08/Aug/2025:09:14:59 +0000] "GET /getWalletData/67c6a1060e912a2b7180ac35 HTTP/1.1" 200 2104 "http://localhost:1234/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0"

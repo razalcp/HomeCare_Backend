@@ -5,7 +5,7 @@ import DoctorReprository from '../repositories/doctorReprository'
 
 import DoctorModel from '../models/doctor/doctorModel'
 import upload from '../config/multer_config'
-import DepartmentModel from '../models/admin/departmentModel'
+import DepartmentModel, { IDepartment } from '../models/admin/departmentModel'
 import doctorAuthMiddleware from '../middlewares/jwtAuthDoctor'
 import SlotModel from '../models/doctor/slotModel'
 import BookingModel, { IBooking } from "../models/user/bookingModel";
@@ -18,7 +18,7 @@ import { Model } from 'mongoose'
 import { IMessage } from '../models/messageModel'
 
 const router = express.Router()
-const doctorReprository = new DoctorReprository(DoctorModel as any, DepartmentModel, SlotModel as any, BookingModel as Model<IBooking>, doctorWalletModel as any, messageModel as Model<IMessage>, conversationModel as Model<IConversation>, PrescriptionModel as any, User)
+const doctorReprository = new DoctorReprository(DoctorModel as any, DepartmentModel as unknown as Model<IDepartment>, SlotModel as any, BookingModel as Model<IBooking>, doctorWalletModel as any, messageModel as Model<IMessage>, conversationModel as Model<IConversation>, PrescriptionModel as any, User)
 const doctorService = new DoctorService(doctorReprository)
 const doctorController: any = new DoctorController(doctorService)
 

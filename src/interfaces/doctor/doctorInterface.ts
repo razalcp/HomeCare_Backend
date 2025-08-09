@@ -167,7 +167,7 @@ export interface ILeanPopulatedBooking {
 
 
 export interface IWalletResponse {
-    _id: Types.ObjectId;
+    _id: Types.ObjectId ;
     doctorId: string;
     balance: number;
     transactions: IWalletTransaction[];

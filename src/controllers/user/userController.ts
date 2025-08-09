@@ -5,22 +5,19 @@ import HTTP_statusCode from "../../enums/httpStatusCode";
 const stripe = require('stripe')("sk_test_51R6U86C1BfcS3nBm3F9VPOzMitLY6kndB9xIywEvFDKrPi8jDQ457NySmoSq2Nl0hBdT8vtGMvNZ5Wr8cNq736Kk00RPBZDxXt")
 import cloudinary from '../../config/cloudinary_config'
 import { IUserService } from "../../interfaces/user/IUserService";
-import { log } from "console";
-import { get } from "https";
-
 
 
 class userController {
-  private userService: IUserService;
+  private _userService: IUserService;
 
   constructor(userService: IUserService) {
-    this.userService = userService;
+    this._userService = userService;
   }
 
   register = async (req: Request, res: Response): Promise<void> => {
     try {
       const userData: IUser = req.body;
-      await this.userService.register(userData);
+      await this._userService.register(userData);
       res.status(HTTP_statusCode.OK).send("OTP sent to mail");
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -51,7 +48,7 @@ class userController {
       const enteredOtp: { enteredOtp: string } = req.body.enteredOtp;
 
 
-      const serviceResponse = await this.userService.otpVerification(
+      const serviceResponse = await this._userService.otpVerification(
         enteredOtp
       );
       res.status(HTTP_statusCode.OK).json(serviceResponse);
@@ -75,7 +72,7 @@ class userController {
 
   resendOtp = async (req: Request, res: Response) => {
     try {
-      await this.userService.resendOTP();
+      await this._userService.resendOTP();
       res.status(HTTP_statusCode.OK).send("OTP sended");
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -99,7 +96,7 @@ class userController {
 
       const { email, password } = req.body
 
-      const serviceResponse = await this.userService.login(email, password);
+      const serviceResponse = await this._userService.login(email, password);
 
       res.cookie("UserRefreshToken", serviceResponse.userRefreshToken, {
         httpOnly: true,
@@ -149,7 +146,7 @@ class userController {
       const minFee = parseInt(req.query.minFee as string) || 0;
       const maxFee = parseInt(req.query.maxFee as string) || 10000;
 
-      const result = await this.userService.getVerifiedDoctors(
+      const result = await this._userService.getVerifiedDoctors(
         page,
         limit,
         search,
@@ -221,7 +218,7 @@ class userController {
       const slotId = req.body.slotId
       const userId = req.body.userId
       const doctorId = req.body.doctorId
-      const saveData = await this.userService.saveBookingToDb(slotId, userId, doctorId)
+      const saveData = await this._userService.saveBookingToDb(slotId, userId, doctorId)
     } catch (error) {
       throw error
     }
@@ -229,9 +226,10 @@ class userController {
 
   getUserBookings = async (req: Request, res: Response) => {
     try {
+     
+      
       const userId = req.body.userId
-      const getBookingData = await this.userService.getUserBookings(userId)
-      // console.log("getBookingData ",getBookingData);
+      const getBookingData = await this._userService.getUserBookings(userId)
 
       res.status(HTTP_statusCode.OK).json(getBookingData)
     } catch (error) {
@@ -242,7 +240,7 @@ class userController {
   cancelBooking = async (req: Request, res: Response) => {
     try {
       const bookingId = req.body.bookingId
-      const cancelBookingData = await this.userService.cancelBooking(bookingId)
+      const cancelBookingData = await this._userService.cancelBooking(bookingId)
       res.status(HTTP_statusCode.OK).json(cancelBookingData)
     } catch (error) {
       res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -256,7 +254,7 @@ class userController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
-      const getData = await this.userService.getWalletData(userId, page, limit);
+      const getData = await this._userService.getWalletData(userId, page, limit);
       res.status(HTTP_statusCode.OK).json(getData);
     } catch (error) {
       res.status(HTTP_statusCode.InternalServerError).json({
@@ -267,57 +265,118 @@ class userController {
   };
 
 
+  // updateUser = async (req: Request, res: Response) => {
+  //   try {
+
+  //     const userData = req.body
+  //     const fileName = req.files as Express.Multer.File[]
+
+  //     let uploadToCloudinary = (buffer: Buffer) => {
+
+  //       return new Promise((resolve, reject) => {
+  //         const uploadStream = cloudinary.uploader.upload_stream(
+  //           { folder: "doctor_profiles" }, // Cloudinary folder
+  //           (error, result) => {
+  //             if (error) {
+  //               reject(error);
+  //             } else {
+  //               resolve(result?.secure_url); // Return uploaded image URL
+  //             }
+  //           }
+  //         );
+  //         uploadStream.end(buffer); // Send buffer data to Cloudinary
+  //       });
+
+
+
+  //     };
+  //     const imgObject: { [key: string]: string } = {};
+
+  //     for (const file of fileName!) {
+  //       const upload: string = await uploadToCloudinary(file.buffer) as string
+
+  //       imgObject[file.fieldname] = upload
+
+  //     }
+
+  //     const docData = await this._userService.updateUserProfile(userData, imgObject)
+  //     res.status(HTTP_statusCode.OK).json(docData)
+  //   } catch (error: unknown) {
+  //     if (error instanceof Error) {
+  //       return res.status(400).json({ error: error.message });
+  //     }
+
+  //     return res.status(400).json({ error: 'An unexpected error occurred' });
+  //   }
+
+  // };
+
   updateUser = async (req: Request, res: Response) => {
     try {
+      const userData = req.body;
+      const files = req.files as Express.Multer.File[];
 
-      const userData = req.body
-      const fileName = req.files as Express.Multer.File[]
-
-      let uploadToCloudinary = (buffer: Buffer) => {
-
+      // Helper to upload image as 'authenticated' and return public_id
+      const uploadToCloudinary = (buffer: Buffer, filename: string): Promise<string> => {
         return new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: "doctor_profiles" }, // Cloudinary folder
+            {
+              folder: 'doctor_profiles',
+              public_id: filename,
+              type: 'authenticated', // ensures URL must be signed to access
+            },
             (error, result) => {
               if (error) {
                 reject(error);
+              } else if (result?.public_id) {
+                console.log('Cloudinary upload result:', result);
+                resolve(result.public_id as string); // This will be like "doctor_profiles/vis.jpg"
               } else {
-                resolve(result?.secure_url); // Return uploaded image URL
+                reject(new Error('Upload failed with no public_id'));
               }
             }
           );
-          uploadStream.end(buffer); // Send buffer data to Cloudinary
+          uploadStream.end(buffer);
         });
-
-
-
       };
+
       const imgObject: { [key: string]: string } = {};
 
-      for (const file of fileName!) {
-        const upload: string = await uploadToCloudinary(file.buffer) as string
+      for (const file of files) {
+        // Step 1: Upload the image and get the full public_id (including folder)
+        const filenameWithoutExt = file.originalname.replace(/\.[^/.]+$/, '');
+        const publicId = await uploadToCloudinary(file.buffer, filenameWithoutExt);
 
-        imgObject[file.fieldname] = upload
 
+        // Step 2: Generate signed URL for the uploaded image
+        const signedUrl = cloudinary.url(publicId, {
+          resource_type: 'image',          // important!
+          type: 'authenticated',
+          sign_url: true,
+          expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiry
+        });
+
+        // Step 3: Store the signed URL
+        imgObject[file.fieldname] = signedUrl;
       }
 
-      const docData = await this.userService.updateUserProfile(userData, imgObject)
-      res.status(HTTP_statusCode.OK).json(docData)
+      // Step 4: Update user profile and include signed image URL
+      const docData = await this._userService.updateUserProfile(userData, imgObject);
+
+      return res.status(HTTP_statusCode.OK).json(docData);
     } catch (error: unknown) {
       if (error instanceof Error) {
         return res.status(400).json({ error: error.message });
       }
-
       return res.status(400).json({ error: 'An unexpected error occurred' });
     }
-
   };
 
   getUser = async (req: Request, res: Response) => {
     try {
       const { email } = req.params
 
-      const getUserData = await this.userService.getUser(email)
+      const getUserData = await this._userService.getUser(email)
       res.status(HTTP_statusCode.OK).json(getUserData)
     } catch (error) {
       res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -327,7 +386,7 @@ class userController {
   bookedDoctors = async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.user_id
-      const Userdata = await this.userService.getBookedDoctors(userId)
+      const Userdata = await this._userService.getBookedDoctors(userId)
       res.status(HTTP_statusCode.OK).json(Userdata)
 
     } catch (error) {
@@ -340,7 +399,7 @@ class userController {
     try {
       const { receiverId, senderId } = req.query;
 
-      const getData = await this.userService.getMessages(receiverId as any, senderId as any)
+      const getData = await this._userService.getMessages(receiverId as string, senderId as string)
       res.status(HTTP_statusCode.OK).json(getData)
 
     } catch (error) {
@@ -352,7 +411,7 @@ class userController {
   saveMessages = async (req: Request, res: Response) => {
     try {
       const messageData = req.body
-      const saveData = await this.userService.saveMessages(messageData)
+      const saveData = await this._userService.saveMessages(messageData)
       res.status(HTTP_statusCode.OK).json(saveData)
     } catch (error) {
       res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -398,7 +457,7 @@ class userController {
 
     const messageId = req.query.id
     try {
-      const data = await this.userService.deleteMessage(messageId as string)
+      const data = await this._userService.deleteMessage(messageId as string)
       res.status(HTTP_statusCode.OK).json(data)
     } catch (error) {
       res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -413,18 +472,23 @@ class userController {
       const doctorId = req.body.doctorId
       const doctorFees = req.body.doctorFees
 
-      const saveData = await this.userService.saveWalletBookingToDb(slotId, userId, doctorId, doctorFees)
+      const saveData = await this._userService.saveWalletBookingToDb(slotId, userId, doctorId, doctorFees)
       res.status(HTTP_statusCode.OK).json(saveData)
-    } catch (error: any) {
-      res.status(HTTP_statusCode.InternalServerError).json(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(HTTP_statusCode.InternalServerError).json({ message: error.message });
+      } else {
+        res.status(HTTP_statusCode.InternalServerError).json({ message: "An unexpected error occurred." });
+      }
     }
+
 
   };
 
   submitReview = async (req: Request, res: Response) => {
     try {
       const reviewData = req.body
-      const saveData = await this.userService.submitReview(reviewData)
+      const saveData = await this._userService.submitReview(reviewData)
 
       res.status(HTTP_statusCode.OK).json(saveData)
     } catch (error) {
@@ -437,7 +501,7 @@ class userController {
       const { doctorId } = req.query
 
 
-      const saveData = await this.userService.reviewDetails(doctorId as string)
+      const saveData = await this._userService.reviewDetails(doctorId as string)
 
       res.status(HTTP_statusCode.OK).json(saveData)
     } catch (error) {
@@ -447,7 +511,7 @@ class userController {
 
   getDoctorSlotsForBooking = async (req: Request, res: Response) => {
     const { doctorId } = req.params;
-    const getData = await this.userService.getDoctorSlotsForBooking(doctorId)
+    const getData = await this._userService.getDoctorSlotsForBooking(doctorId)
     res.status(HTTP_statusCode.OK).json(getData);
 
   };
@@ -456,7 +520,7 @@ class userController {
     try {
       const { bookingId } = req.query
 
-      const presData = await this.userService.getPrescription(bookingId as string)
+      const presData = await this._userService.getPrescription(bookingId as string)
 
       res.status(HTTP_statusCode.OK).json(presData)
     } catch (error) {

@@ -26,7 +26,9 @@ interface IAdminService {
     getWalletData: (
         adminId: string,
         page: number,
-        limit: number
+        limit: number,
+        search: string ,
+        type?: string
     ) => Promise<IGetWalletDataResponse>;
 
     findDashBoardData(): Promise<IDashboardData>;

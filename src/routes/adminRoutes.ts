@@ -4,7 +4,7 @@ import AdminController from '../controllers/admin/adminController'
 import AdminService from '../services/adminService'
 import AdminReprository from '../repositories/adminReprository'
 import AdminModel from '../models/admin/adminModel'
-import DepartmentModel from '../models/admin/departmentModel'
+import DepartmentModel, { IDepartment } from '../models/admin/departmentModel'
 import DoctorModel, { IDoctor } from '../models/doctor/doctorModel'
 import User from '../models/user/userModel'
 import adminAuthMiddleware from '../middlewares/jwtAuthAdmin'
@@ -16,7 +16,7 @@ import { Model } from 'mongoose'
 const router = express.Router()
 
 
-const adminReprository = new AdminReprository(AdminModel, DepartmentModel, DoctorModel as Model<IDoctor>, User, adminWalletModel as Model<IAdminWallet>, doctorWalletModel as Model<IWallet>, BookingModel as Model<IBooking>)
+const adminReprository = new AdminReprository(AdminModel, DepartmentModel as unknown as Model<IDepartment>, DoctorModel as Model<IDoctor>, User, adminWalletModel as Model<IAdminWallet>, doctorWalletModel as Model<IWallet>, BookingModel as Model<IBooking>)
 const adminService = new AdminService(adminReprository)
 const adminController = new AdminController(adminService)
 

@@ -1,6 +1,6 @@
 import { IAdmin } from '../models/admin/adminModel'
 import { Model } from 'mongoose'
-import { IDepartment } from '../models/admin/departmentModel'
+import { DepartmentDocument, IDepartment } from '../models/admin/departmentModel'
 import { IDoctor } from '../models/doctor/doctorModel'
 import { IUserModel } from '../interfaces/user/userModelInterface'
 import { IAdminWallet } from '../models/admin/adminWalletModel'
@@ -9,30 +9,38 @@ import { IAdminRepository } from '../interfaces/admin/IAdminRepository'
 import { IAdminAuth, IDoctorData } from '../interfaces/admin/AdminInterface'
 import { IWallet } from '../models/doctor/doctorWalletModel'
 import { IBooking } from '../models/user/bookingModel'
+import BaseRepository from './baseRepository'
+import DepartmentModel from '../models/admin/departmentModel'
 
+//getDepartments and getEmailAndPassword
 
-class AdminReprository implements IAdminRepository {
-    private adminModel: Model<IAdmin>
-    private departmentModel: Model<IDepartment>
-    private doctorModel: Model<IDoctor>
-    private userModel: Model<IUserModel>
-    private adminWalletModel: Model<IAdminWallet>
-    private doctorWalletModel: Model<IWallet>
-    private bookingModel: Model<IBooking>
+class AdminReprository extends BaseRepository<IAdmin> implements IAdminRepository {
+
+    private _departmentModel: Model<IDepartment>
+    private _doctorModel: Model<IDoctor>
+    private _userModel: Model<IUserModel>
+    private _adminModel: Model<IAdmin>
+    private _adminWalletModel: Model<IAdminWallet>
+    private _doctorWalletModel: Model<IWallet>
+    private _bookingModel: Model<IBooking>
+    private _departmentRepo: BaseRepository<DepartmentDocument>;
+
     constructor(adminModel: Model<IAdmin>, departmentModel: Model<IDepartment>, doctorModel: Model<IDoctor>, userModel: Model<IUserModel>, adminWalletModel: Model<IAdminWallet>, doctorWalletModel: Model<IWallet>, bookingModel: Model<IBooking>) {
+        super(adminModel);
+        this._departmentRepo = new BaseRepository<DepartmentDocument>(DepartmentModel);
+        this._adminModel = adminModel
+        this._departmentModel = departmentModel
+        this._doctorModel = doctorModel
+        this._userModel = userModel
+        this._adminWalletModel = adminWalletModel
+        this._doctorWalletModel = doctorWalletModel
+        this._bookingModel = bookingModel
 
-
-        this.adminModel = adminModel
-        this.departmentModel = departmentModel
-        this.doctorModel = doctorModel
-        this.userModel = userModel
-        this.adminWalletModel = adminWalletModel
-        this.doctorWalletModel = doctorWalletModel
-        this.bookingModel = bookingModel
     }
 
     getEmailAndPassword = async (email: string): Promise<IAdminAuth | null> => {
-        const admin = await this.adminModel.findOne({ email });
+        // const admin = await this._adminModel.findOne({ email });
+        const admin = await this.findOne({ email });
 
         if (!admin) return null;
 
@@ -43,15 +51,14 @@ class AdminReprository implements IAdminRepository {
         };
     };
 
-
     addDepartments = async (dept: String) => {
         try {
-            const data = await this.departmentModel.findOne({ departmentName: dept })
+            const data = await this._departmentModel.findOne({ departmentName: dept })
             if (data === null) {
                 try {
                     const obj = { departmentName: dept };
-                    await this.departmentModel.create(obj);
-                    const allData = await this.departmentModel.find()
+                    await this._departmentModel.create(obj);
+                    const allData = await this._departmentModel.find()
                     return allData
                 } catch (error) {
                     throw error
@@ -64,26 +71,25 @@ class AdminReprository implements IAdminRepository {
 
     };
 
-
-    getDepartments = async (page: number, limit: number, search: string) => {
+    getDepartments = async (
+        page: number,
+        limit: number,
+        search: string
+    ) => {
         try {
-            const skip = (page - 1) * limit;
-
             const filter = search
-                ? { departmentName: { $regex: search, $options: "i" } }
+                ? { departmentName: { $regex: search, $options: 'i' } }
                 : {};
 
-            const [data, totalCount] = await Promise.all([
-                this.departmentModel.find(filter).sort({ _id: -1 }).skip(skip).limit(limit).lean(),
-                this.departmentModel.countDocuments(filter),
-            ]);
+            const result = await this._departmentRepo.findWithPagination(filter, page, limit);
+
+            const data = result.data as unknown as IDepartment[];
 
             return {
+                ...result,
                 data,
-                totalCount,
-                totalPages: Math.ceil(totalCount / limit),
-                currentPage: page,
             };
+
         } catch (error) {
             throw error;
         }
@@ -94,14 +100,14 @@ class AdminReprository implements IAdminRepository {
     updateListUnlist = async (departmentName: string) => {
         try {
 
-            const department = await this.departmentModel.findOne({ departmentName });
+            const department = await this._departmentModel.findOne({ departmentName });
 
             if (!department) {
                 return [];
             }
             department.isListed = !department.isListed;
             const updatedDepartment = await department.save();
-            return await this.departmentModel.find()
+            return await this._departmentModel.find()
 
         } catch (error) {
             throw error
@@ -121,13 +127,13 @@ class AdminReprository implements IAdminRepository {
             };
 
             const [data, totalCount] = await Promise.all([
-                this.doctorModel
+                this._doctorModel
                     .find(query)
                     .sort({ createdAt: -1 })
                     .skip(skip)
                     .limit(limit)
                     .lean<IDoctorModel[]>(),
-                this.doctorModel.countDocuments(query)
+                this._doctorModel.countDocuments(query)
             ]);
 
             return {
@@ -146,7 +152,7 @@ class AdminReprository implements IAdminRepository {
     updateKycStatus = async (status: string, doctorId: string): Promise<IDoctorData | null> => {
         try {
 
-            const updatedDoctor = await this.doctorModel.findByIdAndUpdate(
+            const updatedDoctor = await this._doctorModel.findByIdAndUpdate(
                 doctorId,
                 { $set: { kycStatus: status } },
                 { new: true } // Return the updated document
@@ -158,28 +164,6 @@ class AdminReprository implements IAdminRepository {
             throw error;
         }
     };
-
-
-    // getPatients = async (page: number, limit: number) => {
-    //     try {
-    //         const skip = (page - 1) * limit;
-
-    //         const [data, totalCount] = await Promise.all([
-    //             this.userModel.find().skip(skip).limit(limit),
-    //             this.userModel.countDocuments()
-    //         ]);
-
-
-    //         return {
-    //             data,
-    //             totalCount,
-    //             totalPages: Math.ceil(totalCount / limit),
-    //             currentPage: page
-    //         };
-    //     } catch (error) {
-    //         throw error;
-    //     }
-    // };
 
     getPatients = async (page: number, limit: number, search: string) => {
         try {
@@ -196,8 +180,8 @@ class AdminReprository implements IAdminRepository {
                 : {};
 
             const [data, totalCount] = await Promise.all([
-                this.userModel.find(searchQuery).skip(skip).limit(limit),
-                this.userModel.countDocuments(searchQuery),
+                this._userModel.find(searchQuery).skip(skip).limit(limit),
+                this._userModel.countDocuments(searchQuery),
             ]);
 
             return {
@@ -212,13 +196,12 @@ class AdminReprository implements IAdminRepository {
     };
 
 
-
     updateuserIsBlocked = async (buttonName: string, id: string) => {
         try {
             const isUserBlocked = buttonName === "Block";
 
             // Update the document and return the updated user.
-            const updatedUser = await this.userModel.findByIdAndUpdate(
+            const updatedUser = await this._userModel.findByIdAndUpdate(
                 id,
                 { isUserBlocked },
                 { new: true }
@@ -230,35 +213,48 @@ class AdminReprository implements IAdminRepository {
         }
     };
 
-
-    getWalletData = async (adminId: string, page: number, limit: number) => {
+    getWalletData = async (adminId: string, page: number, limit: number, search = "", type?: string) => {
         try {
-            const wallet = await this.adminWalletModel.findOne({ adminId });
+            const wallet = await this._adminWalletModel.findOne({ adminId });
 
-            if (!wallet) {
-                throw new Error('Wallet not found');
+            if (!wallet) throw new Error("Wallet not found");
+
+            // Filter and search
+            let filteredTransactions = wallet.transactions;
+
+            if (type && (type === "credit" || type === "debit")) {
+                filteredTransactions = filteredTransactions.filter(tx => tx.transactionType === type);
             }
 
-            // Sort transactions by date in descending order (latest first)
-            const sortedTransactions = wallet.transactions.sort(
+            if (search) {
+                const lowerSearch = search.toLowerCase();
+                filteredTransactions = filteredTransactions.filter((tx) =>
+                    tx.transactionId.toLowerCase().includes(lowerSearch) ||
+                    tx.transactionType.toLowerCase().includes(lowerSearch) ||
+                    tx.amount.toString().includes(lowerSearch) ||
+                    (tx.date && new Date(tx.date).toLocaleString().toLowerCase().includes(lowerSearch))
+                );
+            }
+
+            // Sort & paginate
+            const sorted = filteredTransactions.sort(
                 (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime()
             );
-
-            const totalTransactions = sortedTransactions.length;
+            const totalTransactions = sorted.length;
             const startIndex = (page - 1) * limit;
-            const paginatedTransactions = sortedTransactions.slice(startIndex, startIndex + limit);
+            const paginated = sorted.slice(startIndex, startIndex + limit);
 
             return {
                 _id: wallet._id,
                 adminId: wallet.adminId,
                 balance: wallet.balance,
-                transactions: paginatedTransactions,
+                transactions: paginated,
                 totalTransactions,
                 createdAt: wallet.createdAt,
                 updatedAt: wallet.updatedAt,
             };
         } catch (error) {
-            throw new Error('Failed to fetch wallet');
+            throw new Error("Failed to fetch wallet");
         }
     };
 
@@ -267,7 +263,7 @@ class AdminReprository implements IAdminRepository {
         try {
 
             const adminId = "admin";
-            const result = await this.adminWalletModel.aggregate([
+            const result = await this._adminWalletModel.aggregate([
                 { $match: { adminId } },
                 { $unwind: '$transactions' },
                 { $match: { 'transactions.transactionType': 'credit' } },
@@ -282,7 +278,7 @@ class AdminReprository implements IAdminRepository {
             const adminRevenue = result[0]?.totalCredit || 0;
 
 
-            const revenueResult = await this.doctorWalletModel.aggregate([
+            const revenueResult = await this._doctorWalletModel.aggregate([
                 { $unwind: '$transactions' },
                 { $match: { 'transactions.transactionType': 'credit' } },
                 {
@@ -297,18 +293,18 @@ class AdminReprository implements IAdminRepository {
 
             const totalRevenue = adminRevenue + doctorRevenue;
 
-            const totalUsers = await this.userModel.countDocuments();
+            const totalUsers = await this._userModel.countDocuments();
 
-            const activeUsers = await this.userModel.countDocuments({ isUserBlocked: false });
-
-
-            const totalDoctors = await this.doctorModel.countDocuments();
+            const activeUsers = await this._userModel.countDocuments({ isUserBlocked: false });
 
 
-            const activeDoctors = await this.doctorModel.countDocuments({ kycStatus: 'Approved' });
+            const totalDoctors = await this._doctorModel.countDocuments();
 
 
-            const totalBookings = await this.bookingModel.countDocuments();
+            const activeDoctors = await this._doctorModel.countDocuments({ kycStatus: 'Approved' });
+
+
+            const totalBookings = await this._bookingModel.countDocuments();
 
             const data = await this.getMonthlyDashboardData()
 
@@ -333,7 +329,7 @@ class AdminReprository implements IAdminRepository {
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
         const [adminRevenue, doctorRevenue, users, bookings] = await Promise.all([
-            this.adminWalletModel.aggregate([
+            this._adminWalletModel.aggregate([
                 { $unwind: "$transactions" },
                 { $match: { "transactions.transactionType": "credit" } },
                 {
@@ -348,7 +344,7 @@ class AdminReprository implements IAdminRepository {
                 { $project: { _id: 0, month: "$_id.month", year: "$_id.year", revenue: 1 } },
             ]),
 
-            this.doctorWalletModel.aggregate([
+            this._doctorWalletModel.aggregate([
                 { $unwind: "$transactions" },
                 { $match: { "transactions.transactionType": "credit" } },
                 {
@@ -363,7 +359,7 @@ class AdminReprository implements IAdminRepository {
                 { $project: { _id: 0, month: "$_id.month", year: "$_id.year", revenue: 1 } },
             ]),
 
-            this.userModel.aggregate([
+            this._userModel.aggregate([
                 { $match: { createdAt: { $ne: null } } }, // <--- Add this line
                 {
                     $group: {
@@ -385,7 +381,7 @@ class AdminReprository implements IAdminRepository {
             ]),
 
 
-            this.bookingModel.aggregate([
+            this._bookingModel.aggregate([
                 {
                     $group: {
                         _id: {
@@ -428,7 +424,7 @@ class AdminReprository implements IAdminRepository {
 
     updateDepartment = async (departmentId: string, departmentName: string) => {
         try {
-            const updatedDepartment = await this.departmentModel.findByIdAndUpdate(
+            const updatedDepartment = await this._departmentModel.findByIdAndUpdate(
                 departmentId,
                 { departmentName },
                 { new: true } // returns the updated document

@@ -4,22 +4,22 @@ import AdminReprository from '../repositories/adminReprository'
 import { sendDoctorEmail } from '../config/email_config'
 import bcrypt from "bcrypt";
 import IAdminService from '../interfaces/admin/IAdminService';
-import { mapAdminToDto, mapPatientToDTO } from '../mappers/admin.mapper';
+import { mapAdminToDto, mapPatientToDTO, toDepartmentDTO } from '../mappers/admin.mapper';
 import { log } from 'node:console';
 import { IDashboardData, IDepartmentResponse } from '../interfaces/admin/AdminInterface';
 import { IAdminRepository } from '../interfaces/admin/IAdminRepository';
+import { IDepartment } from '../models/admin/departmentModel';
 
 class AdminService implements IAdminService {
-    private adminReprository: IAdminRepository
+    private _adminReprository: IAdminRepository
+
     constructor(adminReprository: IAdminRepository) {
-        this.adminReprository = adminReprository
+        this._adminReprository = adminReprository
     }
 
     checkWetherAdmin = async (email: string, password: string) => {
         try {
-
-            const data = await this.adminReprository.getEmailAndPassword(email)
-
+            const data = await this._adminReprository.getEmailAndPassword(email)
             if (!data) throw new Error("Check Credentials");
             const comparePassword = await bcrypt.compare(password as string, data.password as string);
             if (!comparePassword) throw new Error("Wrong password");
@@ -42,22 +42,47 @@ class AdminService implements IAdminService {
             throw error
         }
 
-    }
-
-    addDepartments = async (dept: string) => {
-        const data = await this.adminReprository.addDepartments(dept)
-        if (!data) throw new Error("Already Added");
-        return data
-
     };
+
+    // addDepartments = async (dept: string) => {
+    //     const data = await this._adminReprository.addDepartments(dept)
+    //     if (!data) throw new Error("Already Added");
+    //     return data
+
+    // };
+    addDepartments = async (dept: string) => {
+        const data = await this._adminReprository.addDepartments(dept);
+        if (!data) throw new Error("Already Added");
+        const mappedData = data.map(toDepartmentDTO);
+        return mappedData as unknown as IDepartment[];
+    };
+
+    // getDepartments = async (page: number, limit: number, search: string) => {
+    //     const data =await this._adminReprository.getDepartments(page, limit, search);
+    //     console.log(data);
+
+    //     return data
+    // };
+
 
     getDepartments = async (page: number, limit: number, search: string) => {
-        return await this.adminReprository.getDepartments(page, limit, search);
+        const result = await this._adminReprository.getDepartments(page, limit, search);
+        const mappedData = result.data.map(toDepartmentDTO);
+        console.log({
+            ...result,
+            data: mappedData as unknown as IDepartment[],
+        });
+
+        return {
+            ...result,
+            data: mappedData as unknown as IDepartment[],
+        };
     };
+
 
 
     updateListUnlist = async (departmentName: string) => {
-        const update = await this.adminReprository.updateListUnlist(departmentName)
+        const update = await this._adminReprository.updateListUnlist(departmentName)
         log
         if (!update) return [];
         return update
@@ -65,7 +90,7 @@ class AdminService implements IAdminService {
 
     getDoctorData = async (page: number, limit: number) => {
         try {
-            return await this.adminReprository.getDoctors(page, limit);
+            return await this._adminReprository.getDoctors(page, limit);
         } catch (error) {
             throw error;
         }
@@ -73,7 +98,7 @@ class AdminService implements IAdminService {
 
     updateKycStatus = async (status: string, doctorId: string) => {
         try {
-            const update = await this.adminReprository.updateKycStatus(status, doctorId)
+            const update = await this._adminReprository.updateKycStatus(status, doctorId)
             if (!update) {
                 throw new Error("Doctor not found or update failed");
             }
@@ -96,7 +121,6 @@ class AdminService implements IAdminService {
                 } else {
                     console.error("Missing required fields: email, kycStatus, or name.");
                 }
-
             }
 
         } catch (error) {
@@ -105,21 +129,11 @@ class AdminService implements IAdminService {
     };
 
 
-    // getPatients = async (page: number, limit: number) => {
-    //     try {
-    //         const { data, totalCount, totalPages, currentPage } = await this.adminReprository.getPatients(page, limit);
 
-    //         const safeData = data.map(mapPatientToDTO);
-
-    //         return { data: safeData, totalCount, totalPages, currentPage };
-    //     } catch (error) {
-    //         throw error;
-    //     }
-    // };
     getPatients = async (page: number, limit: number, search: string) => {
         try {
             const { data, totalCount, totalPages, currentPage } =
-                await this.adminReprository.getPatients(page, limit, search);
+                await this._adminReprository.getPatients(page, limit, search);
 
             const safeData = data.map(mapPatientToDTO);
 
@@ -132,25 +146,39 @@ class AdminService implements IAdminService {
 
     updateuserIsBlocked = async (buttonName: string, id: string) => {
         try {
-            const update = await this.adminReprository.updateuserIsBlocked(buttonName, id)
+            const update = await this._adminReprository.updateuserIsBlocked(buttonName, id)
             return
         } catch (error) {
             throw error
         }
     }
 
-    getWalletData = async (adminId: string, page: number, limit: number) => {
+
+    getWalletData = async (
+        adminId: string,
+        page: number,
+        limit: number,
+        search: string = "",
+        type?: string
+    ) => {
         try {
-            const getData = await this.adminReprository.getWalletData(adminId, page, limit);
+            const getData = await this._adminReprository.getWalletData(
+                adminId,
+                page,
+                limit,
+                search,
+                type
+            );
             return getData;
         } catch (error) {
             throw error;
         }
     };
 
+
     findDashBoardData = async (): Promise<IDashboardData> => {
         try {
-            const getData = await this.adminReprository.findDashBoardData()
+            const getData = await this._adminReprository.findDashBoardData()
             return getData;
         } catch (error) {
             throw error
@@ -159,7 +187,7 @@ class AdminService implements IAdminService {
 
     updateDepartment = async (departmentId: string, departmentName: string): Promise<IDepartmentResponse> => {
         try {
-            const updateData = await this.adminReprository.updateDepartment(departmentId, departmentName)
+            const updateData = await this._adminReprository.updateDepartment(departmentId, departmentName)
             return {
                 _id: updateData._id.toString(),
                 departmentName: updateData.departmentName,

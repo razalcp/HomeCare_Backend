@@ -1,4 +1,4 @@
-import express, { Application, Request, Response } from "express";
+import express, { Application } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import userRouter from "./routes/userRoutes";
@@ -8,12 +8,32 @@ import adminRouter from './routes/adminRoutes'
 import cookieParser from "cookie-parser";
 // import messageRoutes from "./routes/messageRoutes.js";
 import { startSocket } from "./socketConfig";
-
+import path from "node:path";
+import { devLogger, prodLogger } from "./middlewares/logger";
 const socketIo = require('socket.io')
 const http = require('http');
 const app: Application = express();
 
-dotenv.config();
+// dotenv.config();
+
+
+dotenv.config({
+  path: path.resolve(
+    __dirname,
+    process.env.NODE_ENV === "production" ? "../.env.production" : "../.env.development"
+  ),
+});
+
+
+
+if ((process.env.NODE_ENV ?? "").trim() === "production") {
+  console.log("✅ Logger in PRODUCTION mode — writing to logs/access.log");
+  app.use(prodLogger);
+} else {
+  console.log("🛠 Logger in DEVELOPMENT mode — logging to console");
+  app.use(devLogger);
+}
+
 
 
 mongooseConnection();
@@ -34,7 +54,9 @@ app.use(
 //socket
 const server = http.createServer(app);
 
+console.log("bfr");
 startSocket(server)
+console.log("aftr");
 
 app.use("/", userRouter);
 app.use("/doctors", doctorRouter)

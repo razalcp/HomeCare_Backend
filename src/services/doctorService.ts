@@ -9,37 +9,36 @@ import { mapBookingToDTO } from "../mappers/doctor.mapper";
 
 class DoctorService implements IDoctorService {
 
-    private doctorReprository: IDoctorReprository
+    private _doctorReprository: IDoctorReprository
 
-    private doctorEmail: string | null = null;
-    private OTP: string | null = null;
-    private expiryOTP_time: Date | null = null;
+    private _doctorEmail: string | null = null;
+    private _OTP: string | null = null;
+    private _expiryOTP_time: Date | null = null;
 
     constructor(doctorReprository: IDoctorReprository) {
-        this.doctorReprository = doctorReprository
+        this._doctorReprository = doctorReprository
     }
 
     findRegisteredEmail = async (email: string) => {
-        return await this.doctorReprository.findByEmail(email)
+        return await this._doctorReprository.findByEmail(email)
     };
 
     register = async (email: string) => {
         try {
-            const alreadyExistingDoctor = await this.doctorReprository.findByEmail(email)
+            const alreadyExistingDoctor = await this._doctorReprository.findByEmail(email)
 
-            this.doctorEmail = email
+            this._doctorEmail = email
 
             const generated_Otp = Math.floor(1000 + Math.random() * 9000).toString()
-            this.OTP = generated_Otp
+            this._OTP = generated_Otp
             const isMailSended = await sendEmail(email, generated_Otp)
             if (!isMailSended) {
                 throw new Error("Email not Send")
             }
 
-
             const OTP_createdTime = new Date();
-            this.expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
-            console.log(this.expiryOTP_time)
+             this._expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
+            console.log( this._expiryOTP_time)
             return;
         } catch (error) {
             throw error
@@ -51,9 +50,9 @@ class DoctorService implements IDoctorService {
     doctorLogin = async (email: string) => {
 
         try {
-            const alreadyApprovedDoctor = await this.doctorReprository.findEmailForLogin(email)
+            const alreadyApprovedDoctor = await this._doctorReprository.findEmailForLogin(email)
 
-            this.doctorEmail = email
+             this._doctorEmail = email
 
 
             if (alreadyApprovedDoctor?.kycStatus === 'Rejected') {
@@ -63,7 +62,7 @@ class DoctorService implements IDoctorService {
             else if (alreadyApprovedDoctor?.kycStatus === 'Approved') {
 
                 const generated_Otp = Math.floor(1000 + Math.random() * 9000).toString()
-                this.OTP = generated_Otp
+                 this._OTP = generated_Otp
                 const isMailSended = await sendEmail(email, generated_Otp)
                 if (!isMailSended) {
                     throw new Error("Email not Send")
@@ -80,7 +79,7 @@ class DoctorService implements IDoctorService {
 
 
             const OTP_createdTime = new Date();
-            this.expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
+             this._expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
 
             return;
         } catch (error) {
@@ -90,18 +89,18 @@ class DoctorService implements IDoctorService {
 
     otpVerification = async (enteredOtp: string) => {
         try {
-            if (enteredOtp !== this.OTP) {
+            if (enteredOtp !==  this._OTP) {
 
                 throw new Error("Incorrect OTP")
             }
             const currentTime = new Date();
 
-            if (currentTime > this.expiryOTP_time!) {
+            if (currentTime >  this._expiryOTP_time!) {
                 console.log("Otp expired");
 
                 throw new Error("OTP expired");
             }
-            const doctorData = await this.doctorReprository.register(this.doctorEmail!);
+            const doctorData = await this._doctorReprository.register( this._doctorEmail!);
             if (!doctorData) throw new Error("Email not found");
 
 
@@ -122,7 +121,7 @@ class DoctorService implements IDoctorService {
 
 
         try {
-            if (enteredOtp !== this.OTP) {
+            if (enteredOtp !==  this._OTP) {
                 console.log("Wrong Otp");
 
                 throw new Error("Incorrect OTP")
@@ -130,12 +129,12 @@ class DoctorService implements IDoctorService {
             const currentTime = new Date();
 
 
-            if (currentTime > this.expiryOTP_time!) {
+            if (currentTime >  this._expiryOTP_time!) {
                 console.log("Otp expired");
 
                 throw new Error("OTP expired");
             }
-            const doctorData = await this.doctorReprository.findEmailForLogin(this.doctorEmail!);
+            const doctorData = await this._doctorReprository.findEmailForLogin( this._doctorEmail!);
             if (!doctorData) throw new Error("Email not found");
 
 
@@ -160,14 +159,14 @@ class DoctorService implements IDoctorService {
             const Generated_OTP: string = Math.floor(
                 1000 + Math.random() * 9000
             ).toString();
-            this.OTP = Generated_OTP;
+             this._OTP = Generated_OTP;
             console.log(`Re-generated OTP is : ${Generated_OTP}`);
-            const isMailSended = await sendEmail(this.doctorEmail!, Generated_OTP);
+            const isMailSended = await sendEmail( this._doctorEmail!, Generated_OTP);
             if (!isMailSended) {
                 throw new Error("Email not send");
             }
             const OTP_createdTime = new Date();
-            this.expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
+             this._expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
         } catch (error) {
             throw error;
         }
@@ -175,7 +174,7 @@ class DoctorService implements IDoctorService {
 
     doctorKycRegister = async (doctorData: IDoctorKycRegisterInput, imgObject: IDoctorImageUpload) => {
         try {
-            const saveDoctorData = await this.doctorReprository.doctorRepoKycRegister(doctorData, imgObject)
+            const saveDoctorData = await this._doctorReprository.doctorRepoKycRegister(doctorData, imgObject)
             return saveDoctorData?.kycStatus?.toString() ?? null;
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -187,13 +186,13 @@ class DoctorService implements IDoctorService {
     }
 
     getDepartments = async () => {
-        const getDeptData = await this.doctorReprository.getDepartments()
+        const getDeptData = await this._doctorReprository.getDepartments()
         return getDeptData
     }
 
     updateDoctorProfile = async (doctorData: IDoctorModel, imgObject: { profileImage: string }) => {
         try {
-            const updateDoctorData = await this.doctorReprository.updateDoctor(doctorData, imgObject)
+            const updateDoctorData = await this._doctorReprository.updateDoctor(doctorData, imgObject)
             return updateDoctorData;
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -207,7 +206,7 @@ class DoctorService implements IDoctorService {
     addDoctorSlots = async (slotData: SlotInput) => {
 
         try {
-            const updateSlotData = await this.doctorReprository.addDoctorSlots(slotData)
+            const updateSlotData = await this._doctorReprository.addDoctorSlots(slotData)
 
             return updateSlotData
 
@@ -221,18 +220,18 @@ class DoctorService implements IDoctorService {
     };
 
     getDoctorSlotsForBooking = async (doctorId: string) => {
-        const getSlots = await this.doctorReprository.getDoctorSlotsForBooking(doctorId)
+        const getSlots = await this._doctorReprository.getDoctorSlotsForBooking(doctorId)
         return getSlots
     };
 
     getDoctorSlots = async (doctorId: string, page: number, limit: number) => {
-        return await this.doctorReprository.getDoctorSlots(doctorId, page, limit);
+        return await this._doctorReprository.getDoctorSlots(doctorId, page, limit);
     };
 
 
 
     getMyBookings = async (doctorId: string, page: number, limit: number): Promise<IBookingListResponseDTO> => {
-        const result = await this.doctorReprository.getMyBookings(doctorId, page, limit);
+        const result = await this._doctorReprository.getMyBookings(doctorId, page, limit);
             
         return {
             bookings: result.bookings.map(mapBookingToDTO),
@@ -244,7 +243,7 @@ class DoctorService implements IDoctorService {
 
     getWalletData = async (doctorId: string, page: number, limit: number) => {
         try {
-            const walletData = await this.doctorReprository.getWalletData(doctorId, page, limit);
+            const walletData = await this._doctorReprository.getWalletData(doctorId, page, limit);
             return walletData;
         } catch (error) {
             throw new Error('Service error: ' + error);
@@ -253,7 +252,7 @@ class DoctorService implements IDoctorService {
 
     deleteSlot = async (slotId: string): Promise<string> => {
         try {
-            const update = await this.doctorReprository.deleteSlot(slotId)
+            const update = await this._doctorReprository.deleteSlot(slotId)
             return update
         } catch (error) {
             if (error instanceof Error) {
@@ -266,7 +265,7 @@ class DoctorService implements IDoctorService {
 
     getBookedUsers = async (doctorId: string) => {
         try {
-            const userData = await this.doctorReprository.getBookedUsers(doctorId)
+            const userData = await this._doctorReprository.getBookedUsers(doctorId)
             return userData
         } catch (error) {
             throw new Error('error in getting booked users ' + error);
@@ -275,7 +274,7 @@ class DoctorService implements IDoctorService {
 
     saveMessages = async (messageData: IMessageFromDoctor) => {
         try {
-            const saveData = await this.doctorReprository.saveMessages(messageData)
+            const saveData = await this._doctorReprository.saveMessages(messageData)
             return saveData
         } catch (error) {
             throw new Error('Service error saving message: ' + error);
@@ -284,7 +283,7 @@ class DoctorService implements IDoctorService {
 
     getMessages = async (receiverId: string, senderId: string) => {
         try {
-            const messageData = await this.doctorReprository.findMessage(receiverId, senderId)
+            const messageData = await this._doctorReprository.findMessage(receiverId, senderId)
             return messageData
         } catch (error) {
             throw new Error('error in getting messages ' + error);
@@ -294,7 +293,7 @@ class DoctorService implements IDoctorService {
 
     savePrescription = async (presData: IPrescriptionRequest) => {
         try {
-            const saveData = await this.doctorReprository.savePrescription(presData)
+            const saveData = await this._doctorReprository.savePrescription(presData)
             return saveData
         } catch (error) {
             throw new Error('error in saving prescription: ' + error);
@@ -305,7 +304,7 @@ class DoctorService implements IDoctorService {
 
     doctorDashBoard = async (doctorId: string) => {
         try {
-            const dashData = await this.doctorReprository.doctorDashboard(doctorId)
+            const dashData = await this._doctorReprository.doctorDashboard(doctorId)
             return dashData
         } catch (error) {
             throw new Error('Doctor Dashboard data not found' + error);

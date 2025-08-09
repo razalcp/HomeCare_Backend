@@ -3,11 +3,12 @@ import AdminService from '../../services/adminService'
 import HTTP_statusCode from '../../enums/httpStatusCode'
 import IAdminService from '../../interfaces/admin/IAdminService';
 
+
 class AdminController {
-    private adminService: IAdminService;
+    private _adminService: IAdminService;
 
     constructor(adminService: IAdminService) {
-        this.adminService = adminService
+        this._adminService = adminService
     }
 
     adminLogin = async (req: Request, res: Response) => {
@@ -15,7 +16,7 @@ class AdminController {
             const { values } = req.body
             const { loginId, password } = values
 
-            const serviceResponse = await this.adminService.checkWetherAdmin(loginId, password)
+            const serviceResponse = await this._adminService.checkWetherAdmin(loginId, password)
 
             res.cookie("adminRefreshToken", serviceResponse?.adminRefreshToken, {
                 httpOnly: true,
@@ -70,7 +71,7 @@ class AdminController {
         try {
             const { dept } = req.body
 
-            const serviceResponse = await this.adminService.addDepartments(dept)
+            const serviceResponse = await this._adminService.addDepartments(dept)
 
             res.status(HTTP_statusCode.OK).json({ data: serviceResponse })
         } catch (error) {
@@ -80,27 +81,13 @@ class AdminController {
     };
 
 
-
-    // getDepartments = async (req: Request, res: Response) => {
-    //     try {
-    //         const page = parseInt(req.query.page as string) || 1;
-    //         const limit = parseInt(req.query.limit as string) || 5;
-
-    //         const getData = await this.adminService.getDepartments(page, limit);
-
-    //         res.status(HTTP_statusCode.OK).json(getData);
-    //     } catch (error) {
-    //         throw error;
-    //     }
-    // };
-
     getDepartments = async (req: Request, res: Response) => {
         try {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 5;
             const search = (req.query.search as string) || "";
 
-            const getData = await this.adminService.getDepartments(page, limit, search);
+            const getData = await this._adminService.getDepartments(page, limit, search);
 
             res.status(HTTP_statusCode.OK).json(getData);
         } catch (error) {
@@ -114,7 +101,7 @@ class AdminController {
         try {
 
             const { department } = req.body
-            const updateData = await this.adminService.updateListUnlist(department)
+            const updateData = await this._adminService.updateListUnlist(department)
             res.status(HTTP_statusCode.OK).json({ data: updateData })
 
         } catch (error) {
@@ -128,7 +115,7 @@ class AdminController {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 8;
 
-            const result = await this.adminService.getDoctorData(page, limit);
+            const result = await this._adminService.getDoctorData(page, limit);
 
             res.status(200).json(result);
         } catch (error) {
@@ -142,7 +129,7 @@ class AdminController {
         try {
             const { status, doctorId } = req.body
 
-            const updateData = await this.adminService.updateKycStatus(status, doctorId)
+            const updateData = await this._adminService.updateKycStatus(status, doctorId)
             res.status(HTTP_statusCode.OK).json({ data: updateData })
 
         } catch (error) {
@@ -151,25 +138,13 @@ class AdminController {
     }
 
 
-    // getPatients = async (req: Request, res: Response) => {
-    //     try {
-    //         const page = parseInt(req.query.page as string) || 1;
-    //         const limit = parseInt(req.query.limit as string) || 7;
-
-    //         const result = await this.adminService.getPatients(page, limit);
-
-    //         res.status(HTTP_statusCode.OK).json(result);
-    //     } catch (error) {
-    //         throw error;
-    //     }
-    // };
     getPatients = async (req: Request, res: Response) => {
         try {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 7;
             const search = (req.query.search as string) || "";
 
-            const result = await this.adminService.getPatients(page, limit, search);
+            const result = await this._adminService.getPatients(page, limit, search);
 
             res.status(HTTP_statusCode.OK).json(result);
         } catch (error) {
@@ -182,7 +157,7 @@ class AdminController {
     updateuserIsBlocked = async (req: Request, res: Response) => {
         try {
             const { buttonName, id } = req.body
-            const updateData = await this.adminService.updateuserIsBlocked(buttonName, id)
+            const updateData = await this._adminService.updateuserIsBlocked(buttonName, id)
             if (buttonName === 'Block') {
                 res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: "strict" });
                 res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: "strict" });
@@ -198,10 +173,11 @@ class AdminController {
         try {
             const { adminId } = req.params;
             const page = parseInt(req.query.page as string) || 1;
-            const limit = parseInt(req.query.limit as string) || 5;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const search = (req.query.search as string) || "";
+            const type = req.query.type as string | undefined;
 
-            const walletData = await this.adminService.getWalletData(adminId, page, limit);
-
+            const walletData = await this._adminService.getWalletData(adminId, page, limit, search, type);
             res.status(HTTP_statusCode.OK).json(walletData);
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -209,9 +185,10 @@ class AdminController {
     };
 
 
+
     findDashBoardData = async (req: Request, res: Response) => {
         try {
-            const getData = await this.adminService.findDashBoardData()
+            const getData = await this._adminService.findDashBoardData()
             res.status(HTTP_statusCode.OK).json(getData)
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
@@ -223,7 +200,7 @@ class AdminController {
         try {
             const { departmentId, departmentName } = req.body
 
-            let updatedData = await this.adminService.updateDepartment(departmentId, departmentName)
+            let updatedData = await this._adminService.updateDepartment(departmentId, departmentName)
             res.status(HTTP_statusCode.OK).json(updatedData)
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });

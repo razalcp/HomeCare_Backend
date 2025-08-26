@@ -2,7 +2,6 @@
 import IDoctorModel from "./doctorModelInterface";
 import { ISlot } from "../../models/doctor/slotModel";
 import { IDepartment } from "../../models/admin/departmentModel";
-import { IWallet } from "../../models/doctor/doctorWalletModel";
 import { IBookedUser, IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IMessageFromDoctor, IPrescriptionRequest, IPrescriptionResponse, IWalletResponse, IWalletTransaction, SlotInput } from "./doctorInterface";
 import { IBookingListResponseDTO } from "../../dtos/doctor.dto";
 

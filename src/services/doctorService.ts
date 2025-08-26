@@ -5,7 +5,7 @@ import { createToken, createRefreshToken } from "../config/jwt_config";
 import { IDoctorService } from "../interfaces/doctor/IDoctorService";
 import { IDoctorImageUpload, IDoctorKycRegisterInput, IMessageFromDoctor, IPrescriptionRequest, SlotInput } from "../interfaces/doctor/doctorInterface";
 import { IBookingListResponseDTO } from "../dtos/doctor.dto";
-import { mapBookingToDTO } from "../mappers/doctor.mapper";
+import { mapBookingToDTO, mapDoctorEmailDTO, mapDoctorFullDTO } from "../mappers/doctor.mapper";
 
 class DoctorService implements IDoctorService {
 
@@ -19,8 +19,14 @@ class DoctorService implements IDoctorService {
         this._doctorReprository = doctorReprository
     }
 
-    findRegisteredEmail = async (email: string) => {
-        return await this._doctorReprository.findByEmail(email)
+    // findRegisteredEmail = async (email: string) => {
+    //     return await this._doctorReprository.findByEmail(email)
+    // };
+
+    findRegisteredEmail = async (email: string): Promise<{ email?: string } | null> => {
+        const doctor = await this._doctorReprository.findByEmail(email);
+        if (!doctor) return null;
+        return mapDoctorEmailDTO(doctor);
     };
 
     register = async (email: string) => {
@@ -37,8 +43,8 @@ class DoctorService implements IDoctorService {
             }
 
             const OTP_createdTime = new Date();
-             this._expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
-            console.log( this._expiryOTP_time)
+            this._expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
+            console.log(this._expiryOTP_time)
             return;
         } catch (error) {
             throw error
@@ -52,7 +58,7 @@ class DoctorService implements IDoctorService {
         try {
             const alreadyApprovedDoctor = await this._doctorReprository.findEmailForLogin(email)
 
-             this._doctorEmail = email
+            this._doctorEmail = email
 
 
             if (alreadyApprovedDoctor?.kycStatus === 'Rejected') {
@@ -62,7 +68,7 @@ class DoctorService implements IDoctorService {
             else if (alreadyApprovedDoctor?.kycStatus === 'Approved') {
 
                 const generated_Otp = Math.floor(1000 + Math.random() * 9000).toString()
-                 this._OTP = generated_Otp
+                this._OTP = generated_Otp
                 const isMailSended = await sendEmail(email, generated_Otp)
                 if (!isMailSended) {
                     throw new Error("Email not Send")
@@ -79,7 +85,7 @@ class DoctorService implements IDoctorService {
 
 
             const OTP_createdTime = new Date();
-             this._expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
+            this._expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
 
             return;
         } catch (error) {
@@ -87,41 +93,75 @@ class DoctorService implements IDoctorService {
         }
     }
 
+    // otpVerification = async (enteredOtp: string) => {
+    //     try {
+    //         if (enteredOtp !== this._OTP) {
+
+    //             throw new Error("Incorrect OTP")
+    //         }
+    //         const currentTime = new Date();
+
+    //         if (currentTime > this._expiryOTP_time!) {
+    //             console.log("Otp expired");
+
+    //             throw new Error("OTP expired");
+    //         }
+    //         const doctorData = await this._doctorReprository.register(this._doctorEmail!);
+    //         if (!doctorData) throw new Error("Email not found");
+
+
+    //         if (doctorData?.isBlocked) throw new Error("Doctor is Blocked")
+
+    //         const doctorToken = createToken(doctorData._id?.toString() || "", process.env.doctorRole as string);
+
+    //         const doctorRefreshToken = createRefreshToken(doctorData._id?.toString() || "", process.env.doctorRole as string);
+
+    //         return { doctorData, doctorToken, doctorRefreshToken }
+
+    //     } catch (error) {
+    //         throw error
+    //     }
+    // }
+
     otpVerification = async (enteredOtp: string) => {
+
         try {
-            if (enteredOtp !==  this._OTP) {
+            if (enteredOtp !== this._OTP) throw new Error("Incorrect OTP");
 
-                throw new Error("Incorrect OTP")
-            }
             const currentTime = new Date();
+            if (currentTime > this._expiryOTP_time!) throw new Error("OTP expired");
 
-            if (currentTime >  this._expiryOTP_time!) {
-                console.log("Otp expired");
-
-                throw new Error("OTP expired");
-            }
-            const doctorData = await this._doctorReprository.register( this._doctorEmail!);
+            const doctorData = await this._doctorReprository.register(this._doctorEmail!);
             if (!doctorData) throw new Error("Email not found");
+            if (doctorData.isBlocked) throw new Error("Doctor is Blocked");
 
+            const doctorToken = createToken(
+                doctorData._id?.toString() || "",
+                process.env.doctorRole as string
+            );
 
-            if (doctorData?.isBlocked) throw new Error("Doctor is Blocked")
+            const doctorRefreshToken = createRefreshToken(
+                doctorData._id?.toString() || "",
+                process.env.doctorRole as string
+            );
 
-            const doctorToken = createToken(doctorData._id?.toString() || "", process.env.doctorRole as string);
-
-            const doctorRefreshToken = createRefreshToken(doctorData._id?.toString() || "", process.env.doctorRole as string);
-
-            return { doctorData, doctorToken, doctorRefreshToken }
-
+            return {
+                doctorData: mapDoctorFullDTO(doctorData),
+                doctorToken,
+                doctorRefreshToken
+            };
         } catch (error) {
             throw error
         }
-    }
+
+    };
+
+
 
     verifyDoctorOtp = async (enteredOtp: string) => {
 
-
         try {
-            if (enteredOtp !==  this._OTP) {
+            if (enteredOtp !== this._OTP) {
                 console.log("Wrong Otp");
 
                 throw new Error("Incorrect OTP")
@@ -129,12 +169,12 @@ class DoctorService implements IDoctorService {
             const currentTime = new Date();
 
 
-            if (currentTime >  this._expiryOTP_time!) {
+            if (currentTime > this._expiryOTP_time!) {
                 console.log("Otp expired");
 
                 throw new Error("OTP expired");
             }
-            const doctorData = await this._doctorReprository.findEmailForLogin( this._doctorEmail!);
+            const doctorData = await this._doctorReprository.findEmailForLogin(this._doctorEmail!);
             if (!doctorData) throw new Error("Email not found");
 
 
@@ -143,13 +183,15 @@ class DoctorService implements IDoctorService {
             const doctorToken = createToken(doctorData._id?.toString() || "", process.env.doctorRole as string);
 
             const doctorRefreshToken = createRefreshToken(doctorData._id?.toString() || "", process.env.doctorRole as string);
-
-
+            // const mappedDocData = mapDoctorFullDTO(doctorData)
             return { doctorData, doctorToken, doctorRefreshToken }
+            // return {
+            //     mappedDocData,
+            //     doctorToken,
+            //     doctorRefreshToken
+            // };
 
         } catch (error) {
-
-
             throw error
         }
     };
@@ -159,14 +201,14 @@ class DoctorService implements IDoctorService {
             const Generated_OTP: string = Math.floor(
                 1000 + Math.random() * 9000
             ).toString();
-             this._OTP = Generated_OTP;
+            this._OTP = Generated_OTP;
             console.log(`Re-generated OTP is : ${Generated_OTP}`);
-            const isMailSended = await sendEmail( this._doctorEmail!, Generated_OTP);
+            const isMailSended = await sendEmail(this._doctorEmail!, Generated_OTP);
             if (!isMailSended) {
                 throw new Error("Email not send");
             }
             const OTP_createdTime = new Date();
-             this._expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
+            this._expiryOTP_time = new Date(OTP_createdTime.getTime() + 2 * 60 * 1000);
         } catch (error) {
             throw error;
         }
@@ -232,7 +274,7 @@ class DoctorService implements IDoctorService {
 
     getMyBookings = async (doctorId: string, page: number, limit: number): Promise<IBookingListResponseDTO> => {
         const result = await this._doctorReprository.getMyBookings(doctorId, page, limit);
-            
+
         return {
             bookings: result.bookings.map(mapBookingToDTO),
             totalPages: result.totalPages,

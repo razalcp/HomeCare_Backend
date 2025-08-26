@@ -1,14 +1,12 @@
-import IAdmin from '../models/admin/adminModel'
 import { createToken, createRefreshToken } from '../config/jwt_config'
-import AdminReprository from '../repositories/adminReprository'
 import { sendDoctorEmail } from '../config/email_config'
 import bcrypt from "bcrypt";
 import IAdminService from '../interfaces/admin/IAdminService';
-import { mapAdminToDto, mapPatientToDTO, toDepartmentDTO } from '../mappers/admin.mapper';
-import { log } from 'node:console';
+import { DashboardDTO, DepartmentResponseDTO, mapAdminToDto, mapPatientToDTO, MonthlyDashboardDTO, toDepartmentDTO, toDoctorDTO, toWalletDTO } from '../mappers/admin.mapper';
 import { IDashboardData, IDepartmentResponse } from '../interfaces/admin/AdminInterface';
 import { IAdminRepository } from '../interfaces/admin/IAdminRepository';
 import { IDepartment } from '../models/admin/departmentModel';
+import { WalletDTO } from '../dtos/admin.dto';
 
 class AdminService implements IAdminService {
     private _adminReprository: IAdminRepository
@@ -44,12 +42,6 @@ class AdminService implements IAdminService {
 
     };
 
-    // addDepartments = async (dept: string) => {
-    //     const data = await this._adminReprository.addDepartments(dept)
-    //     if (!data) throw new Error("Already Added");
-    //     return data
-
-    // };
     addDepartments = async (dept: string) => {
         const data = await this._adminReprository.addDepartments(dept);
         if (!data) throw new Error("Already Added");
@@ -57,21 +49,11 @@ class AdminService implements IAdminService {
         return mappedData as unknown as IDepartment[];
     };
 
-    // getDepartments = async (page: number, limit: number, search: string) => {
-    //     const data =await this._adminReprository.getDepartments(page, limit, search);
-    //     console.log(data);
-
-    //     return data
-    // };
-
 
     getDepartments = async (page: number, limit: number, search: string) => {
+
         const result = await this._adminReprository.getDepartments(page, limit, search);
         const mappedData = result.data.map(toDepartmentDTO);
-        console.log({
-            ...result,
-            data: mappedData as unknown as IDepartment[],
-        });
 
         return {
             ...result,
@@ -80,21 +62,35 @@ class AdminService implements IAdminService {
     };
 
 
-
-    updateListUnlist = async (departmentName: string) => {
-        const update = await this._adminReprository.updateListUnlist(departmentName)
-        log
+    updateListUnlist = async (departmentName: string): Promise<IDepartment[]> => {
+        const update = await this._adminReprository.updateListUnlist(departmentName);
         if (!update) return [];
-        return update
+        const mapped = update.map(toDepartmentDTO);
+        return mapped;
     };
+
+
+    // getDoctorData = async (page: number, limit: number) => {
+    //     try {
+    //         return await this._adminReprository.getDoctors(page, limit);
+    //     } catch (error) {
+    //         throw error;
+    //     }
+    // };
 
     getDoctorData = async (page: number, limit: number) => {
         try {
-            return await this._adminReprository.getDoctors(page, limit);
+            const result = await this._adminReprository.getDoctors(page, limit);
+
+            return {
+                ...result,
+                data: result.data.map(toDoctorDTO),
+            };
         } catch (error) {
             throw error;
         }
     };
+
 
     updateKycStatus = async (status: string, doctorId: string) => {
         try {
@@ -154,13 +150,34 @@ class AdminService implements IAdminService {
     }
 
 
+    // getWalletData = async (
+    //     adminId: string,
+    //     page: number,
+    //     limit: number,
+    //     search: string = "",
+    //     type?: string
+    // ) => {
+    //     try {
+    //         const getData = await this._adminReprository.getWalletData(
+    //             adminId,
+    //             page,
+    //             limit,
+    //             search,
+    //             type
+    //         );
+    //         return getData;
+    //     } catch (error) {
+    //         throw error;
+    //     }
+    // };
+
     getWalletData = async (
         adminId: string,
         page: number,
         limit: number,
         search: string = "",
         type?: string
-    ) => {
+    ): Promise<WalletDTO> => {
         try {
             const getData = await this._adminReprository.getWalletData(
                 adminId,
@@ -169,32 +186,66 @@ class AdminService implements IAdminService {
                 search,
                 type
             );
-            return getData;
+            return toWalletDTO(getData);
         } catch (error) {
             throw error;
         }
     };
 
 
+    // findDashBoardData = async (): Promise<IDashboardData> => {
+    //     try {
+    //         const getData = await this._adminReprository.findDashBoardData()
+    //         return getData;
+    //     } catch (error) {
+    //         throw error
+    //     }
+    // };
+
     findDashBoardData = async (): Promise<IDashboardData> => {
         try {
-            const getData = await this._adminReprository.findDashBoardData()
-            return getData;
+            const getData = await this._adminReprository.findDashBoardData();
+            if (!getData) {
+                throw new Error("Dashboard data not found");
+            }
+
+            const monthlyMapped = getData.monthlyDashBoardData.map(entry =>
+                MonthlyDashboardDTO(entry)
+            );
+
+            const mappedData = DashboardDTO({
+                ...getData,
+                monthlyDashBoardData: monthlyMapped
+            });
+
+            return mappedData;
         } catch (error) {
-            throw error
+            throw error;
         }
     };
 
-    updateDepartment = async (departmentId: string, departmentName: string): Promise<IDepartmentResponse> => {
+    // updateDepartment = async (departmentId: string, departmentName: string): Promise<IDepartmentResponse> => {
+    //     try {
+    //         const updateData = await this._adminReprository.updateDepartment(departmentId, departmentName)
+    //         return {
+    //             _id: updateData._id.toString(),
+    //             departmentName: updateData.departmentName,
+    //             isListed: updateData.isListed,
+    //         };
+    //     } catch (error) {
+    //         throw error
+    //     }
+    // };
+
+    updateDepartment = async (
+        departmentId: string,
+        departmentName: string
+    ): Promise<IDepartmentResponse> => {
         try {
-            const updateData = await this._adminReprository.updateDepartment(departmentId, departmentName)
-            return {
-                _id: updateData._id.toString(),
-                departmentName: updateData.departmentName,
-                isListed: updateData.isListed,
-            };
+            const updateData = await this._adminReprository.updateDepartment(departmentId, departmentName);
+            return DepartmentResponseDTO(updateData);
         } catch (error) {
-            throw error
+            throw error;
         }
     };
 }

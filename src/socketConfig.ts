@@ -12,6 +12,7 @@ function getReceiverSocketId(receiverId: string) {
     return onlineuser[receiverId]
 }
 const startSocket = (server: HttpServer) => {
+    console.log("socket started");
 
     io = new SocketIoserver(server, {
         cors: {
@@ -24,7 +25,7 @@ const startSocket = (server: HttpServer) => {
 
     io.on("connection", (socket) => {
         console.log("socket connected");
-        
+
         console.log("A user connected:", socket.id);
         console.log("Handshake:", socket.handshake.query.userId);
         let userId
@@ -47,8 +48,8 @@ const startSocket = (server: HttpServer) => {
 
 
         socket.on("outgoing-video-call", (data) => {
-            console.log("outgoing data : ",data);
-            
+            console.log("outgoing data : ", data);
+
             const userSocketId = getReceiverSocketId(data.to);
 
             if (userSocketId) {

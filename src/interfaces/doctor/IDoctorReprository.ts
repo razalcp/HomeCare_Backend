@@ -18,7 +18,7 @@ interface IDoctorReprository {
     register(regEmail: string | null): Promise<IDoctorModel | null>
     getDepartments(): Promise<IDepartment[]>
     addDoctorSlots(slotData: ISlot | ISlot[]): Promise<{ success: boolean; message: string }>;
-    getDoctorSlotsForBooking(doctorId: string): Promise<ISlot[]>;
+    // getDoctorSlotsForBooking(doctorId: string): Promise<ISlot[]>;
 
     getDoctorSlots(
         doctorId: string,

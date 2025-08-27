@@ -165,9 +165,9 @@ class DoctorReprository implements IDoctorReprository {
 
     };
 
-    getDoctorSlotsForBooking = async (doctorId: string) => {
-        return await this._slotModel.find({ doctorId });
-    };
+    // getDoctorSlotsForBooking = async (doctorId: string) => {
+    //     return await this._slotModel.find({ doctorId });
+    // };
 
     getDoctorSlots = async (doctorId: string, page: number, limit: number) => {
         const skip = (page - 1) * limit;
@@ -466,7 +466,7 @@ class DoctorReprository implements IDoctorReprository {
 
             const mappedAppointments: IUpcomingAppointment[] = filtered.map(booking => ({
                 _id: new Types.ObjectId(booking._id),
-                doctorId: booking.doctorId as Types.ObjectId,
+                doctorId: booking.doctorId as unknown as Types.ObjectId,
                 userId: new Types.ObjectId(
                     typeof booking.userId === 'string' ? booking.userId : (booking.userId as IUserModel)._id
                 ),

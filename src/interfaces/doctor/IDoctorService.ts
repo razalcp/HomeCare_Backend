@@ -3,7 +3,7 @@ import IDoctorModel from "./doctorModelInterface";
 import { ISlot } from "../../models/doctor/slotModel";
 import { IDepartment } from "../../models/admin/departmentModel";
 import { IBookedUser, IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IMessageFromDoctor, IPrescriptionRequest, IPrescriptionResponse, IWalletResponse, IWalletTransaction, SlotInput } from "./doctorInterface";
-import { IBookingListResponseDTO } from "../../dtos/doctor.dto";
+import { IBookingListResponseDTO, IDoctorDashboardDTO } from "../../dtos/doctor.dto";
 
 
 export interface IDoctorService {
@@ -44,7 +44,7 @@ export interface IDoctorService {
     message: string;
   }>;
 
-  getDoctorSlotsForBooking(doctorId: string): Promise<ISlot[]>;
+  // getDoctorSlotsForBooking(doctorId: string): Promise<ISlot[]>;
 
   getDoctorSlots(
     doctorId: string,
@@ -65,7 +65,7 @@ export interface IDoctorService {
     doctorId: string,
     page: number,
     limit: number
-  ): Promise<{ wallet: IWalletResponse; totalPages: number } | null>;
+  ): Promise<{ wallet: IWalletResponse | null; totalPages: number } | null>;
 
   deleteSlot(slotId: string): Promise<string>;
 
@@ -86,5 +86,5 @@ export interface IDoctorService {
   ): Promise<IMessageFromDoctor[]>;
 
   savePrescription(presData: IPrescriptionRequest): Promise<string>;
-  doctorDashBoard(doctorId: string): Promise<IDoctorDashboard>;
+  doctorDashBoard(doctorId: string): Promise<IDoctorDashboardDTO>;
 }

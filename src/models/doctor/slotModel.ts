@@ -7,7 +7,8 @@ export interface ISlot extends Document {
     status: string;
     doctorId: mongoose.Types.ObjectId;
     isBooked: boolean;
-    
+    __v?: number;
+
 }
 
 const slotSchema = new Schema<ISlot>({

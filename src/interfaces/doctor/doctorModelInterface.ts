@@ -9,31 +9,32 @@ interface IDoctorAddress {
 
 interface IDoctorModel {
     _id?: mongoose.Types.ObjectId
-    doctorName?: string
+    name: string,
+    email: string;
+    profileImage: string;
+    certifications0: string;
+    certifications1: string;
+    departments: mongoose.Types.ObjectId[];
+    doctorImage?: string;
+    mobileNumber?: string;
+    state: string;
+    country: string;
+    slotId?: mongoose.Types.ObjectId[];
+    experience?: string;
+    dateOfBirth?: String;
+    bio?: string;
+    knownLanguages?: string[];
+    degree?: string;
+    institution?: string;
+    year?: string;
+    medicalLicenceNumber: string;
+    consultationType?: string[];
+    consultationFee?: number;
+    isVerified: Boolean;
+    kycStatus?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
 
-    departments?: mongoose.Types.ObjectId[]
-    doctorImage?: string
-    mobileNumber?: string
-    email?: string
-    doctorAddress?: IDoctorAddress
-    slotId?: mongoose.Types.ObjectId[]
-    dob?: Date
-    experienceYears?: number
-    bio?: string
-    doctorEducationId?: mongoose.Types.ObjectId[]
-    knownLanguages?: string[]
-    medicalLicenceNumber?: string
-    typesOfConsultation?: string[]
-    consultationFee?: number
-    certification?: string[]
-    doctorTransactionsId?: mongoose.Types.ObjectId[]
-    doctorWalletBalance?: number
-    isBlocked?: boolean
-    isVerified?: boolean
-    isSubmitted?: boolean
-    kycStatus?: String
-    createdAt?: Date
-    updatedAt?: Date
 }
 
 

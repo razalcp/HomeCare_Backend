@@ -1,7 +1,6 @@
 import { Request, Response } from 'express'
 import HTTP_statusCode from '../../enums/httpStatusCode'
 import cloudinary from '../../config/cloudinary_config'
-import multer from 'multer';
 import { IDoctorService } from '../../interfaces/doctor/IDoctorService'
 import { IDoctorRequestData } from '../../interfaces/doctor/doctorControllerInterface';
 import { DoctorImageObject, IUpdateDoctorProfile } from '../../interfaces/user/userInterface';
@@ -290,13 +289,13 @@ class DoctorController {
 
     };
 
-    getDoctorSlotsForBooking = async (req: Request, res: Response) => {
+    // getDoctorSlotsForBooking = async (req: Request, res: Response) => {
 
-        const { doctorId } = req.params;
-        const getData = await this._doctorService.getDoctorSlotsForBooking(doctorId)
-        res.status(HTTP_statusCode.OK).json(getData);
+    //     const { doctorId } = req.params;
+    //     const getData = await this._doctorService.getDoctorSlotsForBooking(doctorId)
+    //     res.status(HTTP_statusCode.OK).json(getData);
 
-    };
+    // };
 
     getDoctorSlots = async (req: Request, res: Response) => {
         const { doctorId } = req.params;

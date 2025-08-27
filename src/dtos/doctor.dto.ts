@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 
 
 export interface IUserDTO {
@@ -27,4 +28,34 @@ export interface IBookingDTO {
 export interface IBookingListResponseDTO {
     bookings: IBookingDTO[];
     totalPages: number;
+}
+
+export interface DoctorSlotDTO {
+    _id: mongoose.Types.ObjectId;
+    date: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    doctorId: mongoose.Types.ObjectId;
+    isBooked: boolean;
+}
+
+
+export interface IDoctorDashboardDTO {
+    totalAppointments: number;
+    activePatients: number;
+    upcomingAppointments: IUpcomingAppointmentDTO[];
+    doctorRevenue: number;
+}
+
+export interface IUpcomingAppointmentDTO {
+    _id: mongoose.Types.ObjectId;
+    doctorId: mongoose.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;
+    slotId: unknown;
+    paymentStatus: "paid" | "refunded";
+    bookingStatus: "booked" | "cancelled";
+    consultationStatus: "completed" | "pending";
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
 }

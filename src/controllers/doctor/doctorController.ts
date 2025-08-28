@@ -5,6 +5,7 @@ import { IDoctorService } from '../../interfaces/doctor/IDoctorService'
 import { IDoctorRequestData } from '../../interfaces/doctor/doctorControllerInterface';
 import { DoctorImageObject, IUpdateDoctorProfile } from '../../interfaces/user/userInterface';
 import { AuthenticatedRequest } from '../../interfaces/doctor/doctorInterface';
+import { RESPONSE_MESSAGES } from '../../constants/messages';
 
 class DoctorController {
     private _doctorService: IDoctorService
@@ -17,7 +18,7 @@ class DoctorController {
         const { email } = req.body
 
         await this._doctorService.register(email)
-        res.status(HTTP_statusCode.OK).send("OTP Sent to mail")
+        res.status(HTTP_statusCode.OK).send(RESPONSE_MESSAGES.DOCTOR.OTP_SENT_TO_MAIL)
     }
 
     doctorLogin = async (req: Request, res: Response) => {
@@ -26,22 +27,22 @@ class DoctorController {
             const { email } = req.body
 
             await this._doctorService.doctorLogin(email)
-            res.status(HTTP_statusCode.OK).send("OTP Sent to mail")
+            res.status(HTTP_statusCode.OK).send(RESPONSE_MESSAGES.DOCTOR.OTP_SENT_TO_MAIL)
 
         } catch (error: unknown) {
             if (error instanceof Error) {
-                if (error.message === "Email not Registered") {
-                    res.status(HTTP_statusCode.NotFound).json({ message: "Email not Registered" });
-                } else if (error.message === "Your Kyc Verification is Rejected") {
-                    res.status(HTTP_statusCode.NotFound).json({ message: "Your Kyc Verification is Rejected" });
-                } else if (error.message === "Your Kyc Request is Under Review. Please Wait for Conformation Email") {
-                    res.status(HTTP_statusCode.NotFound).json({ message: "Your Kyc Request is Under Review. Please Wait for Conformation Email" });
+                if (error.message === RESPONSE_MESSAGES.DOCTOR.EMAIL_NOT_REGISTERED) {
+                    res.status(HTTP_statusCode.NotFound).json({ message: RESPONSE_MESSAGES.DOCTOR.EMAIL_NOT_REGISTERED });
+                } else if (error.message === RESPONSE_MESSAGES.DOCTOR.KYC_VERIFICATION_REJECTED) {
+                    res.status(HTTP_statusCode.NotFound).json({ message: RESPONSE_MESSAGES.DOCTOR.KYC_VERIFICATION_REJECTED });
+                } else if (error.message === RESPONSE_MESSAGES.DOCTOR.KYC_UNDER_REVIEW) {
+                    res.status(HTTP_statusCode.NotFound).json({ message: RESPONSE_MESSAGES.DOCTOR.KYC_UNDER_REVIEW });
                 } else {
-                    res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong, please try again later" });
+                    res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.DOCTOR.SOMETHING_WENT_WRONG_LOGIN });
                 }
             } else {
                 // fallback in case it's not an instance of Error
-                res.status(HTTP_statusCode.InternalServerError).json({ message: "Unknown error occurred" });
+                res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.DOCTOR.UNKNOWN_ERROR });
             }
         }
 
@@ -59,24 +60,24 @@ class DoctorController {
             res.status(HTTP_statusCode.OK).json(serviceResponse);
         } catch (error: unknown) {
             if (error instanceof Error) {
-                if (error.message === "Incorrect OTP") {
+                if (error.message === RESPONSE_MESSAGES.DOCTOR.INCORRECT_OTP) {
                     res
                         .status(HTTP_statusCode.Unauthorized)
-                        .json({ message: "Incorrect OTP" });
-                } else if (error.message === "OTP is expired") {
+                        .json({ message: RESPONSE_MESSAGES.DOCTOR.INCORRECT_OTP });
+                } else if (error.message === RESPONSE_MESSAGES.DOCTOR.DOCTOR_OTP_EXPIRED) {
                     res
                         .status(HTTP_statusCode.Expired)
-                        .json({ message: "OTP is expired" });
+                        .json({ message: RESPONSE_MESSAGES.DOCTOR.DOCTOR_OTP_EXPIRED });
                 } else {
                     res
                         .status(HTTP_statusCode.InternalServerError)
-                        .json({ message: "Something went wrong. Please try again later." });
+                        .json({ message: RESPONSE_MESSAGES.DOCTOR.SOMETHING_WENT_WRONG_IN_OTP });
                 }
             } else {
                 // Optional: fallback if error is not an Error instance
                 res
                     .status(HTTP_statusCode.InternalServerError)
-                    .json({ message: "An unknown error occurred." });
+                    .json({ message: RESPONSE_MESSAGES.DOCTOR.UNKNOWN_ERROR_IN_OTP });
             }
         }
 
@@ -104,22 +105,22 @@ class DoctorController {
             res.status(HTTP_statusCode.OK).json({ doctorData });
         } catch (error: unknown) {
             if (error instanceof Error) {
-                if (error.message === "Incorrect OTP") {
+                if (error.message === RESPONSE_MESSAGES.DOCTOR.INCORRECT_OTP) {
                     res
                         .status(HTTP_statusCode.Unauthorized)
-                        .json({ message: "Incorrect OTP" });
-                } else if (error.message === "OTP is expired") {
-                    res.status(HTTP_statusCode.Expired).json({ message: "OTP is expired" });
+                        .json({ message: RESPONSE_MESSAGES.DOCTOR.INCORRECT_OTP });
+                } else if (error.message === RESPONSE_MESSAGES.DOCTOR.DOCTOR_OTP_EXPIRED) {
+                    res.status(HTTP_statusCode.Expired).json({ message: RESPONSE_MESSAGES.DOCTOR.DOCTOR_OTP_EXPIRED });
                 } else {
                     res
                         .status(HTTP_statusCode.InternalServerError)
-                        .json({ message: "Something went wrong. Please try again later." });
+                        .json({ message: RESPONSE_MESSAGES.DOCTOR.SOMETHING_WENT_WRONG_IN_OTP });
                 }
             } else {
                 // fallback if error is not an instance of Error
                 res
                     .status(HTTP_statusCode.InternalServerError)
-                    .json({ message: "An unknown error occurred." });
+                    .json({ message: RESPONSE_MESSAGES.DOCTOR.UNKNOWN_ERROR_IN_OTP });
             }
         }
 
@@ -129,23 +130,23 @@ class DoctorController {
     resendOtp = async (req: Request, res: Response) => {
         try {
             await this._doctorService.resendOTP();
-            res.status(HTTP_statusCode.OK).send("OTP sended");
+            res.status(HTTP_statusCode.OK).send(RESPONSE_MESSAGES.DOCTOR.DOC_OTP_SENT);
         } catch (error: unknown) {
             if (error instanceof Error) {
-                if (error.message === "Email not send") {
+                if (error.message === RESPONSE_MESSAGES.DOCTOR.EMAIL_NOT_SENT) {
                     res
                         .status(HTTP_statusCode.InternalServerError)
-                        .json({ message: "Email not send" });
+                        .json({ message: RESPONSE_MESSAGES.DOCTOR.EMAIL_NOT_SENT });
                 } else {
                     res
                         .status(HTTP_statusCode.InternalServerError)
-                        .json({ message: "Something wrong please try again later" });
+                        .json({ message: RESPONSE_MESSAGES.DOCTOR.SOMETHING_WENT_WRONG_IN_VERIFYOTP });
                 }
             } else {
                 // fallback in case error is not a standard Error object
                 res
                     .status(HTTP_statusCode.InternalServerError)
-                    .json({ message: "Unexpected error occurred" });
+                    .json({ message: RESPONSE_MESSAGES.COMMON.UNEXPECTED_ERROR });
             }
         }
 
@@ -196,12 +197,12 @@ class DoctorController {
             }
 
             await this._doctorService.doctorKycRegister(doctorData, imgObject)
-            res.status(200).json({ message: "Logged out successfully" });
+            res.status(200).json({ message: RESPONSE_MESSAGES.DOCTOR.LOGOUT_SUCCESS });
         } catch (error: unknown) {
             if (error instanceof Error) {
                 return res.status(400).json({ error: error.message });
             }
-            return res.status(500).json({ error: 'Unexpected error occurred' });
+            return res.status(500).json({ error: RESPONSE_MESSAGES.DOCTOR.UNEXPECTED_ERROR_DOCTOR_REGISTER });
         }
 
     };
@@ -250,7 +251,7 @@ class DoctorController {
                 return res.status(400).json({ error: error.message });
             }
 
-            return res.status(500).json({ error: 'Unexpected error occurred' });
+            return res.status(500).json({ error: RESPONSE_MESSAGES.DOCTOR.UNEXPECTED_ERROR_DOCTOR_REGISTER });
         }
 
 
@@ -260,9 +261,9 @@ class DoctorController {
         try {
             res.clearCookie("doctorAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
             res.clearCookie("doctorRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
-            res.status(200).json({ message: "Logged out successfully" });
+            res.status(200).json({ message: RESPONSE_MESSAGES.DOCTOR.LOGOUT_DOCTOR_SUCCESS });
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
         }
     };
 
@@ -274,7 +275,7 @@ class DoctorController {
             const slotData = req.body
             const addSlot = await this._doctorService.addDoctorSlots(slotData)
 
-            res.status(200).json({ message: "Slot added successfully!" });
+            res.status(200).json({ message: RESPONSE_MESSAGES.DOCTOR.SLOT_ADDED_SUCCESS });
         } catch (error: unknown) {
             if (error instanceof Error && error.message) {
                 res
@@ -283,7 +284,7 @@ class DoctorController {
             } else {
                 res
                     .status(HTTP_statusCode.InternalServerError)
-                    .json({ message: "Something went wrong, please try again later." });
+                    .json({ message: RESPONSE_MESSAGES.DOCTOR.SOMETHING_WENT_WRONG_IN_ADD_SLOT });
             }
         }
 
@@ -313,7 +314,7 @@ class DoctorController {
             const result = await this._doctorService.getMyBookings(doctorId, Number(page), Number(limit));
             res.status(HTTP_statusCode.OK).json(result);
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
         }
     };
 
@@ -329,7 +330,7 @@ class DoctorController {
             res.status(HTTP_statusCode.OK).json(walletData);
         } catch (error) {
             res.status(HTTP_statusCode.InternalServerError).json({
-                message: "Something went wrong",
+                message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG,
                 error,
             });
         }
@@ -342,7 +343,7 @@ class DoctorController {
             const Userdata = await this._doctorService.getBookedUsers(doctorId)
             res.status(HTTP_statusCode.OK).json(Userdata)
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
         }
 
     };
@@ -353,13 +354,13 @@ class DoctorController {
             const saveData = await this._doctorService.saveMessages(messageData)
             res.status(HTTP_statusCode.OK).json(saveData)
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
         }
     };
     deleteSlot = async (req: Request, res: Response) => {
         const { slotId } = req.params;
         const update = await this._doctorService.deleteSlot(slotId)
-        res.status(200).json({ message: "Slot deleted" });
+        res.status(200).json({ message: RESPONSE_MESSAGES.DOCTOR.SLOT_DELETED });
     };
 
     messages = async (req: Request, res: Response) => {
@@ -370,7 +371,7 @@ class DoctorController {
             res.status(HTTP_statusCode.OK).json(getData)
 
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
         }
     };
 
@@ -382,7 +383,7 @@ class DoctorController {
             const saveData = await this._doctorService.savePrescription(presData)
             res.status(HTTP_statusCode.OK).json(saveData)
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
 
         }
 
@@ -395,7 +396,7 @@ class DoctorController {
 
             res.status(HTTP_statusCode.OK).json(dashData)
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
 
         }
     };

@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { IUserModel } from "../interfaces/user/userModelInterface";
 import { createToken, createRefreshToken } from "../config/jwt_config";
 import { IUserService } from "../interfaces/user/IUserService";
-import { mapToUserBookingDTO, mapUserToAuthDTO, mapUserToSafeDTO } from "../mappers/user.mapper";
+import { mapBookedDoctorDTO, mapDeleteMessageDTO, mapDoctorSlotsToDTO, mapMessageDTO, mapPrescriptionDTO, mapReviewResponse, mapSaveMessageDTO, mapToUserBookingDTO, mapUserProfileDTO, mapUserToAuthDTO, mapUserToSafeDTO, mapVerifiedDoctorDTO, mapWalletDataDTO } from "../mappers/user.mapper";
 import { IUserAuthDTO, IUserBookingDTO } from "../dtos/user.dto";
 
 
@@ -103,12 +103,35 @@ class UserService implements IUserService {
       const safeUserData = mapUserToAuthDTO(userData);
       return { userData: safeUserData, userToken, userRefreshToken };
 
-
-
     } catch (error) {
       throw error
     }
   };
+
+  // getVerifiedDoctors = async (
+  //   page: number,
+  //   limit: number,
+  //   search: string,
+  //   sort: string,
+  //   departments: string[],
+  //   minFee: number,
+  //   maxFee: number
+  // ): Promise<IVerifiedDoctorsResponse> => {
+  //   try {   
+
+  //     return await this._userReprository.getVerifiedDoctors(
+  //       page,
+  //       limit,
+  //       search,
+  //       sort,
+  //       departments,
+  //       minFee,
+  //       maxFee
+  //     );
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // };
 
   getVerifiedDoctors = async (
     page: number,
@@ -120,7 +143,7 @@ class UserService implements IUserService {
     maxFee: number
   ): Promise<IVerifiedDoctorsResponse> => {
     try {
-      return await this._userReprository.getVerifiedDoctors(
+      const result = await this._userReprository.getVerifiedDoctors(
         page,
         limit,
         search,
@@ -129,6 +152,13 @@ class UserService implements IUserService {
         minFee,
         maxFee
       );
+
+      const mappedData = result.data.map(mapVerifiedDoctorDTO);
+
+      return {
+        data: mappedData,
+        total: result.total,
+      };
     } catch (error) {
       throw error;
     }
@@ -159,8 +189,8 @@ class UserService implements IUserService {
 
   cancelBooking = async (bookingId: string): Promise<ICancelBookingResponse> => {
     try {
-      const cancelBookingData = await this._userReprository.cancelBooking(bookingId)
-      return cancelBookingData
+      const cancelBookingResponse = await this._userReprository.cancelBooking(bookingId)
+      return cancelBookingResponse
 
     } catch (error) {
       throw error
@@ -168,24 +198,52 @@ class UserService implements IUserService {
   };
 
 
+  // getWalletData = async (userId: string, page: number, limit: number): Promise<IWalletData> => {
+  //   try {   
+  //     return await this._userReprository.getWalletData(userId, page, limit);
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // };
+
   getWalletData = async (userId: string, page: number, limit: number): Promise<IWalletData> => {
     try {
-      return await this._userReprository.getWalletData(userId, page, limit);
+      const result = await this._userReprository.getWalletData(userId, page, limit);
+      return mapWalletDataDTO(result);
     } catch (error) {
       throw error;
     }
   };
 
 
-  updateUserProfile = async (userData: IUpdateUserProfileInput, imgObject: IUpdateUserProfileImage) => {
+  // updateUserProfile = async (userData: IUpdateUserProfileInput, imgObject: IUpdateUserProfileImage) => {
+  //   try {
+  //     // Hash password if it exists
+  //     if (userData.password) {
+  //       const hashedPassword = await bcrypt.hash(userData.password as string, 10);
+  //       userData.password = hashedPassword;
+  //     }
+  //     const updateUserData = await this._userReprository.updateUser(userData, imgObject);
+
+  //     return updateUserData;
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       throw new Error(error.message);
+  //     }
+  //     throw new Error("An unexpected error occurred");
+  //   }
+  // };
+
+  updateUserProfile = async (userData: IUpdateUserProfileInput, imgObject: IUpdateUserProfileImage): Promise<IUserModel | null> => {
     try {
       // Hash password if it exists
       if (userData.password) {
         const hashedPassword = await bcrypt.hash(userData.password as string, 10);
         userData.password = hashedPassword;
       }
+
       const updateUserData = await this._userReprository.updateUser(userData, imgObject);
-      return updateUserData;
+      return updateUserData ? mapUserProfileDTO(updateUserData) : null;
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(error.message);
@@ -208,7 +266,7 @@ class UserService implements IUserService {
   getBookedDoctors = async (userId: string): Promise<IBookedDoctorForChat[]> => {
     try {
       const userData = await this._userReprository.getBookedDoctor(userId)
-      return userData
+      return userData.map(mapBookedDoctorDTO);
     } catch (error) {
       throw error
     };
@@ -218,7 +276,7 @@ class UserService implements IUserService {
   getMessages = async (receiverId: string, senderId: string): Promise<IMessageUser[]> => {
     try {
       const messageData = await this._userReprository.findMessage(receiverId, senderId)
-      return messageData
+      return messageData.map(mapMessageDTO);
     } catch (error) {
       throw error
     }
@@ -226,8 +284,8 @@ class UserService implements IUserService {
 
   saveMessages = async (messageData: ISaveMessageInput) => {
     try {
-      const saveData = await this._userReprository.saveMessages(messageData)
-      return saveData
+      const saveData = await this._userReprository.saveMessages(mapSaveMessageDTO(messageData));
+      return saveData;
     } catch (error) {
       throw error
     }
@@ -236,7 +294,7 @@ class UserService implements IUserService {
   deleteMessage = async (messageId: string): Promise<IMessageSaveResponse | null> => {
     try {
       const updateData = await this._userReprository.deleteMessage(messageId)
-      return updateData
+      return updateData ? mapDeleteMessageDTO(updateData) : null;
     } catch (error) {
       throw error
     }
@@ -251,20 +309,18 @@ class UserService implements IUserService {
   };
 
   submitReview = async (reviewData: IReviewSubmit) => {
-
     try {
       const saveData = await this._userReprository.submitReview(reviewData)
-      return saveData
+      return mapReviewResponse(saveData);
     } catch (error) {
       throw error
     }
   };
 
-
   reviewDetails = async (doctorId: string) => {
     try {
       const saveData = await this._userReprository.reviewDetails(doctorId)
-      return saveData
+      return mapReviewResponse(saveData);
     } catch (error) {
       throw error
     }
@@ -272,16 +328,17 @@ class UserService implements IUserService {
 
   getDoctorSlotsForBooking = async (doctorId: string) => {
     const getSlots = await this._userReprository.getDoctorSlotsForBooking(doctorId)
-    return getSlots
+    return mapDoctorSlotsToDTO(getSlots)
   };
 
+  
   getPrescription = async (bookingId: string) => {
     try {
       const prescriptionData = await this._userReprository.getPrescription(bookingId)
       if (!prescriptionData) {
         throw new Error('Prescription not found');
       }
-      return prescriptionData
+      return mapPrescriptionDTO(prescriptionData);
     } catch (error) {
       throw new Error('error in getting your prerscription' + error);
     }

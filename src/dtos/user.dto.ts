@@ -42,7 +42,7 @@ export interface IUserProfileDTO {
   name: string;
   email: string;
   mobile: string;
-  dob?: Date;
+  dob?: Date | string;
   profileIMG?: string;
   walletBalance?: number;
   isUserBlocked?: boolean;

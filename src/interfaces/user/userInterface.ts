@@ -26,7 +26,7 @@ export interface IUserAuth {
   email: string;
   mobile: string;
   password?: string;
-  dob?: Date;
+  dob?: Date | string;
   profileIMG?: string;
   walletBalance?: number;
   medicalRecords?: IMedicalRecords[];
@@ -55,7 +55,7 @@ export interface IUpdateDoctorProfile {
 export interface IVerifiedDoctorData {
   _id: string;
   email: string;
-  slotId: string[]; // Assuming it's an array of slot IDs
+  slotId: string[]; 
   departments: string[];
   knownLanguages: string[];
   consultationType: string[];
@@ -141,6 +141,7 @@ export interface IMessageUser {
   senderId: string;
   receiverId: string;
   message: string;
+  image?:string
   createdAt: Date;
   updatedAt: Date;
 }
@@ -175,7 +176,7 @@ export interface IReview {
   userId: {
     _id?: string;
     name?: string;
-    profileIMG?: string // Assuming userId is populated — adjust if needed
+    profileIMG?: string 
   };
   rating: number;
   comment: string;
@@ -199,7 +200,7 @@ export interface IDoctorSlot {
   status: "Available" | "Booked" | "Cancelled"; // adjust if there are more statuses
   doctorId: Types.ObjectId;
   isBooked: boolean;
-  __v: number;
+  
 }
 
 export interface IUserResponse {
@@ -228,7 +229,7 @@ export interface IUserResponseFull {
   isUserBlocked?: boolean;
   profileIMG?: string;
   walletBalance?: number;
-  dob?: Date;
+  dob?: Date | string;
   age?: number;
   allergies?: string[];
   bloodGroup?: string;

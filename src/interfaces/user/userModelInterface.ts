@@ -8,7 +8,7 @@ export interface IUserModel {
   email: string;
   mobile: string;
   password?: string;
-  dob?: Date;
+  dob?: Date |string;
   profileIMG?: string;
   gender?: 'Male' | 'Female' | 'Other';
   age?: number;

@@ -154,9 +154,9 @@ class UserReprository implements IUserRepository {
           throw new Error("Slot not found");
         }
 
-        if (slot.isBooked) {
-          throw new Error("Slot already booked");
-        }
+        // if (slot.isBooked) {
+        //   throw new Error("Slot already booked");
+        // }
 
         await this._slotModel.findByIdAndUpdate(slotId, {
           isBooked: true,
@@ -273,7 +273,7 @@ class UserReprository implements IUserRepository {
     try {
       if (slotId) {
         const slot = await this._slotModel.findById(slotId);
- 
+
         if (!slot) {
           throw new Error("Slot not found");
         }
@@ -381,481 +381,481 @@ class UserReprository implements IUserRepository {
 
 
 
-// saveBookingToDb = async (slotId: string, userId: string, doctorId: string) => {
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
-//   try {
-//     if (!slotId) throw new Error("Slot ID is required");
+  // saveBookingToDb = async (slotId: string, userId: string, doctorId: string) => {
+  //   const session = await mongoose.startSession();
+  //   session.startTransaction();
+  //   try {
+  //     if (!slotId) throw new Error("Slot ID is required");
 
-//     // 1. Atomically lock the slot if available
-//     const slot = await this._slotModel.findOneAndUpdate(
-//       { _id: slotId, isBooked: false, status: "Available" },
-//       { $set: { isBooked: true, status: "Booked" } },
-//       { new: true, session }
-//     );
+  //     // 1. Atomically lock the slot if available
+  //     const slot = await this._slotModel.findOneAndUpdate(
+  //       { _id: slotId, isBooked: false, status: "Available" },
+  //       { $set: { isBooked: true, status: "Booked" } },
+  //       { new: true, session }
+  //     );
 
-//     if (!slot) {
-//       throw new Error("Slot already booked or not available");
-//     }
+  //     if (!slot) {
+  //       throw new Error("Slot already booked or not available");
+  //     }
 
-//     // 2. Create booking
-//     const newBooking = await this._bookingModel.create([{
-//       doctorId,
-//       userId,
-//       slotId,
-//       paymentStatus: "paid",
-//       bookingStatus: "booked"
-//     }], { session });
+  //     // 2. Create booking
+  //     const newBooking = await this._bookingModel.create([{
+  //       doctorId,
+  //       userId,
+  //       slotId,
+  //       paymentStatus: "paid",
+  //       bookingStatus: "booked"
+  //     }], { session });
 
-//     // 3. Get Doctor fees
-//     const doctor = await this._doctorModel.findById(doctorId).session(session);
-//     if (!doctor) throw new Error("Doctor not found");
+  //     // 3. Get Doctor fees
+  //     const doctor = await this._doctorModel.findById(doctorId).session(session);
+  //     if (!doctor) throw new Error("Doctor not found");
 
-//     const doctorFees = doctor.consultationFee;
-//     if (doctorFees === undefined) {
-//       throw new Error("Consultation fee not set for this doctor.");
-//     }
+  //     const doctorFees = doctor.consultationFee;
+  //     if (doctorFees === undefined) {
+  //       throw new Error("Consultation fee not set for this doctor.");
+  //     }
 
-//     const doctorShare = Math.floor(doctorFees * 0.7);
-//     const adminShare = doctorFees - doctorShare;
-//     const bookingId  = newBooking[0]._id.toString();
+  //     const doctorShare = Math.floor(doctorFees * 0.7);
+  //     const adminShare = doctorFees - doctorShare;
+  //     const bookingId  = newBooking[0]._id.toString();
 
-//     // 4. Update Doctor Wallet
-//     let doctorWallet = await this._doctorWalletModel.findOne({ doctorId }).session(session);
-//     if (doctorWallet) {
-//       doctorWallet.balance += doctorShare;
-//       doctorWallet.transactions.push({
-//         amount: doctorShare,
-//         transactionId: bookingId,
-//         transactionType: "credit",
-//         appointmentId: bookingId
-//       });
-//       await doctorWallet.save({ session });
-//     } else {
-//       await this._doctorWalletModel.create([{
-//         doctorId,
-//         balance: doctorShare,
-//         transactions: [{
-//           amount: doctorShare,
-//           transactionId: bookingId,
-//           transactionType: "credit",
-//           appointmentId: bookingId
-//         }]
-//       }], { session });
-//     }
+  //     // 4. Update Doctor Wallet
+  //     let doctorWallet = await this._doctorWalletModel.findOne({ doctorId }).session(session);
+  //     if (doctorWallet) {
+  //       doctorWallet.balance += doctorShare;
+  //       doctorWallet.transactions.push({
+  //         amount: doctorShare,
+  //         transactionId: bookingId,
+  //         transactionType: "credit",
+  //         appointmentId: bookingId
+  //       });
+  //       await doctorWallet.save({ session });
+  //     } else {
+  //       await this._doctorWalletModel.create([{
+  //         doctorId,
+  //         balance: doctorShare,
+  //         transactions: [{
+  //           amount: doctorShare,
+  //           transactionId: bookingId,
+  //           transactionType: "credit",
+  //           appointmentId: bookingId
+  //         }]
+  //       }], { session });
+  //     }
 
-//     // 5. Update Admin Wallet
-//     const adminId = "admin";
-//     let adminWallet = await this._adminWalletModel.findOne({ adminId }).session(session);
-//     if (!adminWallet) {
-//       await this._adminWalletModel.create([{
-//         adminId,
-//         balance: adminShare,
-//         transactions: [{
-//           amount: adminShare,
-//           transactionId: bookingId,
-//           transactionType: "credit",
-//           appointmentId: bookingId
-//         }]
-//       }], { session });
-//     } else {
-//       adminWallet.balance += adminShare;
-//       adminWallet.transactions.push({
-//         amount: adminShare,
-//         transactionId: bookingId,
-//         transactionType: "credit",
-//         appointmentId: bookingId
-//       });
-//       await adminWallet.save({ session });
-//     }
+  //     // 5. Update Admin Wallet
+  //     const adminId = "admin";
+  //     let adminWallet = await this._adminWalletModel.findOne({ adminId }).session(session);
+  //     if (!adminWallet) {
+  //       await this._adminWalletModel.create([{
+  //         adminId,
+  //         balance: adminShare,
+  //         transactions: [{
+  //           amount: adminShare,
+  //           transactionId: bookingId,
+  //           transactionType: "credit",
+  //           appointmentId: bookingId
+  //         }]
+  //       }], { session });
+  //     } else {
+  //       adminWallet.balance += adminShare;
+  //       adminWallet.transactions.push({
+  //         amount: adminShare,
+  //         transactionId: bookingId,
+  //         transactionType: "credit",
+  //         appointmentId: bookingId
+  //       });
+  //       await adminWallet.save({ session });
+  //     }
 
-//     await session.commitTransaction();
-//     session.endSession();
+  //     await session.commitTransaction();
+  //     session.endSession();
 
-//   } catch (error) {
-//     await session.abortTransaction();
-//     session.endSession();
-//     throw error;
-//   }
-// };
-
-
-getUserBookings = async (userId: string): Promise<IUserBooking[]> => {
-  try {
-    const bookings = await this._bookingModel.find({ userId })
-      .sort({ createdAt: -1 })
-      .populate('doctorId') // populate doctor details
-      .populate('slotId')   // populate slot details
-      .populate('userId')
-      .lean();
-    return mapBookingsToUserResponse(bookings);
-
-  } catch (error) {
-    console.error("Error fetching user bookings:", error);
-    throw error;
-  }
-};
+  //   } catch (error) {
+  //     await session.abortTransaction();
+  //     session.endSession();
+  //     throw error;
+  //   }
+  // };
 
 
+  getUserBookings = async (userId: string): Promise<IUserBooking[]> => {
+    try {
+      const bookings = await this._bookingModel.find({ userId })
+        .sort({ createdAt: -1 })
+        .populate('doctorId') // populate doctor details
+        .populate('slotId')   // populate slot details
+        .populate('userId')
+        .lean();
+      return mapBookingsToUserResponse(bookings);
 
-cancelBooking = async (bookingId: string) => {
-  try {
-    // Step 1: Find the booking
-    const booking = await this._bookingModel.findById(bookingId);
-    if (!booking) throw new Error('Booking not found');
+    } catch (error) {
+      console.error("Error fetching user bookings:", error);
+      throw error;
+    }
+  };
 
-    const { slotId, doctorId, userId } = booking;
 
-    // Step 2: Update the slot as available
-    await this._slotModel.findByIdAndUpdate(slotId, {
-      status: 'Available',
-      isBooked: false,
-    });
 
-    // Step 3: Get doctor wallet and find the matching transaction
-    const doctorWallet = await this._doctorWalletModel.findOne({ doctorId });
-    if (!doctorWallet) throw new Error('Doctor wallet not found');
+  cancelBooking = async (bookingId: string) => {
+    try {
+      // Step 1: Find the booking
+      const booking = await this._bookingModel.findById(bookingId);
+      if (!booking) throw new Error('Booking not found');
 
-    const transaction = doctorWallet.transactions.find(
-      (tx: {
-        amount?: number;
-        transactionId?: string;
-        transactionType?: 'credit' | 'debit';
-        appointmentId?: string;
-        _id?: Types.ObjectId;
-        date?: Date;
-      }) => {
-        return tx.transactionId === bookingId
+      const { slotId, doctorId, userId } = booking;
+
+      // Step 2: Update the slot as available
+      await this._slotModel.findByIdAndUpdate(slotId, {
+        status: 'Available',
+        isBooked: false,
       });
-    if (!transaction) throw new Error('Transaction not found in doctor wallet');
 
-    const amountToRefund = transaction.amount;
+      // Step 3: Get doctor wallet and find the matching transaction
+      const doctorWallet = await this._doctorWalletModel.findOne({ doctorId });
+      if (!doctorWallet) throw new Error('Doctor wallet not found');
 
-    // Step 4: Deduct amount from doctor and save debit transaction
-    doctorWallet.balance -= amountToRefund;
-    doctorWallet.transactions.push({
-      amount: amountToRefund,
-      transactionId: bookingId,
-      transactionType: 'debit',
-      appointmentId: bookingId,
-      date: new Date(),
-    });
-    await doctorWallet.save();
+      const transaction = doctorWallet.transactions.find(
+        (tx: {
+          amount?: number;
+          transactionId?: string;
+          transactionType?: 'credit' | 'debit';
+          appointmentId?: string;
+          _id?: Types.ObjectId;
+          date?: Date;
+        }) => {
+          return tx.transactionId === bookingId
+        });
+      if (!transaction) throw new Error('Transaction not found in doctor wallet');
 
-    // Step 5: Find or create user wallet
-    let userWallet = await this._userWalletModel.findOne({ userId });
+      const amountToRefund = transaction.amount;
 
-    if (!userWallet) {
-      userWallet = await this._userWalletModel.create({
-        userId,
-        balance: amountToRefund,
-        transactions: [{
+      // Step 4: Deduct amount from doctor and save debit transaction
+      doctorWallet.balance -= amountToRefund;
+      doctorWallet.transactions.push({
+        amount: amountToRefund,
+        transactionId: bookingId,
+        transactionType: 'debit',
+        appointmentId: bookingId,
+        date: new Date(),
+      });
+      await doctorWallet.save();
+
+      // Step 5: Find or create user wallet
+      let userWallet = await this._userWalletModel.findOne({ userId });
+
+      if (!userWallet) {
+        userWallet = await this._userWalletModel.create({
+          userId,
+          balance: amountToRefund,
+          transactions: [{
+            amount: amountToRefund,
+            transactionId: bookingId,
+            transactionType: 'credit',
+            appointmentId: bookingId,
+            date: new Date(),
+          }],
+        });
+      } else {
+        userWallet.balance += amountToRefund;
+        userWallet.transactions.push({
           amount: amountToRefund,
           transactionId: bookingId,
           transactionType: 'credit',
           appointmentId: bookingId,
           date: new Date(),
-        }],
-      });
-    } else {
-      userWallet.balance += amountToRefund;
-      userWallet.transactions.push({
-        amount: amountToRefund,
-        transactionId: bookingId,
-        transactionType: 'credit',
-        appointmentId: bookingId,
-        date: new Date(),
-      });
+        });
+      }
+
+      await userWallet.save();
+
+      // Step 6: Delete the booking
+
+      await this._bookingModel.findByIdAndUpdate(bookingId, {
+        bookingStatus: 'cancelled',
+        paymentStatus: 'refunded'
+      })
+
+      return { message: "Booking Cancelled Successfully" }
+    } catch (error) {
+      console.error('Error in cancelBooking:', error);
+      throw error;
     }
-
-    await userWallet.save();
-
-    // Step 6: Delete the booking
-
-    await this._bookingModel.findByIdAndUpdate(bookingId, {
-      bookingStatus: 'cancelled',
-      paymentStatus: 'refunded'
-    })
-
-    return { message: "Booking Cancelled Successfully" }
-  } catch (error) {
-    console.error('Error in cancelBooking:', error);
-    throw error;
-  }
-};
-
-
-
-getWalletData = async (userId: string, page: number, limit: number) => {
-  try {
-    const wallet = await this._userWalletModel.findOne({ userId });
-
-    if (!wallet) throw new Error('Wallet not found');
-
-    const totalTransactions = wallet.transactions.length;
-    const totalPages = Math.ceil(totalTransactions / limit);
-    const startIndex = (page - 1) * limit;
-
-    const paginatedTransactions = wallet.transactions
-      .sort((a, b) => new Date(b.date || '').getTime() - new Date(a.date || '').getTime())
-      .slice(startIndex, startIndex + limit)
-      .map((tx: {
-        amount?: number;
-        transactionId?: string;
-        transactionType?: 'credit' | 'debit';
-        appointmentId?: string;
-        _id?: Types.ObjectId;
-        date?: Date;
-      }) => {
-        if (
-          !tx._id ||
-          tx.amount === undefined ||
-          !tx.transactionId ||
-          !tx.transactionType ||
-          !tx.appointmentId ||
-          !tx.date
-        ) {
-          throw new Error("Incomplete transaction data");
-        }
-
-        return {
-          _id: tx._id?.toString() || '',
-          amount: tx.amount,
-          transactionId: tx.transactionId,
-          transactionType: tx.transactionType,
-          appointmentId: tx.appointmentId,
-          date: tx.date,
-        }
-      });
-
-
-    return {
-      _id: wallet._id.toString(),
-      userId: wallet.userId.toString(),
-      balance: wallet.balance,
-      transactions: paginatedTransactions,
-      totalTransactions,
-      currentPage: page,
-      totalPages,
-    };
-  } catch (error) {
-    console.error('Error fetching paginated wallet:', error);
-    throw new Error('Failed to fetch wallet');
-  }
-};
-
-
-updateUser = async (userData: IUpdateUserProfileInput, imgObject: IUpdateUserProfileImage) => {
-
-  const existingUser = await this._userModel.findOne({ email: userData.email });
-
-  if (existingUser) {
-
-    let transformedImgObject: TransformedImageObject = {};
-
-    if (imgObject?.profileImage) {
-      transformedImgObject.profileIMG = imgObject.profileImage;
-    }
-
-    const updatedUser = await this._userModel.findOneAndUpdate(
-      { email: userData.email },
-      { $set: { ...userData, ...transformedImgObject } },
-      { new: true }
-    );
-
-    return updatedUser;
-  } else {
-    throw new Error("Email not registered");
-  }
-};
-
-
-getUser = async (email: string): Promise<IUserResponseFull | null> => {
-  try {
-    const data = await this._userModel.findOne({ email }).lean();
-
-    if (!data) return null;
-
-    const mappedUser: IUserResponseFull = {
-      ...data,
-      _id: data._id.toString(),
-      profileIMG: data.profileIMG ?? "",
-    };
-
-    return mappedUser;
-  } catch (error) {
-    throw error;
-  }
-};
-
-getBookedDoctor = async (userId: string) => {
-  try {
-    const bookings = await this._bookingModel.find({ userId })
-      .populate('doctorId', 'name email profileImage') // only select needed fields
-      .exec();
-    // Extract user data from populated bookings
-    const doctors = bookings.map(booking => booking.doctorId as unknown as IBookedDoctorForChat);
-    return doctors
-
-  } catch (error) {
-    throw new Error('Failed to fetch booked user data');
-  }
-};
-
-findMessage = async (receiverId: string, senderId: string): Promise<IMessageUser[]> => {
-  try {
-    const conversation = await this._conversationModel.findOne({
-      participants: { $all: [receiverId, senderId] },
-    }).populate('messages');
-
-    if (!conversation) {
-      return [];
-    }
-
-    return conversation.messages as unknown as IMessageUser[];
-  } catch (error) {
-    console.error('Error finding conversation:', error);
-    throw error;
-  }
-};
-
-saveMessages = async (messageData: { senderId: string; receiverId: string; message: string, image: string; }) => {
-  try {
-    const { senderId, receiverId, message, image } = messageData;
-
-    let conversation = await this._conversationModel.findOne({
-      participants: { $all: [senderId, receiverId] },
-    });
-
-    if (!conversation) {
-      conversation = await this._conversationModel.create({
-        participants: [senderId, receiverId],
-        messages: [],
-      });
-    }
-
-    const newMessage = await this._messageModel.create({
-      senderId,
-      receiverId,
-      message,
-      image
-    });
-
-    // Step 4: Push the message into conversation's messages array
-    conversation.messages.push(newMessage._id);
-    await conversation.save();
-    return mapMessages(newMessage);
-  } catch (error) {
-    console.error("Error in saveMessages:", error);
-    throw error;
-  }
-};
-
-deleteMessage = async (messageId: string): Promise<IMessageSaveResponse | null> => {
-  if (!messageId) {
-    throw new Error("Message ID is required.");
-  }
-
-  const deleted = await this._messageModel.findByIdAndDelete(messageId);
-  if (!deleted) throw new Error("Message not found.");
-
-  return {
-    _id: deleted._id.toString(),
-    senderId: deleted.senderId.toString(),
-    receiverId: deleted.receiverId.toString(),
-    message: deleted.message,
-    image: deleted.image,
-    createdAt: deleted.createdAt,
-    updatedAt: deleted.updatedAt,
   };
-};
 
 
-submitReview = async (reviewData: IReviewSubmit): Promise<IReviewResponse> => {
-  try {
-    const { userId, doctorId, rating, comment } = reviewData;
 
-    // Check if a review already exists
-    const existingReview = await this._reviewModel.findOne({ userId, doctorId });
+  getWalletData = async (userId: string, page: number, limit: number) => {
+    try {
+      const wallet = await this._userWalletModel.findOne({ userId });
+
+      if (!wallet) throw new Error('Wallet not found');
+
+      const totalTransactions = wallet.transactions.length;
+      const totalPages = Math.ceil(totalTransactions / limit);
+      const startIndex = (page - 1) * limit;
+
+      const paginatedTransactions = wallet.transactions
+        .sort((a, b) => new Date(b.date || '').getTime() - new Date(a.date || '').getTime())
+        .slice(startIndex, startIndex + limit)
+        .map((tx: {
+          amount?: number;
+          transactionId?: string;
+          transactionType?: 'credit' | 'debit';
+          appointmentId?: string;
+          _id?: Types.ObjectId;
+          date?: Date;
+        }) => {
+          if (
+            !tx._id ||
+            tx.amount === undefined ||
+            !tx.transactionId ||
+            !tx.transactionType ||
+            !tx.appointmentId ||
+            !tx.date
+          ) {
+            throw new Error("Incomplete transaction data");
+          }
+
+          return {
+            _id: tx._id?.toString() || '',
+            amount: tx.amount,
+            transactionId: tx.transactionId,
+            transactionType: tx.transactionType,
+            appointmentId: tx.appointmentId,
+            date: tx.date,
+          }
+        });
 
 
-    if (existingReview) {
+      return {
+        _id: wallet._id.toString(),
+        userId: wallet.userId.toString(),
+        balance: wallet.balance,
+        transactions: paginatedTransactions,
+        totalTransactions,
+        currentPage: page,
+        totalPages,
+      };
+    } catch (error) {
+      console.error('Error fetching paginated wallet:', error);
+      throw new Error('Failed to fetch wallet');
+    }
+  };
 
 
-      throw new Error("Review already added for this doctor");
+  updateUser = async (userData: IUpdateUserProfileInput, imgObject: IUpdateUserProfileImage) => {
+
+    const existingUser = await this._userModel.findOne({ email: userData.email });
+
+    if (existingUser) {
+
+      let transformedImgObject: TransformedImageObject = {};
+
+      if (imgObject?.profileImage) {
+        transformedImgObject.profileIMG = imgObject.profileImage;
+      }
+
+      const updatedUser = await this._userModel.findOneAndUpdate(
+        { email: userData.email },
+        { $set: { ...userData, ...transformedImgObject } },
+        { new: true }
+      );
+
+      return updatedUser;
+    } else {
+      throw new Error("Email not registered");
+    }
+  };
+
+
+  getUser = async (email: string): Promise<IUserResponseFull | null> => {
+    try {
+      const data = await this._userModel.findOne({ email }).lean();
+
+      if (!data) return null;
+
+      const mappedUser: IUserResponseFull = {
+        ...data,
+        _id: data._id.toString(),
+        profileIMG: data.profileIMG ?? "",
+      };
+
+      return mappedUser;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  getBookedDoctor = async (userId: string) => {
+    try {
+      const bookings = await this._bookingModel.find({ userId })
+        .populate('doctorId', 'name email profileImage') // only select needed fields
+        .exec();
+      // Extract user data from populated bookings
+      const doctors = bookings.map(booking => booking.doctorId as unknown as IBookedDoctorForChat);
+      return doctors
+
+    } catch (error) {
+      throw new Error('Failed to fetch booked user data');
+    }
+  };
+
+  findMessage = async (receiverId: string, senderId: string): Promise<IMessageUser[]> => {
+    try {
+      const conversation = await this._conversationModel.findOne({
+        participants: { $all: [receiverId, senderId] },
+      }).populate('messages');
+
+      if (!conversation) {
+        return [];
+      }
+
+      return conversation.messages as unknown as IMessageUser[];
+    } catch (error) {
+      console.error('Error finding conversation:', error);
+      throw error;
+    }
+  };
+
+  saveMessages = async (messageData: { senderId: string; receiverId: string; message: string, image: string; }) => {
+    try {
+      const { senderId, receiverId, message, image } = messageData;
+
+      let conversation = await this._conversationModel.findOne({
+        participants: { $all: [senderId, receiverId] },
+      });
+
+      if (!conversation) {
+        conversation = await this._conversationModel.create({
+          participants: [senderId, receiverId],
+          messages: [],
+        });
+      }
+
+      const newMessage = await this._messageModel.create({
+        senderId,
+        receiverId,
+        message,
+        image
+      });
+
+      // Step 4: Push the message into conversation's messages array
+      conversation.messages.push(newMessage._id);
+      await conversation.save();
+      return mapMessages(newMessage);
+    } catch (error) {
+      console.error("Error in saveMessages:", error);
+      throw error;
+    }
+  };
+
+  deleteMessage = async (messageId: string): Promise<IMessageSaveResponse | null> => {
+    if (!messageId) {
+      throw new Error("Message ID is required.");
     }
 
-    // Create a new review
-    const newReview = new this._reviewModel({
-      userId,
-      doctorId,
-      rating,
-      comment,
-    });
+    const deleted = await this._messageModel.findByIdAndDelete(messageId);
+    if (!deleted) throw new Error("Message not found.");
 
-    await newReview.save();
-    const allReviews = await this._reviewModel.find({ doctorId }).populate('userId', 'name profileIMG');
-
-    const formattedReviews = (allReviews as unknown as PopulatedReviewDocument[]).map(mapReviewDocument);
     return {
-      success: true,
-      message: "Review submitted successfully",
-      data: formattedReviews,
+      _id: deleted._id.toString(),
+      senderId: deleted.senderId.toString(),
+      receiverId: deleted.receiverId.toString(),
+      message: deleted.message,
+      image: deleted.image,
+      createdAt: deleted.createdAt,
+      updatedAt: deleted.updatedAt,
     };
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      throw error.message;
+  };
+
+
+  submitReview = async (reviewData: IReviewSubmit): Promise<IReviewResponse> => {
+    try {
+      const { userId, doctorId, rating, comment } = reviewData;
+
+      // Check if a review already exists
+      const existingReview = await this._reviewModel.findOne({ userId, doctorId });
+
+
+      if (existingReview) {
+
+
+        throw new Error("Review already added for this doctor");
+      }
+
+      // Create a new review
+      const newReview = new this._reviewModel({
+        userId,
+        doctorId,
+        rating,
+        comment,
+      });
+
+      await newReview.save();
+      const allReviews = await this._reviewModel.find({ doctorId }).populate('userId', 'name profileIMG');
+
+      const formattedReviews = (allReviews as unknown as PopulatedReviewDocument[]).map(mapReviewDocument);
+      return {
+        success: true,
+        message: "Review submitted successfully",
+        data: formattedReviews,
+      };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw error.message;
+      }
+      throw 'An unknown error occurred';
     }
-    throw 'An unknown error occurred';
-  }
-};
+  };
 
-reviewDetails = async (doctorId: string) => {
-  try {
-    const allReviews = await this._reviewModel.find({ doctorId }).populate('userId', 'name profileIMG');
-    const formattedReviews = (allReviews as unknown as PopulatedReviewDocument[]).map(mapReviewDocument);
-    return {
-      success: true,
-      message: "Review submitted successfully",
-      data: formattedReviews,
-    };
-  } catch (error) {
-    throw error
-  }
-};
-
-
-
-getDoctorSlotsForBooking = async (doctorId: string): Promise<IDoctorSlot[]> => {
-  const slots = await this._slotModel.find({ doctorId, status: "Available" }).lean();
-  return slots as unknown as IDoctorSlot[];
-};
-
-getPrescription = async (bookingId: string): Promise<IPrescriptionResponse | null> => {
-  try {
-
-    const data = await this._prescriptionModel.findOne({ bookingId }) as (IPrescription & { _id: Types.ObjectId, createdAt: Date, updatedAt: Date });
-
-    if (!data) {
-      throw new Error("Prescription not found");
+  reviewDetails = async (doctorId: string) => {
+    try {
+      const allReviews = await this._reviewModel.find({ doctorId }).populate('userId', 'name profileIMG');
+      const formattedReviews = (allReviews as unknown as PopulatedReviewDocument[]).map(mapReviewDocument);
+      return {
+        success: true,
+        message: "Review submitted successfully",
+        data: formattedReviews,
+      };
+    } catch (error) {
+      throw error
     }
-    const response: IPrescriptionResponse = {
-      _id: data._id.toString(),
-      bookingId: data.bookingId.toString(),
-      patientAdvice: data.patientAdvice,
-      medications: data.medications,
-      userId: data.userId.toString(),
-      doctorId: data.doctorId.toString(),
-      createdAt: data.createdAt.toISOString(),
-      updatedAt: data.updatedAt.toISOString(),
-    };
+  };
 
-    return response;
-  } catch (error) {
-    console.error("Error fetching prescription:", error);
-    throw error;
-  }
-};
+
+
+  getDoctorSlotsForBooking = async (doctorId: string): Promise<IDoctorSlot[]> => {
+    const slots = await this._slotModel.find({ doctorId, status: "Available" }).lean();
+    return slots as unknown as IDoctorSlot[];
+  };
+
+  getPrescription = async (bookingId: string): Promise<IPrescriptionResponse | null> => {
+    try {
+
+      const data = await this._prescriptionModel.findOne({ bookingId }) as (IPrescription & { _id: Types.ObjectId, createdAt: Date, updatedAt: Date });
+
+      if (!data) {
+        throw new Error("Prescription not found");
+      }
+      const response: IPrescriptionResponse = {
+        _id: data._id.toString(),
+        bookingId: data.bookingId.toString(),
+        patientAdvice: data.patientAdvice,
+        medications: data.medications,
+        userId: data.userId.toString(),
+        doctorId: data.doctorId.toString(),
+        createdAt: data.createdAt.toISOString(),
+        updatedAt: data.updatedAt.toISOString(),
+      };
+
+      return response;
+    } catch (error) {
+      console.error("Error fetching prescription:", error);
+      throw error;
+    }
+  };
 
 };
 

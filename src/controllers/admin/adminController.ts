@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import AdminService from '../../services/adminService'
 import HTTP_statusCode from '../../enums/httpStatusCode'
 import IAdminService from '../../interfaces/admin/IAdminService';
+import { RESPONSE_MESSAGES } from '../../constants/messages';
 
 
 class AdminController {
@@ -37,20 +38,20 @@ class AdminController {
 
         } catch (error: unknown) {
             if (error instanceof Error) {
-                if (error.message === "Check Credentials") {
-                    res.status(HTTP_statusCode.NotFound).json({ message: "Check Credentials" });
-                } else if (error.message === "Wrong password") {
-                    res.status(HTTP_statusCode.Unauthorized).json({ message: "Wrong password" });
-                } else if (error.message === "User is blocked") {
-                    res.status(HTTP_statusCode.NoAccess).json({ message: "User is blocked" });
+                if (error.message === RESPONSE_MESSAGES.ADMIN.CHECK_CREDENTIALS) {
+                    res.status(HTTP_statusCode.NotFound).json({ message: RESPONSE_MESSAGES.ADMIN.CHECK_CREDENTIALS });
+                } else if (error.message === RESPONSE_MESSAGES.ADMIN.WRONG_PASSWORD) {
+                    res.status(HTTP_statusCode.Unauthorized).json({ message: RESPONSE_MESSAGES.ADMIN.WRONG_PASSWORD });
+                } else if (error.message === RESPONSE_MESSAGES.ADMIN.USER_BLOCKED) {
+                    res.status(HTTP_statusCode.NoAccess).json({ message: RESPONSE_MESSAGES.ADMIN.USER_BLOCKED });
                 } else {
                     res.status(HTTP_statusCode.InternalServerError).json({
-                        message: "Something went wrong, please reconnect internet and try again",
+                        message: RESPONSE_MESSAGES.COMMON.INTERNET_ERROR,
                     });
                 }
             } else {
                 res.status(HTTP_statusCode.InternalServerError).json({
-                    message: "Unexpected error occurred",
+                    message: RESPONSE_MESSAGES.COMMON.UNEXPECTED_ERROR,
                 });
             }
         }
@@ -61,9 +62,9 @@ class AdminController {
         try {
             res.clearCookie("adminAccessToken", { httpOnly: true });
             res.clearCookie("adminRefreshToken", { httpOnly: true });
-            res.status(200).json({ message: "Logged out successfully" });
+            res.status(200).json({ message: RESPONSE_MESSAGES.ADMIN.LOGOUT_SUCCESS });
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
         }
     }
 
@@ -119,8 +120,7 @@ class AdminController {
 
             res.status(200).json(result);
         } catch (error) {
-            console.error("Error in getDoctors Controller", error);
-            res.status(500).json({ message: "Server Error" });
+            res.status(500).json({ message: RESPONSE_MESSAGES.COMMON.SERVER_ERROR });
         }
     };
 
@@ -180,7 +180,7 @@ class AdminController {
             const walletData = await this._adminService.getWalletData(adminId, page, limit, search, type);
             res.status(HTTP_statusCode.OK).json(walletData);
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
         }
     };
 
@@ -191,7 +191,7 @@ class AdminController {
             const getData = await this._adminService.findDashBoardData()
             res.status(HTTP_statusCode.OK).json(getData)
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
 
         }
     };
@@ -203,7 +203,7 @@ class AdminController {
             let updatedData = await this._adminService.updateDepartment(departmentId, departmentName)
             res.status(HTTP_statusCode.OK).json(updatedData)
         } catch (error) {
-            res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+            res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
 
         }
     };

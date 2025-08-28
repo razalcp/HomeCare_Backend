@@ -4,6 +4,7 @@ import { ISlot } from "../../models/doctor/slotModel";
 import { IDepartment } from "../../models/admin/departmentModel";
 import { IBookedUser, IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IMessageFromDoctor, IPrescriptionRequest, IPrescriptionResponse, IWalletResponse, IWalletTransaction, SlotInput } from "./doctorInterface";
 import { IBookingListResponseDTO, IDoctorDashboardDTO } from "../../dtos/doctor.dto";
+import { IUpdateDoctorProfile } from "../user/userInterface";
 
 
 export interface IDoctorService {
@@ -33,12 +34,16 @@ export interface IDoctorService {
 
   getDepartments(): Promise<Pick<IDepartment, "departmentName">[]>;
 
+  // updateDoctorProfile(
+  //   doctorData: IDoctorModel,
+  //   imgObject?: { profileImage?: string }
+  // ): Promise<void | IDoctorModel | null>;
+
   updateDoctorProfile(
-    doctorData: IDoctorModel,
+    doctorData: IUpdateDoctorProfile,
     imgObject?: { profileImage?: string }
   ): Promise<void | IDoctorModel | null>;
-
-
+  
   addDoctorSlots(slotData: SlotInput): Promise<{
     success: boolean;
     message: string;

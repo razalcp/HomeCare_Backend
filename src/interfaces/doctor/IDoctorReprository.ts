@@ -1,6 +1,7 @@
 import { IDepartment } from "../../models/admin/departmentModel"
 import { IWallet } from "../../models/doctor/doctorWalletModel"
 import { ISlot } from "../../models/doctor/slotModel"
+import { IUpdateDoctorProfile } from "../user/userInterface"
 import { IBookedUser, IDoctorDashboard, IDoctorImageUpload, IDoctorKycRegisterInput, IGetMyBookingsResponse, IMessageFromDoctor, IPrescriptionRequest, IPrescriptionResponse, IWalletResponse, IWalletTransaction } from "./doctorInterface"
 import IDoctorModel from "./doctorModelInterface"
 
@@ -10,8 +11,13 @@ interface IDoctorReprository {
     findByEmail(email: string): Promise<{ email?: string } | null>
     findEmailForLogin(email: string): Promise<IDoctorModel | null>
     doctorRepoKycRegister(doctorData: IDoctorKycRegisterInput, imgObject: IDoctorImageUpload): Promise<IDoctorModel | null | void>
-    updateDoctor(
-        doctorData: IDoctorModel,
+    // updateDoctor(
+    //     doctorData: IDoctorModel,
+    //     imgObject: { profileImage: string }
+    // ): Promise<void | IDoctorModel | null>;
+    
+        updateDoctor(
+        doctorData: IUpdateDoctorProfile,
         imgObject: { profileImage: string }
     ): Promise<void | IDoctorModel | null>;
 

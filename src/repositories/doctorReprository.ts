@@ -12,6 +12,7 @@ import { PopulatedBooking } from "../interfaces/doctor/doctorInterface"
 import { IMessage } from "../models/messageModel"
 import { IConversation } from "../models/conversationModel"
 import { IPrescription } from "../models/doctor/prescriptionModel"
+import { IUpdateDoctorProfile } from "../interfaces/user/userInterface"
 
 
 class DoctorReprository implements IDoctorReprository {
@@ -72,7 +73,7 @@ class DoctorReprository implements IDoctorReprository {
 
     };
 
-    updateDoctor = async (doctorData: IDoctorModel, imgObject: { profileImage: string }): Promise<void | IDoctorModel | null> => {
+    updateDoctor = async (doctorData: IUpdateDoctorProfile, imgObject: { profileImage: string }): Promise<void | IDoctorModel | null> => {
 
         const existingUser = await this._doctorModel.findOne({ email: doctorData.email })
 

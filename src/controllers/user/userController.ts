@@ -5,6 +5,7 @@ import HTTP_statusCode from "../../enums/httpStatusCode";
 const stripe = require('stripe')("sk_test_51R6U86C1BfcS3nBm3F9VPOzMitLY6kndB9xIywEvFDKrPi8jDQ457NySmoSq2Nl0hBdT8vtGMvNZ5Wr8cNq736Kk00RPBZDxXt")
 import cloudinary from '../../config/cloudinary_config'
 import { IUserService } from "../../interfaces/user/IUserService";
+import { RESPONSE_MESSAGES } from "../../constants/messages";
 
 
 class userController {
@@ -18,26 +19,26 @@ class userController {
     try {
       const userData: IUser = req.body;
       await this._userService.register(userData);
-      res.status(HTTP_statusCode.OK).send("OTP sent to mail");
+      res.status(HTTP_statusCode.OK).send(RESPONSE_MESSAGES.USER.OTP_SENT_TO_MAIL);
     } catch (error: unknown) {
       if (error instanceof Error) {
-        if (error.message === "Email already exists") {
+        if (error.message === RESPONSE_MESSAGES.USER.EMAIL_ALREADY_EXISTS) {
           res
             .status(HTTP_statusCode.Conflict)
-            .json({ message: "Email already exists" });
-        } else if (error.message === "Email not send") {
+            .json({ message: RESPONSE_MESSAGES.USER.EMAIL_ALREADY_EXISTS });
+        } else if (error.message === RESPONSE_MESSAGES.USER.EMAIL_NOT_SENT) {
           res
             .status(HTTP_statusCode.InternalServerError)
-            .json({ message: "Email not send" });
+            .json({ message: RESPONSE_MESSAGES.USER.EMAIL_NOT_SENT });
         } else {
           res
             .status(HTTP_statusCode.InternalServerError)
-            .json({ message: "Something wrong please try again later" });
+            .json({ message: RESPONSE_MESSAGES.USER.SOMETHING_WENT_WRONG });
         }
       } else {
         res
           .status(HTTP_statusCode.InternalServerError)
-          .json({ message: "Unknown error occurred" });
+          .json({ message: RESPONSE_MESSAGES.USER.UNKNOWN_ERROR });
       }
     }
   };
@@ -54,16 +55,16 @@ class userController {
       res.status(HTTP_statusCode.OK).json(serviceResponse);
     } catch (error: unknown) {
       if (error instanceof Error) {
-        if (error.message === "Incorrect OTP") {
+        if (error.message === RESPONSE_MESSAGES.USER.INCORRECT_OTP) {
           res
             .status(HTTP_statusCode.Unauthorized)
-            .json({ message: "Incorrect OTP" });
-        } else if (error.message === "OTP is expired") {
-          res.status(HTTP_statusCode.Expired).json({ message: "OTP is expired" });
+            .json({ message: RESPONSE_MESSAGES.USER.INCORRECT_OTP });
+        } else if (error.message === RESPONSE_MESSAGES.USER.OTP_EXPIRED) {
+          res.status(HTTP_statusCode.Expired).json({ message: RESPONSE_MESSAGES.USER.OTP_EXPIRED });
         } else {
           res
             .status(HTTP_statusCode.InternalServerError)
-            .json({ message: "Something went wrong. Please try again later." });
+            .json({ message: RESPONSE_MESSAGES.USER.SOMETHING_WENT_WRONG_OTP_VERIFICATION });
         }
       }
 
@@ -73,19 +74,19 @@ class userController {
   resendOtp = async (req: Request, res: Response) => {
     try {
       await this._userService.resendOTP();
-      res.status(HTTP_statusCode.OK).send("OTP sended");
+      res.status(HTTP_statusCode.OK).send(RESPONSE_MESSAGES.USER.OTP_SENT);
     } catch (error: unknown) {
       if (error instanceof Error) {
-        if (error.message === "Incorrect OTP") {
+        if (error.message === RESPONSE_MESSAGES.USER.INCORRECT_OTP) {
           res
             .status(HTTP_statusCode.Unauthorized)
-            .json({ message: "Incorrect OTP" });
-        } else if (error.message === "OTP is expired") {
-          res.status(HTTP_statusCode.Expired).json({ message: "OTP is expired" });
+            .json({ message: RESPONSE_MESSAGES.USER.INCORRECT_OTP });
+        } else if (error.message === RESPONSE_MESSAGES.USER.OTP_EXPIRED) {
+          res.status(HTTP_statusCode.Expired).json({ message: RESPONSE_MESSAGES.USER.OTP_EXPIRED });
         } else {
           res
             .status(HTTP_statusCode.InternalServerError)
-            .json({ message: "Something went wrong. Please try again later." });
+            .json({ message: RESPONSE_MESSAGES.USER.SOMETHING_WENT_WRONG_OTP_VERIFICATION });
         }
       }
     }
@@ -117,14 +118,14 @@ class userController {
 
     } catch (error: unknown) {
       if (error instanceof Error) {
-        if (error.message === "Email not found") {
-          res.status(HTTP_statusCode.NotFound).json({ message: "Email not found" });
-        } else if (error.message === "Wrong password") {
-          res.status(HTTP_statusCode.Unauthorized).json({ message: "Wrong password" });
-        } else if (error.message === "User is blocked") {
-          res.status(HTTP_statusCode.NoAccess).json({ message: "User is blocked" });
+        if (error.message === RESPONSE_MESSAGES.USER.EMAIL_NOT_FOUND) {
+          res.status(HTTP_statusCode.NotFound).json({ message: RESPONSE_MESSAGES.USER.EMAIL_NOT_FOUND });
+        } else if (error.message === RESPONSE_MESSAGES.USER.WRONG_PASSWORD) {
+          res.status(HTTP_statusCode.Unauthorized).json({ message: RESPONSE_MESSAGES.USER.WRONG_PASSWORD });
+        } else if (error.message === RESPONSE_MESSAGES.USER.USER_BLOCKED) {
+          res.status(HTTP_statusCode.NoAccess).json({ message: RESPONSE_MESSAGES.USER.USER_BLOCKED });
         } else {
-          res.status(HTTP_statusCode.InternalServerError).json({ message: "Something wrong please try again later" });
+          res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.USER.SOMETHING_WENT_WRONG });
         };
       }
     };
@@ -164,25 +165,22 @@ class userController {
         limit,
       });
     } catch (error) {
-      res.status(500).json({ message: "Something went wrong", error });
+      res.status(500).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
   };
 
 
   logoutUser = async (req: Request, res: Response) => {
-
-
     try {
       res.clearCookie("UserAccessToken", { httpOnly: true, secure: true, sameSite: 'none' });
       res.clearCookie("UserRefreshToken", { httpOnly: true, secure: true, sameSite: 'none' });
-      res.status(200).json({ message: "Logged out successfully" });
+      res.status(200).json({ message: RESPONSE_MESSAGES.USER.LOGOUT_SUCCESS });
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
   };
 
   createcheckoutsession = async (req: Request, res: Response) => {
-    console.log("stripe checkout")
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -226,14 +224,14 @@ class userController {
 
   getUserBookings = async (req: Request, res: Response) => {
     try {
-     
-      
+
+
       const userId = req.body.userId
       const getBookingData = await this._userService.getUserBookings(userId)
 
       res.status(HTTP_statusCode.OK).json(getBookingData)
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
   };
 
@@ -243,7 +241,7 @@ class userController {
       const cancelBookingData = await this._userService.cancelBooking(bookingId)
       res.status(HTTP_statusCode.OK).json(cancelBookingData)
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
   }
 
@@ -258,7 +256,7 @@ class userController {
       res.status(HTTP_statusCode.OK).json(getData);
     } catch (error) {
       res.status(HTTP_statusCode.InternalServerError).json({
-        message: "Something went wrong",
+        message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG,
         error,
       });
     }
@@ -368,7 +366,7 @@ class userController {
       if (error instanceof Error) {
         return res.status(400).json({ error: error.message });
       }
-      return res.status(400).json({ error: 'An unexpected error occurred' });
+      return res.status(400).json({ error: RESPONSE_MESSAGES.USER.UNEXPECTED_ERROR });
     }
   };
 
@@ -379,7 +377,7 @@ class userController {
       const getUserData = await this._userService.getUser(email)
       res.status(HTTP_statusCode.OK).json(getUserData)
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
   }
 
@@ -390,7 +388,7 @@ class userController {
       res.status(HTTP_statusCode.OK).json(Userdata)
 
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
 
   };
@@ -403,7 +401,7 @@ class userController {
       res.status(HTTP_statusCode.OK).json(getData)
 
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
   };
 
@@ -414,7 +412,7 @@ class userController {
       const saveData = await this._userService.saveMessages(messageData)
       res.status(HTTP_statusCode.OK).json(saveData)
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
   };
 
@@ -448,7 +446,7 @@ class userController {
         res.status(HTTP_statusCode.OK).json(upload)
       }
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
   };
 
@@ -460,7 +458,7 @@ class userController {
       const data = await this._userService.deleteMessage(messageId as string)
       res.status(HTTP_statusCode.OK).json(data)
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
 
   };
@@ -476,9 +474,11 @@ class userController {
       res.status(HTTP_statusCode.OK).json(saveData)
     } catch (error) {
       if (error instanceof Error) {
+        console.log(error.message);
+
         res.status(HTTP_statusCode.InternalServerError).json({ message: error.message });
       } else {
-        res.status(HTTP_statusCode.InternalServerError).json({ message: "An unexpected error occurred." });
+        res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.USER.WALLET_BOOKING_UNEXPECTED_ERROR });
       }
     }
 
@@ -492,7 +492,7 @@ class userController {
 
       res.status(HTTP_statusCode.OK).json(saveData)
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
   };
 
@@ -505,7 +505,7 @@ class userController {
 
       res.status(HTTP_statusCode.OK).json(saveData)
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
     }
   };
 
@@ -524,7 +524,7 @@ class userController {
 
       res.status(HTTP_statusCode.OK).json(presData)
     } catch (error) {
-      res.status(HTTP_statusCode.InternalServerError).json({ message: "Something went wrong", error });
+      res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
 
     }
   };

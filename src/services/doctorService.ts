@@ -6,6 +6,7 @@ import { IDoctorService } from "../interfaces/doctor/IDoctorService";
 import { IDoctorImageUpload, IDoctorKycRegisterInput, IMessageFromDoctor, IPrescriptionRequest, SlotInput } from "../interfaces/doctor/doctorInterface";
 import { IBookingListResponseDTO, IDoctorDashboardDTO } from "../dtos/doctor.dto";
 import { mapAddDoctorSlotsDTO, mapBookedUsersDTO, mapBookingToDTO, mapDepartmentsDTO, mapDoctorDashboardDTO, mapDoctorEmailDTO, mapDoctorFullDTO, mapDoctorSlotsDTO, mapDoctorUpdateFullDTO, mapMessagesDTO, mapWalletDataDTO, messageMapper } from "../mappers/doctor.mapper";
+import { IUpdateDoctorProfile } from "../interfaces/user/userInterface";
 
 class DoctorService implements IDoctorService {
 
@@ -203,7 +204,7 @@ class DoctorService implements IDoctorService {
     };
 
 
-    updateDoctorProfile = async (doctorData: IDoctorModel, imgObject: { profileImage: string }) => {
+    updateDoctorProfile = async (doctorData: IUpdateDoctorProfile, imgObject: { profileImage: string }) => {
         try {
             const updateDoctorData = await this._doctorReprository.updateDoctor(doctorData, imgObject)
 

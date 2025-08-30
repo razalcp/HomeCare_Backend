@@ -6,7 +6,6 @@ import mongooseConnection from "./config/database_config";
 import doctorRouter from './routes/doctorRoutes'
 import adminRouter from './routes/adminRoutes'
 import cookieParser from "cookie-parser";
-// import messageRoutes from "./routes/messageRoutes.js";
 import { startSocket } from "./socketConfig";
 import path from "node:path";
 import { devLogger, prodLogger } from "./middlewares/logger";

@@ -1,4 +1,4 @@
-import { IUserAuthDTO, IUserBookingDTO } from "../../dtos/user.dto";
+import { IUserAuthDTO, IUserBookingDTO, UpdateSlotStatusDTO } from "../../dtos/user.dto";
 import { IPrescriptionResponse } from "../doctor/doctorInterface";
 import { IUserAuth, IUser, IVerifiedDoctorsResponse, ICancelBookingResponse, IWalletData, IBookedDoctorForChat, IMessageUser, IMessageSaveResponse, ISaveMessageInput, IReviewResponse, IReviewSubmit, IDoctorSlot, IUpdateUserProfileInput, IUpdateUserProfileImage } from "./userInterface";
 import { IUserModel } from "./userModelInterface";
@@ -64,8 +64,9 @@ export interface IUserService {
     ): Promise<string>;
 
     submitReview(reviewData: IReviewSubmit): Promise<IReviewResponse>;
-
     reviewDetails(doctorId: string): Promise<IReviewResponse>;
     getPrescription(bookingId: string): Promise<IPrescriptionResponse>;
+    updateSlotStatus(slotId: string, doctorId: string): Promise<UpdateSlotStatusDTO>
+    updatePaymentFail(slotId: string, doctorId: string): Promise<void>
 
 }

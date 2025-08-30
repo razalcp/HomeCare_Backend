@@ -1,6 +1,6 @@
 import { IUserModel } from "./userModelInterface";
-import { IBookedDoctorForChat, IDoctorSlot, IMessageSaveResponse, IMessageUser, IReviewResponse, IReviewSubmit, ISaveMessageInput, IUpdateUserProfileImage, IUpdateUserProfileInput, IUser, IUserAuth, IUserBooking, IUserResponseFull, IVerifiedDoctorsResponse, IWalletData } from "./userInterface";
-import {IPrescriptionResponse } from "../doctor/doctorInterface";
+import { IBookedDoctorForChat, IDoctorSlot, IMessageSaveResponse, IMessageUser, IReviewResponse, IReviewSubmit, ISaveMessageInput, ISlotStatusUpdate, IUpdateUserProfileImage, IUpdateUserProfileInput, IUser, IUserAuth, IUserBooking, IUserResponseFull, IVerifiedDoctorsResponse, IWalletData } from "./userInterface";
+import { IPrescriptionResponse } from "../doctor/doctorInterface";
 
 
 export interface IUserRepository {
@@ -39,6 +39,7 @@ export interface IUserRepository {
     submitReview(reviewData: IReviewSubmit): Promise<IReviewResponse>
     getPrescription(bookingId: string): Promise<IPrescriptionResponse | null>;
     getDoctorSlotsForBooking(doctorId: string): Promise<IDoctorSlot[]>;
-
+    updateSlotStatus(slotId: string, doctorId: string): Promise<ISlotStatusUpdate>
+    updatePaymentFail(slotId: string, doctorId: string):Promise<void>
 }
 

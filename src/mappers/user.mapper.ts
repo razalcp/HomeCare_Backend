@@ -1,6 +1,6 @@
-import { IUserAuthDTO, IUserBookingDTO, IUserProfileDTO } from "../dtos/user.dto";
+import { IUserAuthDTO, IUserBookingDTO, IUserProfileDTO, UpdateSlotStatusDTO } from "../dtos/user.dto";
 import { IPrescriptionResponse } from "../interfaces/doctor/doctorInterface";
-import { IBookedDoctorForChat, IDoctorSlot, IMessageSaveResponse, IMessageUser, IReview, IReviewResponse, ISaveMessageInput, IUserResponseFull, IVerifiedDoctorData, IWalletData, IWalletTransaction } from "../interfaces/user/userInterface";
+import { IBookedDoctorForChat, IDoctorSlot, IMessageSaveResponse, IMessageUser, IReview, IReviewResponse, ISaveMessageInput, ISlotStatusUpdate, IUserResponseFull, IVerifiedDoctorData, IWalletData, IWalletTransaction } from "../interfaces/user/userInterface";
 import { IUserModel } from "../interfaces/user/userModelInterface";
 import { IMedication } from "../models/doctor/prescriptionModel";
 
@@ -228,3 +228,10 @@ export const mapPrescriptionDTO = (p: IPrescriptionResponse): IPrescriptionRespo
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
 });
+
+export const toUpdateSlotStatusDTO = (data:  ISlotStatusUpdate ): UpdateSlotStatusDTO => {
+  return {
+    success: data.success,
+    message: data.message,
+  };
+};

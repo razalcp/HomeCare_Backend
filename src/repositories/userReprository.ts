@@ -857,6 +857,40 @@ class UserReprository implements IUserRepository {
     }
   };
 
+  updateSlotStatus = async (slotId: string, doctorId: string) => {
+    // Try to update only if status === "Available"
+    const result = await this._slotModel.findOneAndUpdate(
+      { _id: slotId, doctorId, status: "Available" }, 
+      { $set: { status: "Pending" } },               
+      { new: true }                                
+    );
+
+    if (result) {
+      return { success: true, message: "Slot is available for booking" };
+    } else {
+      // If not found, check why
+      const slot = await this._slotModel.findOne({ _id: slotId, doctorId });
+
+      if (slot?.status === "Pending") {
+        return { success: false, message: "Slot is locked by other user for booking" };
+      }
+      if (slot?.status === "Booked") {
+        return { success: false, message: "Slot already booked by another user" };
+      }
+
+      return { success: false, message: "Slot not found or unavailable" };
+    }
+  };
+
+  updatePaymentFail = async (slotId: string, doctorId: string) => {
+    const slot = await this._slotModel.findOne({ _id: slotId, doctorId })
+    if (slot?.status === "Pending") {
+      slot.status = "Available";
+      await slot.save();
+
+    }
+  };
+
 };
 
 export default UserReprository;

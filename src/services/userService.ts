@@ -5,8 +5,8 @@ import bcrypt from "bcrypt";
 import { IUserModel } from "../interfaces/user/userModelInterface";
 import { createToken, createRefreshToken } from "../config/jwt_config";
 import { IUserService } from "../interfaces/user/IUserService";
-import { mapBookedDoctorDTO, mapDeleteMessageDTO, mapDoctorSlotsToDTO, mapMessageDTO, mapPrescriptionDTO, mapReviewResponse, mapSaveMessageDTO, mapToUserBookingDTO, mapUserProfileDTO, mapUserToAuthDTO, mapUserToSafeDTO, mapVerifiedDoctorDTO, mapWalletDataDTO } from "../mappers/user.mapper";
-import { IUserAuthDTO, IUserBookingDTO } from "../dtos/user.dto";
+import { mapBookedDoctorDTO, mapDeleteMessageDTO, mapDoctorSlotsToDTO, mapMessageDTO, mapPrescriptionDTO, mapReviewResponse, mapSaveMessageDTO, mapToUserBookingDTO, mapUserProfileDTO, mapUserToAuthDTO, mapUserToSafeDTO, mapVerifiedDoctorDTO, mapWalletDataDTO, toUpdateSlotStatusDTO } from "../mappers/user.mapper";
+import { IUserAuthDTO, IUserBookingDTO, UpdateSlotStatusDTO } from "../dtos/user.dto";
 
 
 
@@ -331,7 +331,7 @@ class UserService implements IUserService {
     return mapDoctorSlotsToDTO(getSlots)
   };
 
-  
+
   getPrescription = async (bookingId: string) => {
     try {
       const prescriptionData = await this._userReprository.getPrescription(bookingId)
@@ -343,6 +343,23 @@ class UserService implements IUserService {
       throw new Error('error in getting your prerscription' + error);
     }
   };
-}
+
+  updateSlotStatus = async (slotId: string, doctorId: string): Promise<UpdateSlotStatusDTO> => {
+    try {
+      const updateData = await this._userReprository.updateSlotStatus(slotId, doctorId);
+      return toUpdateSlotStatusDTO(updateData);
+    } catch (error) {
+      throw error;
+    }
+  };
+  updatePaymentFail = async (slotId: string, doctorId: string) => {
+    try {
+      await this._userReprository.updatePaymentFail(slotId, doctorId)
+    } catch (error) {
+      throw error
+    }
+  }
+
+};
 
 export default UserService;

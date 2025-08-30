@@ -54,3 +54,9 @@ export interface IUserProfileDTO {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+
+export interface UpdateSlotStatusDTO {
+  success: boolean;
+  message: string;
+}

@@ -15,7 +15,7 @@ const slotSchema = new Schema<ISlot>({
     date: { type: String, required: true },
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
-    status: { type: String, required: true, enum: ["Available", "Booked", "Cancelled"] },
+    status: { type: String, required: true, enum: ["Available", "Booked", "Cancelled", "Pending"] },
     doctorId: { type: Schema.Types.ObjectId, required: true, ref: "Doctor" },
     isBooked: { type: Boolean, default: false }
 

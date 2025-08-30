@@ -55,7 +55,7 @@ export interface IUpdateDoctorProfile {
 export interface IVerifiedDoctorData {
   _id: string;
   email: string;
-  slotId: string[]; 
+  slotId: string[];
   departments: string[];
   knownLanguages: string[];
   consultationType: string[];
@@ -89,8 +89,8 @@ export interface ICancelBookingResponse {
   message: string;
 }
 
-export interface IWalletTransaction{
-   
+export interface IWalletTransaction {
+
   amount: number;
   transactionId: string;
   transactionType: "credit" | "debit";
@@ -141,7 +141,7 @@ export interface IMessageUser {
   senderId: string;
   receiverId: string;
   message: string;
-  image?:string
+  image?: string
   createdAt: Date;
   updatedAt: Date;
 }
@@ -176,7 +176,7 @@ export interface IReview {
   userId: {
     _id?: string;
     name?: string;
-    profileIMG?: string 
+    profileIMG?: string
   };
   rating: number;
   comment: string;
@@ -200,7 +200,7 @@ export interface IDoctorSlot {
   status: "Available" | "Booked" | "Cancelled"; // adjust if there are more statuses
   doctorId: Types.ObjectId;
   isBooked: boolean;
-  
+
 }
 
 export interface IUserResponse {
@@ -268,4 +268,9 @@ export interface IUserBooking {
   createdAt: Date;
   updatedAt: Date;
   __v?: number;
+}
+
+export interface ISlotStatusUpdate {
+  success: boolean;
+  message: string;
 }

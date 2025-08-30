@@ -49,6 +49,8 @@ router.patch('/updateUserProfile', authMiddleware, upload.any(), userController.
 router.get("/getUser/:email", authMiddleware, userController.getUser);
 router.get('/bookedDoctors', authMiddleware, userController.bookedDoctors)
 router.get('/messages', authMiddleware, userController.messages)
+router.patch('/updateSlotStatus/:slotId/:doctorId', authMiddleware, userController.updateSlotStatus)
+router.patch(`/slotStatusPaymentFail/:slotId/:doctorId`, authMiddleware, userController.updatePaymentFail)
 router.post('/saveMessages', authMiddleware, userController.saveMessages)
 router.post('/uploadToCloudinary', authMiddleware, upload.any(), userController.uploadImage)
 router.delete('/deleteMessage', authMiddleware, userController.deleteMessage)
@@ -57,4 +59,5 @@ router.post('/submitReview', authMiddleware, userController.submitReview)
 router.get('/reviewDetails', authMiddleware, userController.reviewDetails)
 router.get('/findDoctorSlots/:doctorId', authMiddleware, userController.getDoctorSlotsForBooking)
 router.get('/prescription', authMiddleware, userController.getPrescription)
+
 export default router;

@@ -1,11 +1,11 @@
-import UserService from "../../services/userService";
+
 import { Request, Response } from "express";
 import { IUser } from "../../interfaces/user/userInterface";
 import HTTP_statusCode from "../../enums/httpStatusCode";
-const stripe = require('stripe')("sk_test_51R6U86C1BfcS3nBm3F9VPOzMitLY6kndB9xIywEvFDKrPi8jDQ457NySmoSq2Nl0hBdT8vtGMvNZ5Wr8cNq736Kk00RPBZDxXt")
 import cloudinary from '../../config/cloudinary_config'
 import { IUserService } from "../../interfaces/user/IUserService";
 import { RESPONSE_MESSAGES } from "../../constants/messages";
+
 
 
 class userController {
@@ -181,14 +181,16 @@ class userController {
   };
 
   createcheckoutsession = async (req: Request, res: Response) => {
+    const stripe = require('stripe')("sk_test_51R6U86C1BfcS3nBm3F9VPOzMitLY6kndB9xIywEvFDKrPi8jDQ457NySmoSq2Nl0hBdT8vtGMvNZ5Wr8cNq736Kk00RPBZDxXt")
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       success_url: `http://localhost:1234/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
-      cancel_url: "http://localhost:1234/paymentFailed",
+      cancel_url: `http://localhost:1234/paymentFailed?slotId=${req.body.slotId}&doctorId=${req.body.doctorId}`,
 
       // success_url: `https://home-care-frontend-five.vercel.app/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
-      // cancel_url: "https://home-care-frontend-five.vercel.app/paymentFailed",
+      // cancel_url: `https://home-care-frontend-five.vercel.app/paymentFailed?slotId=${req.body.slotId}&doctorId=${req.body.doctorId}`,
       customer_email: req.body.userEmail, // Optional: associate user with payment
       line_items: [
         {
@@ -526,6 +528,25 @@ class userController {
     } catch (error) {
       res.status(HTTP_statusCode.InternalServerError).json({ message: RESPONSE_MESSAGES.COMMON.SOMETHING_WENT_WRONG, error });
 
+    }
+  };
+
+  updateSlotStatus = async (req: Request, res: Response) => {
+    try {
+      const { slotId, doctorId } = req.params;
+      const slotData = await this._userService.updateSlotStatus(slotId, doctorId)
+      res.status(HTTP_statusCode.OK).json(slotData)
+    } catch (error) {
+      throw error
+    }
+  };
+
+  updatePaymentFail = async (req: Request, res: Response) => {
+    try {
+      const { slotId, doctorId } = req.params;
+      const slotUpdate = await this._userService.updatePaymentFail(slotId, doctorId)
+    } catch (error) {
+      throw error
     }
   };
 }

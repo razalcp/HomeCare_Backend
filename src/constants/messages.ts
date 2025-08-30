@@ -1,5 +1,4 @@
 export const RESPONSE_MESSAGES = {
-
     USER: {
         OTP_SENT_TO_MAIL: "OTP sent to mail",
         EMAIL_ALREADY_EXISTS: "Email already exists",

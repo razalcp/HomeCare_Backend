@@ -266,56 +266,17 @@ class userController {
   };
 
 
-  // updateUser = async (req: Request, res: Response) => {
-  //   try {
-
-  //     const userData = req.body
-  //     const fileName = req.files as Express.Multer.File[]
-
-  //     let uploadToCloudinary = (buffer: Buffer) => {
-
-  //       return new Promise((resolve, reject) => {
-  //         const uploadStream = cloudinary.uploader.upload_stream(
-  //           { folder: "doctor_profiles" }, // Cloudinary folder
-  //           (error, result) => {
-  //             if (error) {
-  //               reject(error);
-  //             } else {
-  //               resolve(result?.secure_url); // Return uploaded image URL
-  //             }
-  //           }
-  //         );
-  //         uploadStream.end(buffer); // Send buffer data to Cloudinary
-  //       });
-
-
-
-  //     };
-  //     const imgObject: { [key: string]: string } = {};
-
-  //     for (const file of fileName!) {
-  //       const upload: string = await uploadToCloudinary(file.buffer) as string
-
-  //       imgObject[file.fieldname] = upload
-
-  //     }
-
-  //     const docData = await this._userService.updateUserProfile(userData, imgObject)
-  //     res.status(HTTP_statusCode.OK).json(docData)
-  //   } catch (error: unknown) {
-  //     if (error instanceof Error) {
-  //       return res.status(400).json({ error: error.message });
-  //     }
-
-  //     return res.status(400).json({ error: 'An unexpected error occurred' });
-  //   }
-
-  // };
-
   updateUser = async (req: Request, res: Response) => {
     try {
       const userData = req.body;
       const files = req.files as Express.Multer.File[];
+      for (const file of files) {
+        if (!file || !file.buffer || !file.buffer.length) {
+          throw new Error('Invalid image file');
+        }
+
+        // continue with Cloudinary upload
+      }
 
       // Helper to upload image as 'authenticated' and return public_id
       const uploadToCloudinary = (buffer: Buffer, filename: string): Promise<string> => {

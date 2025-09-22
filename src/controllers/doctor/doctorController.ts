@@ -219,6 +219,14 @@ class DoctorController {
 
             const fileName = req.files as Express.Multer.File[]
 
+            for (const file of fileName) {
+                if (!file || !file.buffer || !file.buffer.length) {
+                    throw new Error('Invalid image file');
+                }
+
+                // continue with Cloudinary upload
+            }
+
             let uploadToCloudinary = (buffer: Buffer): Promise<string> => {
 
                 return new Promise((resolve, reject) => {

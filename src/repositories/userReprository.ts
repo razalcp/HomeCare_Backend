@@ -381,105 +381,6 @@ class UserReprository implements IUserRepository {
 
 
 
-  // saveBookingToDb = async (slotId: string, userId: string, doctorId: string) => {
-  //   const session = await mongoose.startSession();
-  //   session.startTransaction();
-  //   try {
-  //     if (!slotId) throw new Error("Slot ID is required");
-
-  //     // 1. Atomically lock the slot if available
-  //     const slot = await this._slotModel.findOneAndUpdate(
-  //       { _id: slotId, isBooked: false, status: "Available" },
-  //       { $set: { isBooked: true, status: "Booked" } },
-  //       { new: true, session }
-  //     );
-
-  //     if (!slot) {
-  //       throw new Error("Slot already booked or not available");
-  //     }
-
-  //     // 2. Create booking
-  //     const newBooking = await this._bookingModel.create([{
-  //       doctorId,
-  //       userId,
-  //       slotId,
-  //       paymentStatus: "paid",
-  //       bookingStatus: "booked"
-  //     }], { session });
-
-  //     // 3. Get Doctor fees
-  //     const doctor = await this._doctorModel.findById(doctorId).session(session);
-  //     if (!doctor) throw new Error("Doctor not found");
-
-  //     const doctorFees = doctor.consultationFee;
-  //     if (doctorFees === undefined) {
-  //       throw new Error("Consultation fee not set for this doctor.");
-  //     }
-
-  //     const doctorShare = Math.floor(doctorFees * 0.7);
-  //     const adminShare = doctorFees - doctorShare;
-  //     const bookingId  = newBooking[0]._id.toString();
-
-  //     // 4. Update Doctor Wallet
-  //     let doctorWallet = await this._doctorWalletModel.findOne({ doctorId }).session(session);
-  //     if (doctorWallet) {
-  //       doctorWallet.balance += doctorShare;
-  //       doctorWallet.transactions.push({
-  //         amount: doctorShare,
-  //         transactionId: bookingId,
-  //         transactionType: "credit",
-  //         appointmentId: bookingId
-  //       });
-  //       await doctorWallet.save({ session });
-  //     } else {
-  //       await this._doctorWalletModel.create([{
-  //         doctorId,
-  //         balance: doctorShare,
-  //         transactions: [{
-  //           amount: doctorShare,
-  //           transactionId: bookingId,
-  //           transactionType: "credit",
-  //           appointmentId: bookingId
-  //         }]
-  //       }], { session });
-  //     }
-
-  //     // 5. Update Admin Wallet
-  //     const adminId = "admin";
-  //     let adminWallet = await this._adminWalletModel.findOne({ adminId }).session(session);
-  //     if (!adminWallet) {
-  //       await this._adminWalletModel.create([{
-  //         adminId,
-  //         balance: adminShare,
-  //         transactions: [{
-  //           amount: adminShare,
-  //           transactionId: bookingId,
-  //           transactionType: "credit",
-  //           appointmentId: bookingId
-  //         }]
-  //       }], { session });
-  //     } else {
-  //       adminWallet.balance += adminShare;
-  //       adminWallet.transactions.push({
-  //         amount: adminShare,
-  //         transactionId: bookingId,
-  //         transactionType: "credit",
-  //         appointmentId: bookingId
-  //       });
-  //       await adminWallet.save({ session });
-  //     }
-
-  //     await session.commitTransaction();
-  //     session.endSession();
-
-  //   } catch (error) {
-  //     await session.abortTransaction();
-  //     session.endSession();
-  //     throw error;
-  //   }
-  // };
-
-
   getUserBookings = async (userId: string): Promise<IUserBooking[]> => {
     try {
       const bookings = await this._bookingModel.find({ userId })
@@ -488,7 +389,7 @@ class UserReprository implements IUserRepository {
         .populate('slotId')   // populate slot details
         .populate('userId')
         .lean();
-        
+
       return mapBookingsToUserResponse(bookings as unknown as IBookingRawData[]);
 
     } catch (error) {
@@ -591,7 +492,19 @@ class UserReprository implements IUserRepository {
     try {
       const wallet = await this._userWalletModel.findOne({ userId });
 
-      if (!wallet) throw new Error('Wallet not found');
+      // if (!wallet) throw new Error('Wallet not found');
+      if (!wallet) {
+        return {
+          _id: '',
+          userId,
+          balance: 0,
+          transactions: [],
+          totalTransactions: 0,
+          currentPage: page,
+          totalPages: 0,
+        };
+      }
+
 
       const totalTransactions = wallet.transactions.length;
       const totalPages = Math.ceil(totalTransactions / limit);
@@ -861,9 +774,9 @@ class UserReprository implements IUserRepository {
   updateSlotStatus = async (slotId: string, doctorId: string) => {
     // Try to update only if status === "Available"
     const result = await this._slotModel.findOneAndUpdate(
-      { _id: slotId, doctorId, status: "Available" }, 
-      { $set: { status: "Pending" } },               
-      { new: true }                                
+      { _id: slotId, doctorId, status: "Available" },
+      { $set: { status: "Pending" } },
+      { new: true }
     );
 
     if (result) {

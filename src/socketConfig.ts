@@ -50,30 +50,34 @@ const startSocket = (server: HttpServer) => {
             console.log("outgoing data : ", data);
 
             const userSocketId = getReceiverSocketId(data.to);
-
-            if (userSocketId) {
-                io.to(userSocketId).emit("incoming-video-call", {
-                    _id: data.to,
-                    from: data.from,
-                    callType: data.callType,
-                    doctorName: data.doctorName,
-                    doctorImage: data.doctorImage,
-                    roomId: data.roomId,
-                });
-            } else {
-                console.log(`Receiver not found for user ID: ${data.to}`);
+            if (!userSocketId) {
+                console.log(`Receiver ${data.to} is offline. Cannot send event.`);
+                return;
             }
+
+            io.to(userSocketId).emit("incoming-video-call", {
+                _id: data.to,
+                from: data.from,
+                callType: data.callType,
+                doctorName: data.doctorName,
+                doctorImage: data.doctorImage,
+                roomId: data.roomId,
+            });
+
+
+
         });
 
         socket.on("reject-call", (data) => {
             console.log("call rejected by user", data);
 
             const friendSocketId = getReceiverSocketId(data.to);
-            if (friendSocketId) {
-                socket.to(friendSocketId).emit("call-rejected");
-            } else {
-                console.error(`No socket ID found for the receiver with ID: ${data.to}`);
+            if (!friendSocketId) {
+                console.log(`Receiver ${data.to} is offline. Cannot send call-rejected event.`);
+                return;
             }
+            socket.to(friendSocketId).emit("call-rejected");
+
         });
 
 
@@ -81,6 +85,10 @@ const startSocket = (server: HttpServer) => {
             // console.log("accept-incoming-call", data);
             try {
                 const friendSocketId = await getReceiverSocketId(data.to);
+                if (!friendSocketId) {
+                    console.log(`Receiver ${data.to} is offline. Cannot send accepted-call event.`);
+                    return;
+                }
                 if (friendSocketId) {
                     const startedAt = new Date();
                     const videoCall = {
@@ -105,11 +113,11 @@ const startSocket = (server: HttpServer) => {
                     );
                 }
             } catch (error: unknown) {
-                if (error instanceof Error){
+                if (error instanceof Error) {
                     console.error("Error in accept-incoming-call handler:", error.message);
 
-                }else{
-                    console.error("Unknown Error : ",error)
+                } else {
+                    console.error("Unknown Error : ", error)
                 }
             }
         });
@@ -119,6 +127,10 @@ const startSocket = (server: HttpServer) => {
             // console.log("backend trainer-call-accept ", data);
 
             const trainerSocket = await getReceiverSocketId(data.trainerId);
+            if (!trainerSocket) {
+                console.log(`Trainer ${data.trainerId} is offline. Cannot send trainer-accept event.`);
+                return;
+            }
             if (trainerSocket) {
                 io.to(trainerSocket).emit("trianer-accept", data);
             }
@@ -126,6 +138,10 @@ const startSocket = (server: HttpServer) => {
 
         socket.on("leave-room", (data) => {
             const friendSocketId = getReceiverSocketId(data.to);
+            if (!friendSocketId) {
+                console.log(`Receiver ${data.to} is offline. Cannot send user-left event.`);
+                return;
+            }
             // console.log('friendSocketId when leave', friendSocketId, 'data', data.to);
             if (friendSocketId) {
                 socket.to(friendSocketId).emit("user-left", data.to);

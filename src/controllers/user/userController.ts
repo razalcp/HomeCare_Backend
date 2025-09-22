@@ -8,6 +8,7 @@ import { RESPONSE_MESSAGES } from "../../constants/messages";
 
 
 
+
 class userController {
   private _userService: IUserService;
 
@@ -186,11 +187,11 @@ class userController {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      success_url: `http://localhost:1234/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
-      cancel_url: `http://localhost:1234/paymentFailed?slotId=${req.body.slotId}&doctorId=${req.body.doctorId}`,
+      // success_url: `http://localhost:1234/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
+      // cancel_url: `http://localhost:1234/paymentFailed?slotId=${req.body.slotId}&doctorId=${req.body.doctorId}`,
 
-      // success_url: `https://home-care-frontend-five.vercel.app/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
-      // cancel_url: `https://home-care-frontend-five.vercel.app/paymentFailed?slotId=${req.body.slotId}&doctorId=${req.body.doctorId}`,
+      success_url: `https://home-care-frontend-five.vercel.app/success?slotId=${req.body.slotId}&userId=${req.body.userInfo._id}&doctorId=${req.body.doctorId}`,
+      cancel_url: `https://home-care-frontend-five.vercel.app/paymentFailed?slotId=${req.body.slotId}&doctorId=${req.body.doctorId}`,
       customer_email: req.body.userEmail, // Optional: associate user with payment
       line_items: [
         {
@@ -329,8 +330,8 @@ class userController {
               if (error) {
                 reject(error);
               } else if (result?.public_id) {
-                console.log('Cloudinary upload result:', result);
-                resolve(result.public_id as string); // This will be like "doctor_profiles/vis.jpg"
+                // console.log('Cloudinary upload result:', result);
+                resolve(result.public_id); // This will be like "doctor_profiles/vis.jpg"
               } else {
                 reject(new Error('Upload failed with no public_id'));
               }
@@ -385,7 +386,12 @@ class userController {
 
   bookedDoctors = async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.user_id
+
+      const userId = req.user?.user_id;
+
+      if (!userId) {
+        throw new Error("user not identified")
+      }
       const Userdata = await this._userService.getBookedDoctors(userId)
       res.status(HTTP_statusCode.OK).json(Userdata)
 
@@ -441,10 +447,12 @@ class userController {
 
 
       };
-      const imgObject: any = {}
+
 
       for (const file of fileName!) {
-        const upload: any = await uploadToCloudinary(file.buffer)
+        const upload = await uploadToCloudinary(file.buffer)
+
+
         res.status(HTTP_statusCode.OK).json(upload)
       }
     } catch (error) {

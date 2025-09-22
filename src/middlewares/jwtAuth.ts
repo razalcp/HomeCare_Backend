@@ -7,6 +7,8 @@ import { createToken } from '../config/jwt_config';
 const secret_key = process.env.jwt_secret as string;
 
 const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+
+
     const accessToken = req.cookies?.UserAccessToken;
     const refreshToken = req.cookies?.UserRefreshToken;
 
@@ -21,7 +23,7 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction): void =
             const newAccessToken = createToken(decoded.user_id, decoded.role);
 
             res.cookie("UserAccessToken", newAccessToken, { httpOnly: true, secure: true });
-            (req as any).user = decoded;
+            req.user = decoded
             next();
             return;
         } catch (error) {
@@ -32,9 +34,9 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction): void =
 
     try {
         const decoded = jwt.verify(accessToken, secret_key) as { user_id: string, role: string };
-        (req as any).user = decoded;
+        req.user = decoded
 
-        if ((req as any).user.role === 'user') {
+        if (req.user.role === 'user') {
             next();
             return;
         } else {
@@ -52,7 +54,7 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction): void =
             const newAccessToken = createToken(decoded.user_id, decoded.role);
 
             res.cookie("UserAccessToken", newAccessToken, { httpOnly: true, secure: true });
-            (req as any).user = decoded;
+            req.user = decoded
             next();
             return;
         } catch (refreshErr) {

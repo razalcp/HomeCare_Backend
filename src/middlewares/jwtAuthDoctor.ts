@@ -27,7 +27,7 @@ const doctorAuthMiddleware = (req: Request, res: Response, next: NextFunction): 
                 maxAge: 15 * 60 * 1000,
             });
 
-            (req as any).user = decoded;
+            req.user = decoded;
             next();
         } catch (error) {
             res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid refresh token." });
@@ -37,34 +37,37 @@ const doctorAuthMiddleware = (req: Request, res: Response, next: NextFunction): 
 
     try {
         const decoded = jwt.verify(accessToken, secret_key) as { user_id: string; role: string };
-        (req as any).user = decoded;
+        req.user = decoded;
 
         if (decoded.role === 'doctor') {
             next();
         } else {
             res.status(HTTP_statusCode.NoAccess).json({ message: "Access denied. Not a doctor." });
         }
-    } catch (error: any) {
-        if (error.name === 'TokenExpiredError' && refreshToken) {
-            try {
-                const decoded = jwt.verify(refreshToken, secret_key) as { user_id: string; role: string };
-                const newAccessToken = createToken(decoded.user_id, decoded.role);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            if (error.name === 'TokenExpiredError' && refreshToken) {
+                try {
+                    const decoded = jwt.verify(refreshToken, secret_key) as { user_id: string; role: string };
+                    const newAccessToken = createToken(decoded.user_id, decoded.role);
 
-                res.cookie("doctorAccessToken", newAccessToken, {
-                    httpOnly: true,
-                    sameSite: 'none',
-                    secure: true,
-                    maxAge: 15 * 60 * 1000,
-                });
+                    res.cookie("doctorAccessToken", newAccessToken, {
+                        httpOnly: true,
+                        sameSite: 'none',
+                        secure: true,
+                        maxAge: 15 * 60 * 1000,
+                    });
 
-                (req as any).user = decoded;
-                next();
-            } catch (refreshErr) {
-                res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid refresh token." });
+                    req.user = decoded;
+                    next();
+                } catch (refreshErr) {
+                    res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid refresh token." });
+                }
+            } else {
+                res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid access token." });
             }
-        } else {
-            res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid access token." });
         }
+
     }
 };
 

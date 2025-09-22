@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import HTTP_statusCode from '../enums/httpStatusCode';
-import { createToken} from '../config/jwt_config';
+import { createToken } from '../config/jwt_config';
 
 
 const secret_key = process.env.jwt_secret as string;
@@ -32,7 +32,7 @@ const adminAuthMiddleware = (req: Request, res: Response, next: NextFunction) =>
             });
 
             // Attach user data to request object
-            (req as any).user = decoded;
+            req.user = decoded
             next();
             return
         } catch (error) {
@@ -44,40 +44,50 @@ const adminAuthMiddleware = (req: Request, res: Response, next: NextFunction) =>
 
     try {
         const decoded = jwt.verify(accessToken, secret_key) as { user_id: string, role: string };
-        (req as any).user = decoded;
+        req.user = decoded
 
-        if ((req as any).user.role === 'admin') {
+        if (req.user.role === 'admin') {
             next();
             return;
         } else {
             res.status(HTTP_statusCode.Unauthorized).json({ message: "Access denied. Not an admin." });
             return;
         }
-    } catch (error: any) {
-        if (error.name === 'TokenExpiredError') {
-            if (!refreshToken) {
-                res.status(HTTP_statusCode.Unauthorized).json({ message: "Access denied. Access token expired and no refresh token." });
-                return;
-            }
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            if (error.name === 'TokenExpiredError') {
+                if (!refreshToken) {
+                    res.status(HTTP_statusCode.Unauthorized).json({ message: "Access denied. Access token expired and no refresh token." });
+                    return;
+                }
 
-            try {
-                const decoded = jwt.verify(refreshToken, secret_key) as { user_id: string, role: string };
-                const newAccessToken = createToken(decoded.user_id, decoded.role);
-                res.cookie("adminAccessToken", newAccessToken, {
-                    httpOnly: true, secure: true, sameSite: 'none',
-                    maxAge: 15 * 60 * 1000,
-                });
-                (req as any).user = decoded;
-                next();
-                return;
-            } catch (refreshErr) {
-                res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid refresh token." });
+                try {
+                    const decoded = jwt.verify(refreshToken, secret_key) as { user_id: string, role: string };
+                    const newAccessToken = createToken(decoded.user_id, decoded.role);
+                    res.cookie("adminAccessToken", newAccessToken, {
+                        httpOnly: true, secure: true, sameSite: 'none',
+                        maxAge: 15 * 60 * 1000,
+                    });
+                    req.user = decoded
+                    next();
+                    return;
+                } catch (refreshErr) {
+                    res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid refresh token." });
+                    return;
+                }
+            } else {
+                res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid access token." });
                 return;
             }
         } else {
-            res.status(HTTP_statusCode.NoAccess).json({ message: "Invalid access token." });
+
+            res.status(HTTP_statusCode.InternalServerError).json({
+                message: "An unexpected error occurred",
+                error: String(error), // stringify safely
+            });
             return;
         }
+
     }
 };
 

@@ -104,14 +104,19 @@ const startSocket = (server: HttpServer) => {
                         `No socket ID found for the receiver with ID: ${data.to}`
                     );
                 }
-            } catch (error: any) {
-                console.error("Error in accept-incoming-call handler:", error.message);
+            } catch (error: unknown) {
+                if (error instanceof Error){
+                    console.error("Error in accept-incoming-call handler:", error.message);
+
+                }else{
+                    console.error("Unknown Error : ",error)
+                }
             }
         });
 
 
         socket.on("trainer-call-accept", async (data) => {
-            console.log("backend trainer-call-accept ", data);
+            // console.log("backend trainer-call-accept ", data);
 
             const trainerSocket = await getReceiverSocketId(data.trainerId);
             if (trainerSocket) {
@@ -121,7 +126,7 @@ const startSocket = (server: HttpServer) => {
 
         socket.on("leave-room", (data) => {
             const friendSocketId = getReceiverSocketId(data.to);
-            console.log('friendSocketId when leave', friendSocketId, 'data', data.to);
+            // console.log('friendSocketId when leave', friendSocketId, 'data', data.to);
             if (friendSocketId) {
                 socket.to(friendSocketId).emit("user-left", data.to);
             }

@@ -15,7 +15,7 @@ import { IMessage } from "../models/messageModel";
 import { IReview } from "../models/user/reviewModel";
 import { IPrescriptionResponse } from "../interfaces/doctor/doctorInterface";
 import { mapDoctorsToResponse } from "../helpers/mapDoctors";
-import { mapBookingsToUserResponse } from "../helpers/mapBookings";
+import { IBookingRawData, mapBookingsToUserResponse } from "../helpers/mapBookings";
 import { mapReviewDocument, PopulatedReviewDocument } from "../helpers/mapReview";
 import { mapMessages } from "../helpers/mapMessages";
 
@@ -488,7 +488,8 @@ class UserReprository implements IUserRepository {
         .populate('slotId')   // populate slot details
         .populate('userId')
         .lean();
-      return mapBookingsToUserResponse(bookings);
+        
+      return mapBookingsToUserResponse(bookings as unknown as IBookingRawData[]);
 
     } catch (error) {
       console.error("Error fetching user bookings:", error);

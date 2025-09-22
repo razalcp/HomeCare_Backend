@@ -4,7 +4,7 @@
   "description": "this is the backend of homecare doctor booking app",
   "main": "index.js",
   "scripts": {
-    "dev": "set NODE_ENV=development && ts-node-dev --respawn --transpile-only src/app.ts",
+    "dev": "set NODE_ENV=production && ts-node-dev --respawn --transpile-only src/app.ts",
     "start": "set NODE_ENV=production && node dist/app.js",
     "build": "tsc"
   },

@@ -267,7 +267,7 @@ export interface IUserBooking {
   consultationStatus: string;
   createdAt: Date;
   updatedAt: Date;
-  __v?: number;
+  
 }
 
 export interface ISlotStatusUpdate {
